@@ -1,0 +1,69 @@
+import jaci.openrio.gradle.GradleRIOPlugin
+import jaci.openrio.gradle.frc.FRCJavaArtifact
+import jaci.openrio.gradle.frc.RoboRIO
+
+buildscript {
+    ext.kotlin_version = '1.2.0'
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+plugins {
+    id "jaci.openrio.gradle.GradleRIO" version "2017.11.17"
+}
+
+def TEAM = 2471
+def ROBOT_CLASS = "org.team2471.frc.powerup.Robot"
+
+deploy {
+    targets {
+        target("roborio", RoboRIO) {
+            team = TEAM
+        }
+    }
+    artifacts {
+        artifact('frcKotlin', FRCJavaArtifact) {
+            targets << "roborio"
+            jar = 'jar' //binks
+        }
+    }
+}
+group 'org.team2471.frc'
+
+apply plugin: 'java'
+apply plugin: 'kotlin'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile wpilib()
+    compile ctre()
+}
+
+jar {
+    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it)}
+    manifest GradleRIOPlugin.javaManifest(ROBOT_CLASS)
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.2.1'
+}
