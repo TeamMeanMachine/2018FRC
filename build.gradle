@@ -14,7 +14,7 @@ buildscript {
 }
 
 plugins {
-    id "jaci.openrio.gradle.GradleRIO" version "2017.11.17"
+    id "jaci.openrio.gradle.GradleRIO" version "2018.01.07"
 }
 
 def TEAM = 2471
@@ -49,6 +49,7 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     compile wpilib()
     compile ctre()
+    compile project("meanlib")
 }
 
 jar {

@@ -1,2 +1,4 @@
 rootProject.name = '2018FRC'
+include 'meanlib'
+include 'coprocessor'
 
