@@ -26,4 +26,11 @@ object CoDriver {
     val updown: Double
         get() = -controller.getRawAxis(5)
                 .deadband(.2)
+
+    val grab: Boolean
+        get() = controller.aButtonPressed
+
+    val wristPivot: Double
+        get() = -controller.getRawAxis(5)
+                .deadband(.2)
 }

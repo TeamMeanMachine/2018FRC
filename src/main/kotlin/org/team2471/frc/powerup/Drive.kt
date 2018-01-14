@@ -12,8 +12,6 @@ import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.control.plus
 
 object Drive {
-    private val table = NetworkTable.getTable("Drive")
-
     private val shifter = Solenoid(0)
 
     private val leftMotors = TalonSRX(RobotMap.Talons.DRIVE_LEFT_MOTOR_1).apply {
@@ -31,17 +29,16 @@ object Drive {
         inverted = true
     } + TalonSRX(RobotMap.Talons.DRIVE_RIGHT_MOTOR_2).apply {
         setNeutralMode(NeutralMode.Brake)
+        inverted = true
     } + TalonSRX(RobotMap.Talons.DRIVE_RIGHT_MOTOR_1).apply {
         setNeutralMode(NeutralMode.Brake)
+        inverted = true
     } + TalonSRX(RobotMap.Talons.DRIVE_RIGHT_MOTOR_4).apply {
         setNeutralMode(NeutralMode.Brake)
+        inverted = true
     }
 
     init {
-        table.setDefaultNumber("Left Power Multiplier", 1.0)
-        table.setDefaultNumber("Right Power Multiplier", 1.0)
-        table.setPersistent("Left Power Multiplier")
-        table.setPersistent("Right Power Multiplier")
         CommandSystem.registerDefaultCommand(this, Command("Drive Default", this) {
             periodic {
                 drive(Driver.throttle, Driver.softTurn, Driver.hardTurn)
@@ -52,8 +49,6 @@ object Drive {
     fun drive(throttle: Double, softTurn: Double, hardTurn: Double) {
         var leftPower = throttle + (softTurn * Math.abs(throttle)) + hardTurn
         var rightPower = throttle - (softTurn * Math.abs(throttle)) - hardTurn
-        leftPower *= table.getNumber("Left Power Multiplier", 1.0)
-        rightPower *= table.getNumber("Right Power Multiplier", 1.0)
 
         val maxPower = Math.max(Math.abs(leftPower), Math.abs(rightPower))
         if (maxPower > 1) {
@@ -62,8 +57,6 @@ object Drive {
         }
 
         shifter.set(true)
-
-        table.putBoolean("High Gear Engaged", !shifter.get())
 
         leftMotors.set(ControlMode.PercentOutput, leftPower)
         rightMotors.set(ControlMode.PercentOutput, rightPower)

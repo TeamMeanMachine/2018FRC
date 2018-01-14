@@ -6,5 +6,6 @@ class Robot : IterativeRobot() {
     override fun robotInit() {
         Drive
         Elevator
+        Arm
     }
 }

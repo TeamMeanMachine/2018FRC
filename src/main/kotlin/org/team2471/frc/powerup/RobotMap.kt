@@ -15,6 +15,14 @@ object RobotMap {
         val DRIVE_RIGHT_MOTOR_3 = 13
         val DRIVE_RIGHT_MOTOR_4 = 12
 
-        val ELEVATOR_MOTOR = 7
+        val ELEVATOR_MOTOR = 6
+
+        val INTAKE_MOTOR = 9
+
+        val ARM_SHOULDER_MOTOR_1 = 7
+        val ARM_SHOULDER_MOTOR_2 = 8
+    }
+    object Solenoids {
+        val ARM_CLAMP = 10
     }
 }
