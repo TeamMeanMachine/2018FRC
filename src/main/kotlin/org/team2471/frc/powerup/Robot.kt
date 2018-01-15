@@ -5,7 +5,8 @@ import edu.wpi.first.wpilibj.IterativeRobot
 class Robot : IterativeRobot() {
     override fun robotInit() {
         Drive
-        Elevator
+        //Elevator
         Arm
+        Intake
     }
 }
