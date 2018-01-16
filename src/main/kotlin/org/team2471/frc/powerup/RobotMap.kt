@@ -19,8 +19,8 @@ object RobotMap {
 
         val INTAKE_MOTOR = 6
 
-        val ARM_SHOULDER_MOTOR_1 = 7
-        val ARM_SHOULDER_MOTOR_2 = 8
+        val ARM_WRIST_MOTOR_1 = 7
+        val ARM_WRIST_MOTOR_2 = 8
     }
 
     object Solenoids {

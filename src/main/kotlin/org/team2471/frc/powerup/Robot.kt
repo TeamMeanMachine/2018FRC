@@ -9,4 +9,14 @@ class Robot : IterativeRobot() {
         Arm
         Intake
     }
+
+//    override fun disabledPeriodic() {
+//        super.disabledPeriodic()
+//        println("encoder: " + Arm.position)
+//    }
+
+    override fun teleopPeriodic() {
+        super.teleopPeriodic()
+        println("encoder: " + Arm.position)
+    }
 }

@@ -2,6 +2,7 @@ package org.team2471.frc.powerup
 
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.XboxController
+import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.runWhen
 import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareWithSign
@@ -44,5 +45,8 @@ object CoDriver {
 
     init {
         Intake.toggleClampCommand.runWhen { controller.aButton }
+        Command("Arm Preset 0", Arm){ Arm.moveToAngle(0.0) }.runWhen { controller.bButton }
+        Command("Arm Preset 45", Arm){ Arm.moveToAngle(45.0) }.runWhen { controller.xButton }
+        Command("Arm Preset 90", Arm){ Arm.moveToAngle(90.0) }.runWhen { controller.yButton }
     }
 }
