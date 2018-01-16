@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="bottom|center"
+    android:id="@+id/popup_window"
+    android:background="@android:color/white"
+    android:padding="10dp">
+
+
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="5dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="H"
+            android:id="@+id/hLabel"
+            android:paddingRight="10dp"
+            android:paddingTop="23dp" />
+
+        <io.apptik.widget.MultiSlider
+            android:id="@+id/hueSlider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            app:thumbNumber="2"
+            app:stepsThumbsApart="5"
+            app:drawThumbsApart="true"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="5dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="S"
+            android:id="@+id/sLabel"
+            android:paddingRight="10dp"
+            android:paddingTop="23dp" />
+
+        <io.apptik.widget.MultiSlider
+            android:id="@+id/satSlider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            app:thumbNumber="2"
+            app:stepsThumbsApart="5"
+            app:drawThumbsApart="true"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="5dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="V"
+            android:id="@+id/vLabel"
+            android:paddingRight="10dp"
+            android:paddingTop="23dp" />
+
+        <io.apptik.widget.MultiSlider
+            android:id="@+id/valSlider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            app:thumbNumber="2"
+            app:stepsThumbsApart="5"
+            app:drawThumbsApart="true"/>
+    </LinearLayout>
+
+</LinearLayout>
