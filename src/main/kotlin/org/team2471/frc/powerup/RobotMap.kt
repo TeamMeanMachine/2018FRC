@@ -17,7 +17,8 @@ object RobotMap {
 
         val ELEVATOR_MOTOR = 9
 
-        val INTAKE_MOTOR = 6
+        val INTAKE_MOTOR_LEFT = 6
+        val INTAKE_MOTOR_RIGHT = 7
 
         val ARM_WRIST_MOTOR_1 = 7
         val ARM_WRIST_MOTOR_2 = 8

@@ -33,20 +33,24 @@ object CoDriver {
     val grab: Boolean
         get() = controller.aButtonPressed
 
-    val spin: Boolean
-        get() = controller.getTriggerAxis(GenericHID.Hand.kRight) > 0.15
+    val leftIntake: Double
+        get() = controller.getTriggerAxis(GenericHID.Hand.kLeft)
+
+    val rightIntake: Double
+        get() = controller.getTriggerAxis(GenericHID.Hand.kRight)
+
+    val invertIntake: Boolean
+        get() = controller.bButton
 
     val wristPivot: Double
         get() = controller.getRawAxis(5)
                 .deadband(.2)
 
-    val spit: Boolean
-        get() = controller.getTriggerAxis(GenericHID.Hand.kLeft) > 0.15
 
     init {
         Intake.toggleClampCommand.runWhen { controller.aButton }
-        Command("Arm Preset 0", Arm){ Arm.moveToAngle(0.0) }.runWhen { controller.bButton }
-        Command("Arm Preset 45", Arm){ Arm.moveToAngle(45.0) }.runWhen { controller.xButton }
-        Command("Arm Preset 90", Arm){ Arm.moveToAngle(90.0) }.runWhen { controller.yButton }
+        Command("Arm Preset 0", Arm) { Arm.moveToAngle(0.0) }.runWhen { controller.pov == 0 }
+        Command("Arm Preset 45", Arm) { Arm.moveToAngle(45.0) }.runWhen { controller.pov == 90 }
+        Command("Arm Preset 90", Arm) { Arm.moveToAngle(90.0) }.runWhen { controller.pov == 180 }
     }
 }
