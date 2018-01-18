@@ -1,13 +1,13 @@
 package org.team2471.frc.powerup
 
+import edu.wpi.first.wpilibj.AnalogInput
 import edu.wpi.first.wpilibj.IterativeRobot
 
 class Robot : IterativeRobot() {
+    lateinit var ultrasonic: AnalogInput
+
     override fun robotInit() {
-        Drive
-        //Elevator
-        Arm
-        Intake
+        ultrasonic = AnalogInput(0)
     }
 
 //    override fun disabledPeriodic() {
@@ -16,7 +16,6 @@ class Robot : IterativeRobot() {
 //    }
 
     override fun teleopPeriodic() {
-        super.teleopPeriodic()
-        println("encoder: " + Arm.position)
+        print("Ultrasonic sensor: " + ultrasonic.value)
     }
 }
