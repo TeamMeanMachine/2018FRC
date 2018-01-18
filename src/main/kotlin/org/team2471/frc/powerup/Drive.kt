@@ -1,11 +1,9 @@
 package org.team2471.frc.powerup
 
-import com.ctre.CANTalon
 import com.ctre.phoenix.motorcontrol.ControlMode
 import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import edu.wpi.first.wpilibj.Solenoid
-import edu.wpi.first.wpilibj.networktables.NetworkTable
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.periodic
@@ -24,7 +22,7 @@ object Drive {
         setNeutralMode(NeutralMode.Brake)
     }
 
-    private val rightMotors = CANTalon(RobotMap.Talons.DRIVE_RIGHT_MOTOR_3).apply {
+    private val rightMotors = TalonSRX(RobotMap.Talons.DRIVE_RIGHT_MOTOR_3).apply {
         setNeutralMode(NeutralMode.Brake)
         inverted = true
     } + TalonSRX(RobotMap.Talons.DRIVE_RIGHT_MOTOR_2).apply {
