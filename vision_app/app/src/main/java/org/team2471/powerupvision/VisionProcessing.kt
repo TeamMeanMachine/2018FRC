@@ -1,9 +1,7 @@
 package org.team2471.powerupvision
 
-import org.opencv.core.Core
-import org.opencv.core.Mat
-import org.opencv.core.MatOfPoint
-import org.opencv.core.Scalar
+import android.util.Log
+import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
 
 
@@ -12,24 +10,40 @@ object VisionProcessing {
     private val thresh = Mat()
     private val hierarchy = Mat()
 
-    private val contours:MutableList<MatOfPoint> = ArrayList()
+
+
+    private val allContours: MutableList<MatOfPoint> = ArrayList()
+    private val filteredContours: MutableList<MatOfPoint> = ArrayList()
 
     private val hsvMins = Scalar(0.0,0.0,0.0)
     private val hsvMaxes = Scalar(0.0,0.0,0.0)
 
     private val contourColor = Scalar(255.0,0.0,0.0)
 
+
+    private var aspect_ratio = 0.0
+
+
     fun processImage(inputImage: Mat, displayMode: DisplayMode): Mat {
+        //val cnt = contours[0]
         Imgproc.cvtColor(inputImage, hsv, Imgproc.COLOR_BGR2HSV)
         updateHSVThreshhold()
         Core.inRange(hsv, hsvMins, hsvMaxes, thresh)
 
-        contours.clear()
-        Imgproc.findContours(thresh, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE)
+        Log.i("Aspect Ratio", "$aspect_ratio")
+        allContours.clear()
+        Imgproc.findContours(thresh, allContours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE)
+
+//        for (i in allContours) {
+//            println("yee")
+//        }
+
 
         return when(displayMode) {
             VisionProcessing.DisplayMode.RAW -> inputImage.apply {
-                Imgproc.drawContours(this, contours, -1, contourColor, 2)
+                //cnt = contours[0]
+                Imgproc.drawContours(this, allContours, -1, contourColor, 2)
+
             }
             VisionProcessing.DisplayMode.THRESH -> thresh
         }
