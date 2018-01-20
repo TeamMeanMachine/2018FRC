@@ -3,7 +3,6 @@ package org.team2471.powerupvision
 import android.app.Activity
 import android.app.Dialog
 import android.content.res.Configuration
-import android.media.Image
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
@@ -26,21 +25,24 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.i("OpenCV Loader", "called onCreate")
-        Log.i("ostrich", openCvCameraView?.toString() ?: "null")
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setContentView(R.layout.camera_layout)
 
         openCvCameraView = findViewById(R.id.CameraView)
+
         openCvCameraView?.visibility = SurfaceView.VISIBLE
         openCvCameraView?.setCvCameraViewListener(this)
         openCvCameraView?.setMaxFrameSize(640, 480)
+
     }
+
 
     override fun onResume() {
         super.onResume()
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_1_0, this, loaderCallback)
     }
+
 
     override fun onPause() {
         super.onPause()
