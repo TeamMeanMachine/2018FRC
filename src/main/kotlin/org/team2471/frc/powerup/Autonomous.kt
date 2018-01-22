@@ -1,0 +1,38 @@
+package org.team2471.frc.powerup
+
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import org.team2471.frc.lib.control.experimental.Command
+import org.team2471.frc.lib.motion_profiling.Path2D
+
+object AutoChooser {
+    private val dashboard = SendableChooser<Command>().apply {
+        addDefault(driveStraightAuto.name, driveStraightAuto)
+        addObject(circleTest.name, circleTest)
+
+        SmartDashboard.putData("Auto Chooser", this)
+    }
+    val chosenAuto: Command
+        get() = dashboard.selected
+}
+
+val driveStraightAuto = Command("Drive Straight Auto", Drive){
+    Drive.driveDistance(10.0, 2.0)
+}
+
+val circleTest = Command("Circle Test Auto", Drive){
+    Drive.driveAlongPath(Path2D().apply {
+        travelDirection = 1.0
+        robotWidth = 36.5 / 12
+
+        addPointAndTangent(0.0, 0.0, 0.0, 4.5)
+        addPointAndTangent(4.0, 4.0, 4.5, 0.0)
+        addPointAndTangent(8.0, 0.0, 0.0, -4.5)
+        addPointAndTangent(4.0, -4.0, -4.5, 0.0)
+        addPointAndTangent(0.0, 0.0, 0.0, 4.5)
+
+        addEasePoint(0.0, 0.0)
+        addEasePoint(16.0, 1.0)
+
+    })
+}
