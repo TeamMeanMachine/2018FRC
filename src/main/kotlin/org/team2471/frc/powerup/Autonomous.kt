@@ -23,16 +23,17 @@ val driveStraightAuto = Command("Drive Straight Auto", Drive){
 val circleTest = Command("Circle Test Auto", Drive){
     Drive.driveAlongPath(Path2D().apply {
         travelDirection = 1.0
-        robotWidth = 36.5 / 12
+        val tankDriveFudgeFactor = 1.097  // bigger factor will turn more, smaller less
+        robotWidth = 35.0 /12.0 * tankDriveFudgeFactor  // width in inches turned into feet
+        val tangent = 6.0
 
-        addPointAndTangent(0.0, 0.0, 0.0, 4.5)
-        addPointAndTangent(4.0, 4.0, 4.5, 0.0)
-        addPointAndTangent(8.0, 0.0, 0.0, -4.5)
-        addPointAndTangent(4.0, -4.0, -4.5, 0.0)
-        addPointAndTangent(0.0, 0.0, 0.0, 4.5)
+        addPointAndTangent(0.0, 0.0, 0.0, tangent)
+        addPointAndTangent(4.0, 4.0, tangent, 0.0)
+        addPointAndTangent(8.0, 0.0, 0.0, -tangent)
+        addPointAndTangent(4.0, -4.0, -tangent, 0.0)
+        addPointAndTangent(0.0, 0.0, 0.0, tangent)
 
         addEasePoint(0.0, 0.0)
         addEasePoint(16.0, 1.0)
-
     })
 }
