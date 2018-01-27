@@ -7,7 +7,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.motion_profiling.Path2D
-import org.team2471.frc.lib.util.Alliance
 
 object AutoChooser {
     private val dashboard = SendableChooser<Command>().apply {
@@ -22,15 +21,15 @@ object AutoChooser {
 }
 
 
-val driveStraightAuto = Command("Drive Straight Auto", Drive){
+val driveStraightAuto = Command("Drive Straight Auto", Drive) {
     Drive.driveDistance(10.0, 2.0)
 }
 
-val circleTest = Command("Circle Test Auto", Drive){
+val circleTest = Command("Circle Test Auto", Drive) {
     Drive.driveAlongPath(Path2D().apply {
         travelDirection = 1.0
         val tankDriveFudgeFactor = 1.097  // bigger factor will turn more, smaller less
-        robotWidth = 35.0 /12.0 * tankDriveFudgeFactor  // width in inches turned into feet
+        robotWidth = 35.0 / 12.0 * tankDriveFudgeFactor  // width in inches turned into feet
         val tangent = 6.0
         isMirrored = false
 
@@ -44,43 +43,37 @@ val circleTest = Command("Circle Test Auto", Drive){
         addEasePoint(16.0, 1.0)
     })
 }
-val centerToSwitch = Command("Center To Switch", Drive) {
-    val color = DriverStation.getInstance().alliance
-    //still doesn't know which side is which. it only knows the alliance color which isn't quite right
-    if (color == DriverStation.Alliance.Blue) {
-        Drive.driveAlongPath(Path2D().apply {
-            travelDirection = -1.0
-            val tankDriveFudgeFactor = 1.097
-            robotWidth = 35.0 / 12.0 * tankDriveFudgeFactor
-
-            periodic {
-                addPointAndTangent(0.0, 0.0, 0.0, -4.0)
-                addPointAndTangent(-8.0, -5.0, -2.0, -2.0)
-                addPointAndTangent(-8.0, -16.0, -5.0, -2.0)
-                travelDirection = 1.0
-                addPointAndTangent(-5.0, -14.0, -5.0, 4.0)
-                travelDirection = -1.0
-                addPointAndTangent(-5.0, -26.0, -5.0, -28.0)
-            }
-
-        })
-    } else if (color == DriverStation.Alliance.Red) {
-        Drive.driveAlongPath(Path2D().apply {
-            travelDirection = -1.0
-            val tankDriveFudgeFactor = 1.097
-            robotWidth = 35.0 / 12.0 * tankDriveFudgeFactor
+val centerToSwitch = Command("Middle Killer Auto", Drive) {
+    val gameData = DriverStation.getInstance().gameSpecificMessage
+    Drive.driveAlongPath(Path2D().apply {
+        travelDirection = -1.0
+        val tankDriveFudgeFactor = 1.097
+        robotWidth = 35.0 / 12.0 * tankDriveFudgeFactor
+        isMirrored = false
+        if (gameData[0] == 'L') {
+            isMirrored = false
+        }
+        if (gameData[0] == 'R') {
             isMirrored = true
+        }
+            addPointAndTangent(0.0, 0.0, 0.0, -4.0)
+            addPointAndTangent(-8.0, -5.0, -2.0, -2.0)
+            addPointAndTangent(-8.0, -16.0, -5.0, -2.0)
+            travelDirection = 1.0
+            addPointAndTangent(-5.0, -14.0, -5.0, 4.0)
+            addEasePoint(0.0, 0.0)
+            addEasePoint(3.0, 1.0)
 
-            periodic {
-                addPointAndTangent(0.0, 0.0, 0.0, -4.0)
-                addPointAndTangent(-8.0, -5.0, -2.0, -2.0)
-                addPointAndTangent(-8.0, -16.0, -5.0, -2.0)
-                travelDirection = 1.0
-                addPointAndTangent(-5.0, -14.0, -5.0, 4.0)
-                travelDirection = -1.0
-                addPointAndTangent(-5.0, -26.0, -5.0, -28.0)
-            }
+        if (gameData[1] == 'L') {
+            isMirrored = false
+        } // this is to go to the scale
+        if (gameData[1] == 'R') {
+            isMirrored = true
+        }
 
-        })
-    }
+            travelDirection = -1.0
+            addPointAndTangent(-8.0, -26.0, -5.0, -28.0)
+            addEasePoint(1.0, 1.0)
+
+    })
 }
