@@ -6,16 +6,19 @@ import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import edu.wpi.first.wpilibj.Solenoid
 import edu.wpi.first.wpilibj.Timer
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.control.plus
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.Path2D
+import java.lang.Math.copySign
 
 object Drive {
     private val shifter = Solenoid(0)
+
+    private const val LEFT_POWER_OFFSET = 0.0
+    private const val RIGHT_POWER_OFFSET = 0.0
 
     private var position = 0.0
 
@@ -52,16 +55,17 @@ object Drive {
     }
 
     init {
+        leftMotors.sensorCollection.setQuadraturePosition(0, 0)
+        rightMotors.sensorCollection.setQuadraturePosition(0, 0)
+
         CommandSystem.registerDefaultCommand(this, Command("Drive Default", this) {
-            leftMotors.sensorCollection.setQuadraturePosition(0, 0)
-            rightMotors.sensorCollection.setQuadraturePosition(0, 0)
             periodic {
                 drive(Driver.throttle, Driver.softTurn, Driver.hardTurn)
             }
         })
     }
 
-    fun drive(throttle: Double, softTurn: Double, hardTurn: Double) {
+    fun drive(throttle: Double, softTurn: Double, hardTurn: Double, experimentalOffset: Boolean = false) {
         var leftPower = throttle + (softTurn * Math.abs(throttle)) + hardTurn
         var rightPower = throttle - (softTurn * Math.abs(throttle)) - hardTurn
 
@@ -71,11 +75,20 @@ object Drive {
             rightPower /= maxPower
         }
 
+        if (experimentalOffset) {
+            leftPower = (leftPower + copySign(LEFT_POWER_OFFSET, leftPower)) / (1 - LEFT_POWER_OFFSET)
+            rightPower = (rightPower + copySign(RIGHT_POWER_OFFSET, rightPower)) / (1 - RIGHT_POWER_OFFSET)
+        }
+
         shifter.set(true)
 
         leftMotors.set(ControlMode.PercentOutput, leftPower)
         rightMotors.set(ControlMode.PercentOutput, rightPower)
+    }
 
+    fun driveRaw(leftPower: Double, rightPower: Double) {
+        leftMotors.set(ControlMode.PercentOutput, leftPower)
+        rightMotors.set(ControlMode.PercentOutput, rightPower)
     }
 
     suspend fun driveDistance(distance: Double, time: Double) {

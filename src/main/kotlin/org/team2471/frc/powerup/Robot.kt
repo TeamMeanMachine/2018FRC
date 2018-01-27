@@ -1,7 +1,7 @@
 package org.team2471.frc.powerup
 
 import edu.wpi.first.wpilibj.IterativeRobot
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import org.team2471.frc.lib.control.experimental.EventMapper
 
 class Robot : IterativeRobot() {
     override fun robotInit() {
@@ -9,6 +9,8 @@ class Robot : IterativeRobot() {
         Arm
         Intake
         AutoChooser
+
+        Driver
     }
 
     override fun autonomousInit() {
@@ -20,8 +22,7 @@ class Robot : IterativeRobot() {
     }
 
     override fun teleopPeriodic() {
-//        println("Left: " + Drive.leftMotors.getSelectedSensorPosition(0) + ", Right: " + Drive.rightMotors.getSelectedSensorPosition(0))
-
+        EventMapper.tick()
     }
 
     override fun autonomousPeriodic() {
