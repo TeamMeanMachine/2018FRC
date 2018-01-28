@@ -48,6 +48,7 @@ object CoDriver {
 
 
     init {
+        println("Initialized")
         Intake.toggleClampCommand.runWhen { controller.aButton }
         Command("Arm Preset 0", Arm) { Arm.moveToAngle(0.0) }.runWhen { controller.pov == 0 }
         Command("Arm Preset 45", Arm) { Arm.moveToAngle(45.0) }.runWhen { controller.pov == 90 }
