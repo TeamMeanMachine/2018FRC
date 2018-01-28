@@ -2,8 +2,11 @@ package org.team2471.frc.powerup
 
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.XboxController
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import org.team2471.frc.lib.control.experimental.Command
+import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.control.experimental.runWhen
+import org.team2471.frc.lib.control.experimental.toggleWhen
 import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareWithSign
 
@@ -21,6 +24,23 @@ object Driver {
 
     val hardTurn: Double
         get() = -controller.getRawAxis(2) + controller.getRawAxis(3)
+
+    init {
+        Command("Experimental Drive", Drive) {
+            periodic {
+                Drive.drive(throttle, softTurn, hardTurn, true)
+            }
+        }.toggleWhen { controller.xButton }
+
+        Command("Find Offsets", Drive) {
+            SmartDashboard.putNumber("Drive Left Offset", 0.0)
+            SmartDashboard.putNumber("Drive Right Offset", 0.0)
+            periodic {
+                Drive.driveRaw(SmartDashboard.getNumber("Drive Left Offset", 0.0),
+                        SmartDashboard.getNumber("Drive Right Offset", 0.0))
+            }
+        }.toggleWhen { controller.yButton }
+    }
 }
 
 object CoDriver {
