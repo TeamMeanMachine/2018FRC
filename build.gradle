@@ -51,6 +51,8 @@ dependencies {
     compile wpilib()
     compile ctre()
     compile project("meanlib")
+    compile 'org.msgpack:msgpack-core:0.8.14'
+
 }
 
 jar {
