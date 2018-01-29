@@ -35,8 +35,11 @@ val fromScaleToSwitch = Path2D().apply {
         isMirrored = gameData[0] == 'L'
         travelDirection = 1.0
         addPointAndTangent(0.0, 0.0, 0.0, 4.0)
-        addPointAndTangent(13.5, 8.0, 0.0, 4.0)
+        addPointAndTangent(0.25, 3.0, 2.0, 0.0)
+        addPointAndTangent(14.75, 3.0, 0.0, 3.0)
+        addPointAndTangent(14.75, 5.5, 0.0, 5.0)
         addEasePoint(0.0, 0.0)
-        addEasePoint(3.0, 1.0)
+        addEasePoint(5.0, 1.0)
     }
 }
+

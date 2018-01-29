@@ -51,6 +51,7 @@ dependencies {
     compile wpilib()
     compile ctre()
     compile project("meanlib")
+    compile 'com.google.code.gson:gson:2.8.2'
 }
 
 jar {
