@@ -52,6 +52,8 @@ dependencies {
     compile ctre()
     compile project("meanlib")
     compile 'com.google.code.gson:gson:2.8.2'
+    compile 'org.msgpack:msgpack-core:0.8.14'
+
 }
 
 jar {
