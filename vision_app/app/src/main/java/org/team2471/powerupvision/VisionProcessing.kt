@@ -9,9 +9,11 @@ import org.opencv.imgproc.Imgproc
 object VisionProcessing {
     private const val TAG =  "Vision Processing"
 
-    private val blur = Mat()
     private val hsv = Mat()
     private val thresh = Mat()
+    private val eroded = Mat()
+    private val dilated = Mat()
+
     private val hierarchy = Mat()
 
 
@@ -20,36 +22,51 @@ object VisionProcessing {
 
     private val hsvMins = Scalar(0.0,0.0,0.0)
     private val hsvMaxes = Scalar(0.0,0.0,0.0)
-    private val gaussianSize = Size(9.0,9.0)
+    private val erosionKernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT,
+            Size(8.0,8.0), Point(4.0,4.0))
+    private val dilateKernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT,
+            Size(12.0,12.0), Point(6.0,6.0))
 
     private val contourColor = Scalar(255.0,0.0,0.0)
 
-    fun processImage(inputImage: Mat, displayMode: DisplayMode): Mat {
+    fun processImage(inputImage: Mat): Mat {
+        val displayMode = ImagePreferences.displayMode
         //Imgproc.GaussianBlur(inputImage, blur, gaussianSize, 0.0)
-        Imgproc.cvtColor(inputImage, hsv, Imgproc.COLOR_BGR2HSV)
+        Imgproc.cvtColor(inputImage, hsv, Imgproc.COLOR_RGB2HSV)
         updateHSVThreshhold()
         Core.inRange(hsv, hsvMins, hsvMaxes, thresh)
 
+        Imgproc.erode(thresh, eroded, erosionKernel)
+        Imgproc.dilate(eroded,dilated, dilateKernel)
 
         allContours.clear()
-        Imgproc.findContours(thresh, allContours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE)
+        filteredContours.clear()
+        Imgproc.findContours(if( displayMode == DisplayMode.THRESH_DEBUG) dilated.clone()
+            else dilated, allContours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_TC89_KCOS)
 
         allContours.forEachIndexed { index, contour ->
             val boundingBox = Imgproc.boundingRect(contour)
             val area = boundingBox.area()
-            if (area < 50) return@forEachIndexed
-
+            if (area < 9000 || area > 900000) return@forEachIndexed
             val aspectRatio = boundingBox.width.toDouble() / boundingBox.height
+            if (aspectRatio < .7 || aspectRatio > 1.5) return@forEachIndexed
             Log.d(TAG, "Index: $index, Aspect Ratio: $aspectRatio, Area: $area")
+            filteredContours.add(allContours[index])
+
         }
 
-        return when(displayMode) {
-            VisionProcessing.DisplayMode.RAW -> inputImage.apply {
-                //cnt = contours[0]
-                Imgproc.drawContours(this, allContours, -1, contourColor, 2)
+        //filteredContour
 
+        return when(displayMode) {
+            VisionProcessing.DisplayMode.RAW -> inputImage
+            VisionProcessing.DisplayMode.THRESH -> thresh.apply {
+                Imgproc.cvtColor(this, this, Imgproc.COLOR_GRAY2BGR)
             }
-            VisionProcessing.DisplayMode.THRESH -> thresh
+            VisionProcessing.DisplayMode.THRESH_DEBUG -> dilated.apply {
+                Imgproc.cvtColor(this, this, Imgproc.COLOR_GRAY2BGR)
+            }
+        }.apply {
+            Imgproc.drawContours(this, filteredContours, -1, contourColor, 2)
         }
     }
 
@@ -65,5 +82,6 @@ object VisionProcessing {
     enum class DisplayMode {
         RAW,
         THRESH,
+        THRESH_DEBUG
     }
 }

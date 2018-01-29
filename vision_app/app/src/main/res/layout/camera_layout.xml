@@ -5,7 +5,7 @@
     android:layout_height="match_parent">
 
 
-    <org.opencv.android.JavaCameraView
+    <org.team2471.powerupvision.CameraView
         android:id="@+id/CameraView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"

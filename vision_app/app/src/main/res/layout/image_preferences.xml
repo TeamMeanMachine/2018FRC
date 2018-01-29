@@ -87,4 +87,48 @@
             app:drawThumbsApart="true"/>
     </LinearLayout>
 
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="5dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Exposure"
+            android:id="@+id/exposureLabel"
+            android:paddingRight="10dp"
+            android:paddingTop="23dp" />
+
+        <io.apptik.widget.MultiSlider
+            android:id="@+id/exposureSlider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            app:thumbNumber="1" />
+    </LinearLayout>
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="5dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Exposure"
+            android:id="@+id/viewModeLabel"
+            android:paddingRight="10dp"
+            android:paddingTop="23dp" />
+
+        <Spinner
+            android:id="@+id/viewModeSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical" />
+    </LinearLayout>
+
 </LinearLayout>

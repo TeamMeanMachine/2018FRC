@@ -3,13 +3,17 @@ package org.team2471.powerupvision
 import android.app.Activity
 import android.app.Dialog
 import android.content.res.Configuration
+import android.media.Image
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
 import android.view.SurfaceView
 import android.view.View
 import android.view.WindowManager
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.LinearLayout
+import android.widget.Spinner
 import io.apptik.widget.MultiSlider
 import kotlinx.android.synthetic.main.image_preferences.*
 import org.opencv.android.BaseLoaderCallback
@@ -17,6 +21,7 @@ import org.opencv.android.CameraBridgeViewBase
 import org.opencv.android.LoaderCallbackInterface
 import org.opencv.android.OpenCVLoader
 import org.opencv.core.Mat
+import org.opencv.imgproc.Imgproc
 
 class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
 
@@ -30,11 +35,11 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
         setContentView(R.layout.camera_layout)
 
         openCvCameraView = findViewById(R.id.CameraView)
-
         openCvCameraView?.visibility = SurfaceView.VISIBLE
         openCvCameraView?.setCvCameraViewListener(this)
         openCvCameraView?.setMaxFrameSize(640, 480)
 
+        RoboRIO(this)
     }
 
 
@@ -61,7 +66,7 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
     }
 
     override fun onCameraFrame(inputFrame: CameraBridgeViewBase.CvCameraViewFrame): Mat {
-        return VisionProcessing.processImage(inputFrame.rgba(), VisionProcessing.DisplayMode.RAW)
+        return VisionProcessing.processImage(inputFrame.rgba())
     }
 
     override fun onConfigurationChanged(newConfig: Configuration?) {
@@ -122,6 +127,34 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
             } else if (thumb == 1) {
                 ImagePreferences.valMax = value
                 Log.i("Image Preferences", "Val Max: $value")
+            }
+        }
+
+        val exposureSlider = view.findViewById<MultiSlider>(R.id.exposureSlider)
+        exposureSlider.min = -12
+        exposureSlider.max = 12
+        valSlider.getThumb(0).value = ImagePreferences.exposure
+        exposureSlider.setOnThumbValueChangeListener { _, _, _, value ->
+            ImagePreferences.exposure = value
+            Log.i("Image Preferences", "Exposure: $value")
+        }
+
+        val viewModeSpinner = view.findViewById<Spinner>(R.id.viewModeSpinner)
+        val adapter = ArrayAdapter.createFromResource(this, R.array.visionModes,
+                android.R.layout.simple_spinner_item)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        viewModeSpinner.adapter = adapter
+        viewModeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
+                ImagePreferences.displayMode = when(parent.getItemAtPosition(position) as String) {
+                    "Thresholded" -> VisionProcessing.DisplayMode.THRESH
+                    "Thresholded (Processed)" -> VisionProcessing.DisplayMode.THRESH_DEBUG
+                    else -> VisionProcessing.DisplayMode.RAW
+                }
+            }
+
+            override fun onNothingSelected(p0: AdapterView<*>?) {
+                ImagePreferences.displayMode =  VisionProcessing.DisplayMode.RAW
             }
         }
     }
