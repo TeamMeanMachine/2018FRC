@@ -24,6 +24,7 @@ deploy {
     targets {
         target("roborio", RoboRIO) {
             team = TEAM
+            addresses << '10.24.71.100' << '10.24.71.2'
         }
     }
     artifacts {
@@ -50,6 +51,9 @@ dependencies {
     compile wpilib()
     compile ctre()
     compile project("meanlib")
+    compile 'com.google.code.gson:gson:2.8.2'
+    compile 'org.msgpack:msgpack-core:0.8.14'
+
 }
 
 jar {
