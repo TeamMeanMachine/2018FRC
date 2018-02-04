@@ -1,6 +1,7 @@
-package org.team2471.frc.powerup.Subsystems
+package org.team2471.frc.powerup.subsystems
 
 import com.ctre.phoenix.motorcontrol.ControlMode
+import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
@@ -9,9 +10,19 @@ import org.team2471.frc.lib.control.plus
 import org.team2471.frc.powerup.Driver
 import org.team2471.frc.powerup.RobotMap
 
-object Drive {
-    private val leftMotors = TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_1) + TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_2)
-    private val rightMotors = TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_1) + TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_2)
+object Drivetrain {
+    private val leftMotors = TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_1).apply {
+        setNeutralMode(NeutralMode.Brake)
+    } + TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_2).apply {
+        setNeutralMode(NeutralMode.Brake)
+    }
+    private val rightMotors = TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_1).apply {
+        setNeutralMode(NeutralMode.Brake)
+        inverted = true
+    } + TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_2).apply {
+        setNeutralMode(NeutralMode.Brake)
+        inverted = true
+    }
 
     fun drive(throttle: Double, softTurn: Double, hardTurn: Double) {
         var leftPower = throttle + (softTurn * Math.abs(throttle)) + hardTurn
@@ -27,7 +38,7 @@ object Drive {
     }
 
     init {
-        CommandSystem.registerDefaultCommand(this, Command("Drive Default", this) {
+        CommandSystem.registerDefaultCommand(this, Command("Drivetrain Default", this) {
             periodic {
                 drive(Driver.throttle, Driver.softTurn, Driver.hardTurn)
             }
