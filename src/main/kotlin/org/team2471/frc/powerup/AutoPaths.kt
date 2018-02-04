@@ -1,6 +1,7 @@
 package org.team2471.frc.powerup
 
 import edu.wpi.first.wpilibj.DriverStation
+import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.lib.motion_profiling.Path2D
 
 fun Path2D.setPathDefaults() {

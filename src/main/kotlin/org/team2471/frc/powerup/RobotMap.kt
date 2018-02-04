@@ -1,6 +1,11 @@
 package org.team2471.frc.powerup
 
+import edu.wpi.first.wpilibj.PowerDistributionPanel
+
 object RobotMap {
+
+    val pdp = PowerDistributionPanel()
+
     object Talons {
         val DRIVE_LEFT_MOTOR_1 = 0
         val DRIVE_LEFT_MOTOR_2 = 1
@@ -18,6 +23,9 @@ object RobotMap {
 
         val ARM_WRIST_MOTOR_1 = 7
         val ARM_WRIST_MOTOR_2 = 8
+
+        val CARRIAGE_MOTOR_1 = -1
+        val CARRIAGE_MOTOR_2 = -1
     }
 
     object Solenoids {

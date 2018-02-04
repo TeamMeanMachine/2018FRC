@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.experimental.delay
 import org.team2471.frc.lib.control.experimental.Command
+import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.lib.motion_profiling.Path2D
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
@@ -43,7 +44,18 @@ val circleTest = Command("Circle Test Auto", Drive) {
     })
 }
 
-val middleKillerAuto = Command("Middle Killer Auto", Drive) {
-    Drive.driveAlongPath(centerToScale)
-    Drive.driveAlongPath(fromScaleToSwitch)
+val middleKillerAuto = Command("Middle Killer Auto", Drive, Arm, Intake) {
+    try {
+        Drive.driveAlongPath(centerToScale)
+        dropOffToScale
+        Arm.playAnimation(Arm.Animation.SCALE_TO_INTAKE)
+        Drive.driveAlongPath(fromScaleToSwitch)
+        Arm.intake = 1.0
+        Intake.clamp = true
+        Arm.playAnimation(Arm.Animation.INTAKE_TO_SWITCH)
+        Arm.intake = -1.0
+    }finally {
+        Arm.intake = 0.0
+        Arm.playAnimation(Arm.Animation.SWITCH_TO_IDLE)
+    }
 }

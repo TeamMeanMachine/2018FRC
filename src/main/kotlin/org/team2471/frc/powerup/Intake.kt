@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj.Solenoid
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.periodic
+import org.team2471.frc.lib.control.plus
 import org.team2471.frc.powerup.RobotMap.Solenoids.ARM_CLAMP
 import org.team2471.frc.powerup.RobotMap.Talons.INTAKE_MOTOR_LEFT
 import org.team2471.frc.powerup.RobotMap.Talons.INTAKE_MOTOR_RIGHT
@@ -33,7 +34,7 @@ object Intake {
         get() = rightMotor.motorOutputVoltage/12
         set(value) = rightMotor.set(ControlMode.PercentOutput, value)
 
-    private var clamp: Boolean = false
+    var clamp: Boolean = false
         set(value) {
             field = value
             armClamp.set(clamp)
