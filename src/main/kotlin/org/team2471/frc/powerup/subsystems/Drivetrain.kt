@@ -67,17 +67,16 @@ object Drivetrain {
     }
 
     suspend fun driveAlongPath(path2D: Path2D) {
-        var leftDistance = 0.0
-        var rightDistance = 0.0
+        path2D.resetDistances()
         try {
             leftMotors.sensorCollection.setQuadraturePosition(0, 0)
             rightMotors.sensorCollection.setQuadraturePosition(0, 0)
 
             val timer = Timer().apply { start() }
-            periodic(condition = { timer.get() <= path2D.easeCurve.length }) {
+            periodic(condition = { timer.get() <= path2D.duration }) {
                 val t = timer.get()
-                leftDistance += path2D.getLeftPositionDelta(t)
-                rightDistance += path2D.getRightPositionDelta(t)
+                val leftDistance = path2D.getLeftDistance(t)
+                val rightDistance = path2D.getRightDistance(t)
                 leftMotors.set(ControlMode.Position, feetToTicks(leftDistance))
                 rightMotors.set(ControlMode.Position, feetToTicks(rightDistance))
             }
