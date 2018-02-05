@@ -2,18 +2,16 @@ package org.team2471.frc.powerup
 
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import kotlinx.coroutines.experimental.delay
 import org.team2471.frc.lib.control.experimental.Command
-import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.lib.motion_profiling.Path2D
-import java.util.concurrent.TimeUnit
-import kotlin.system.measureTimeMillis
 
 object AutoChooser {
     private val dashboard = SendableChooser<Command>().apply {
         addDefault(driveStraightAuto.name, driveStraightAuto)
         addObject(circleTest.name, circleTest)
         addObject(middleKillerAuto.name, middleKillerAuto)
+        addObject(rightKillerAuto.name, rightKillerAuto)
+        addObject(leftKillerAuto.name, leftKillerAuto)
 
         SmartDashboard.putData("Auto Chooser", this)
     }
@@ -54,8 +52,33 @@ val middleKillerAuto = Command("Middle Killer Auto", Drive, Arm, Intake) {
         Intake.clamp = true
         Arm.playAnimation(Arm.Animation.INTAKE_TO_SWITCH)
         Arm.intake = -1.0
-    }finally {
+    } finally {
         Arm.intake = 0.0
-        Arm.playAnimation(Arm.Animation.SWITCH_TO_IDLE)
+    }
+}
+
+val rightKillerAuto = Command("Right Killer Auto", Drive, Arm, Intake) {
+    try {
+        Drive.driveAlongPath(rightToScale)
+        dropOffToScaleAuto
+        Drive.driveAlongPath(fromScaleToSwitch)
+        Intake.clamp = true
+        Arm.playAnimation(Arm.Animation.INTAKE_TO_SWITCH)
+        Arm.intake = -1.0
+    } finally {
+        Arm.intake = 0.0
+    }
+}
+
+val leftKillerAuto = Command("Left Killer Auto", Drive, Arm, Intake) {
+    try {
+        Drive.driveAlongPath(leftToScale)
+        dropOffToScaleAuto
+        Drive.driveAlongPath(fromScaleToSwitch)
+        Intake.clamp = true
+        Arm.playAnimation(Arm.Animation.INTAKE_TO_SWITCH)
+        Arm.intake = -1.0
+    } finally {
+        Arm.intake = 0.0
     }
 }

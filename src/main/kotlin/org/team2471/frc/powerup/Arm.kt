@@ -154,8 +154,17 @@ val dropOffToScale = Command("Drop off Cube at Scale", Arm, Intake){
     try {
         Arm.playAnimation(Arm.Animation.IDLE_TO_SCALE)
         Intake.clamp = false
-        Arm.intake = 0.0
     }finally {
         Arm.playAnimation(Arm.Animation.SCALE_TO_IDLE)
+    }
+}
+
+val dropOffToScaleAuto = Command("Drop off Cube at Scale during Auto", Arm, Intake){
+    try {
+        Arm.playAnimation(Arm.Animation.IDLE_TO_SCALE)
+        Intake.clamp = false
+    }finally {
+        Arm.playAnimation(Arm.Animation.SCALE_TO_INTAKE)
+        Arm.intake = 1.0
     }
 }
