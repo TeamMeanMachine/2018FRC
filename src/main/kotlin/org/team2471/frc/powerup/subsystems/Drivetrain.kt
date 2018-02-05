@@ -9,12 +9,15 @@ import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.control.plus
+import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.powerup.Driver
+import org.team2471.frc.powerup.Robot
 import org.team2471.frc.powerup.RobotMap
 
 object Drivetrain {
+
     private val leftMotors = TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_1).apply {
         setNeutralMode(NeutralMode.Brake)
     } + TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_2).apply {
@@ -40,6 +43,7 @@ object Drivetrain {
         leftMotors.set(ControlMode.PercentOutput, leftPower)
         rightMotors.set(ControlMode.PercentOutput, rightPower)
     }
+
     suspend fun driveDistance(distance: Double, time: Double) {
         val curve = MotionCurve()
         curve.storeValue(0.0, 0.0)
@@ -61,6 +65,7 @@ object Drivetrain {
             rightMotors.neutralOutput()
         }
     }
+
     suspend fun driveAlongPath(path2D: Path2D) {
         var leftDistance = 0.0
         var rightDistance = 0.0
@@ -82,8 +87,16 @@ object Drivetrain {
         }
     }
 
+    suspend fun driveAlongPathByNames(autoName: String, pathName: String) {
+/*
+        val path = Robot.autonomi.getPath(autoName, pathName)
+        if (path!=null)
+            driveAlongPath(path)
+*/
+    }
+
     private const val TICKS_PER_REV = 783
-    private const val WHEEL_DIAMETER_INCHES = 6.0
+    private const val WHEEL_DIAMETER_INCHES = 5.0
     fun ticksToFeet(ticks: Int) = ticks.toDouble() / TICKS_PER_REV * WHEEL_DIAMETER_INCHES * Math.PI / 12.0
     fun feetToTicks(feet: Double) = feet * 12.0 / Math.PI / WHEEL_DIAMETER_INCHES * TICKS_PER_REV
 

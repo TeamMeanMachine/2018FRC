@@ -204,6 +204,7 @@ object Carriage {
                 val IDLE_TO_SWITCH = Animation(0.0 to Pose.IDLE, 1.0 to Pose.SWITCH_POS)
                 val INTAKE_TO_IDLE = Animation(0.0 to Pose.INTAKE_POS, 1.0 to Pose.IDLE)
                 val SWITCH_TO_IDLE = Animation(0.0 to Pose.SWITCH_POS, 1.0 to Pose.IDLE)
+                val INTAKE_TO_SCALE = Animation( 0.0 to Pose.INTAKE_POS, 1.0 to Pose.SCALE_POS)
             }
 
             val armCurve: MotionCurve = MotionCurve().apply {

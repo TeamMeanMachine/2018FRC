@@ -9,15 +9,15 @@ object Forks {
     private val rightSolenoid = Solenoid(RobotMap.Solenoids.FORK_RIGHT)
     private val climbingGuide = Solenoid(RobotMap.Solenoids.CLIMBING_GUIDE)
 
-    var leftSideDepolyed: Boolean
+    var leftSideDeployed: Boolean
         get() = leftSolenoid.get()
         set(value) = leftSolenoid.set(value && Game.isEndGame)
 
-    var rightSideDepolyed: Boolean
+    var rightSideDeployed: Boolean
         get() = rightSolenoid.get()
         set(value) = rightSolenoid.set(value && Game.isEndGame)
 
-    var climbingGuideDepolyed: Boolean
+    var climbingGuideDeployed: Boolean
         get() = climbingGuide.get()
         set(value) = climbingGuide.set(value)
 }
