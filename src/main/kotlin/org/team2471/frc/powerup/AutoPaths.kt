@@ -44,6 +44,36 @@ val fromScaleToSwitch = Path2D().apply {
     }
 }
 
+val toSecondCube = Path2D().apply {
+    setPathDefaults()
+    travelDirection = 1.0
+    isMirrored = gameData[1] == 'L'
+    addPointAndTangent(0.0, 0.0, 0.0, 4.0)
+    addPointAndTangent(4.0, 5.0, 0.0, 4.0)
+    addEasePoint(0.0, 0.0)
+    addEasePoint(1.9, 1.0)
+}
+
+val backFromFirstCube = Path2D().apply {
+    setPathDefaults()
+    travelDirection = -1.0
+        isMirrored = gameData[0] == 'R'
+        addPointAndTangent(0.0, 0.0, 0.0, -4.0)
+        addPointAndTangent(-2.0, -5.0, 0.0, -4.0)
+        addEasePoint(0.0, 0.0)
+        addEasePoint(1.9, 1.0)
+}
+
+val backFromSecondCube = Path2D().apply {
+    setPathDefaults()
+    travelDirection = -1.0
+        isMirrored = gameData[0] == 'R'
+        addPointAndTangent(0.0, 0.0, 0.0, -4.0)
+        addPointAndTangent(-4.0, -5.0, 0.0, -4.0)
+        addEasePoint(0.0, 0.0)
+        addEasePoint(1.9, 1.0)
+}
+
 val rightToScale = Path2D().apply {
     setPathDefaults()
     travelDirection = -1.0

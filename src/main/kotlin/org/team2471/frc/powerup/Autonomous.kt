@@ -6,16 +6,18 @@ import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.powerup.subsystems.Carriage
 import org.team2471.frc.powerup.subsystems.Drivetrain
-import org.team2471.frc.powerup.subsystems.dropOffToScale
 import org.team2471.frc.powerup.subsystems.dropOffToScaleAuto
 
 object AutoChooser {
     private val dashboard = SendableChooser<Command>().apply {
         addDefault(driveStraightAuto.name, driveStraightAuto)
         addObject(circleTest.name, circleTest)
-        addObject(middleKillerAuto.name, middleKillerAuto)
-        addObject(rightKillerAuto.name, rightKillerAuto)
-        addObject(leftKillerAuto.name, leftKillerAuto)
+        addObject(middleScalePlusSwitch.name, middleScalePlusSwitch)
+        addObject(rightScalePlusSwitch.name, rightScalePlusSwitch)
+        addObject(leftScalePlusSwitch.name, leftScalePlusSwitch)
+        addObject(middleSuperScale.name, middleSuperScale)
+        addObject(rightSuperScale.name, rightSuperScale)
+        addObject(leftSuperScale.name, leftSuperScale)
 
         SmartDashboard.putData("Auto Chooser", this)
     }
@@ -46,10 +48,10 @@ val circleTest = Command("Circle Test Auto", Drivetrain) {
     })
 }
 
-val middleKillerAuto = Command("Middle Killer Auto", Drivetrain, Carriage) {
+val middleScalePlusSwitch = Command("Middle Scale plus Switch Auto", Drivetrain, Carriage) {
     try {
         Drivetrain.driveAlongPath(centerToScale)
-        dropOffToScale
+        dropOffToScaleAuto
         Carriage.Arm.playAnimation(Carriage.Arm.Animation.SCALE_TO_INTAKE)
         Drivetrain.driveAlongPath(fromScaleToSwitch)
         Carriage.Arm.intake = 1.0
@@ -61,7 +63,7 @@ val middleKillerAuto = Command("Middle Killer Auto", Drivetrain, Carriage) {
     }
 }
 
-val rightKillerAuto = Command("Right Killer Auto", Drivetrain, Carriage) {
+val rightScalePlusSwitch = Command("Right Scale plus Switch Auto", Drivetrain, Carriage) {
     try {
         Drivetrain.driveAlongPath(rightToScale)
         dropOffToScaleAuto
@@ -74,7 +76,7 @@ val rightKillerAuto = Command("Right Killer Auto", Drivetrain, Carriage) {
     }
 }
 
-val leftKillerAuto = Command("Left Killer Auto", Drivetrain, Carriage) {
+val leftScalePlusSwitch = Command("Left Scale plus Switch Auto", Drivetrain, Carriage) {
     try {
         Drivetrain.driveAlongPath(leftToScale)
         dropOffToScaleAuto
@@ -82,6 +84,63 @@ val leftKillerAuto = Command("Left Killer Auto", Drivetrain, Carriage) {
         Carriage.Arm.clamp = true
         Carriage.Arm.playAnimation(Carriage.Arm.Animation.INTAKE_TO_SWITCH)
         Carriage.Arm.intake = -1.0
+    } finally {
+        Carriage.Arm.intake = 0.0
+    }
+}
+//scale - switch - scale - scale - scale...
+val middleSuperScale = Command("Middle Super Scale Auto", Drivetrain, Carriage){
+    try {
+        Drivetrain.driveAlongPath(centerToScale)
+        dropOffToScaleAuto
+        Drivetrain.driveAlongPath(fromScaleToSwitch)
+        Carriage.Arm.clamp = true
+        Carriage.Arm.playAnimation(Carriage.Arm.Animation.INTAKE_TO_SCALE)
+        Drivetrain.driveAlongPath(backFromFirstCube)
+        dropOffToScaleAuto
+        Drivetrain.driveAlongPath(toSecondCube)
+        Carriage.Arm.clamp = true
+        Carriage.Arm.playAnimation(Carriage.Arm.Animation.INTAKE_TO_SCALE)
+        Drivetrain.driveAlongPath(backFromSecondCube)
+        dropOffToScaleAuto
+    } finally {
+        Carriage.Arm.intake = 0.0
+    }
+}
+
+val rightSuperScale = Command("Right Super Scale Auto", Drivetrain, Carriage){
+    try {
+        Drivetrain.driveAlongPath(rightToScale)
+        dropOffToScaleAuto
+        Drivetrain.driveAlongPath(fromScaleToSwitch)
+        Carriage.Arm.clamp = true
+        Carriage.Arm.playAnimation(Carriage.Arm.Animation.INTAKE_TO_SCALE)
+        Drivetrain.driveAlongPath(backFromFirstCube)
+        dropOffToScaleAuto
+        Drivetrain.driveAlongPath(toSecondCube)
+        Carriage.Arm.clamp = true
+        Carriage.Arm.playAnimation(Carriage.Arm.Animation.INTAKE_TO_SCALE)
+        Drivetrain.driveAlongPath(backFromSecondCube)
+        dropOffToScaleAuto
+    } finally {
+        Carriage.Arm.intake = 0.0
+    }
+}
+
+val leftSuperScale = Command("Left Super Scale Auto", Drivetrain, Carriage){
+    try {
+        Drivetrain.driveAlongPath(leftToScale)
+        dropOffToScaleAuto
+        Drivetrain.driveAlongPath(fromScaleToSwitch)
+        Carriage.Arm.clamp = true
+        Carriage.Arm.playAnimation(Carriage.Arm.Animation.INTAKE_TO_SCALE)
+        Drivetrain.driveAlongPath(backFromFirstCube)
+        dropOffToScaleAuto
+        Drivetrain.driveAlongPath(toSecondCube)
+        Carriage.Arm.clamp = true
+        Carriage.Arm.playAnimation(Carriage.Arm.Animation.INTAKE_TO_SCALE)
+        Drivetrain.driveAlongPath(backFromSecondCube)
+        dropOffToScaleAuto
     } finally {
         Carriage.Arm.intake = 0.0
     }
