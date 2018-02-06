@@ -5,8 +5,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.powerup.subsystems.Carriage
+import org.team2471.frc.powerup.subsystems.Carriage.dropOffToScaleAuto
 import org.team2471.frc.powerup.subsystems.Drivetrain
-import org.team2471.frc.powerup.subsystems.dropOffToScaleAuto
 
 object AutoChooser {
     private val dashboard = SendableChooser<Command>().apply {
