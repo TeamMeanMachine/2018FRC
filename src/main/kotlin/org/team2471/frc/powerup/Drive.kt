@@ -30,13 +30,9 @@ object Drive {
         setNeutralMode(NeutralMode.Brake)
     } + TalonSRX(RobotMap.Talons.DRIVE_LEFT_MOTOR_2).apply {
         setNeutralMode(NeutralMode.Brake)
-    } + TalonSRX(RobotMap.Talons.DRIVE_LEFT_MOTOR_3).apply {
-        setNeutralMode(NeutralMode.Brake)
-    } + TalonSRX(RobotMap.Talons.DRIVE_LEFT_MOTOR_4).apply {
-        setNeutralMode(NeutralMode.Brake)
     }
 
-    val rightMotors = TalonSRX(RobotMap.Talons.DRIVE_RIGHT_MOTOR_3).apply {
+    val rightMotors = TalonSRX(RobotMap.Talons.DRIVE_RIGHT_MOTOR_1).apply {
         configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10)
         setSensorPhase(true)
         config_kP(0, 2.0, 10)
@@ -44,12 +40,6 @@ object Drive {
         setNeutralMode(NeutralMode.Brake)
         inverted = true
     } + TalonSRX(RobotMap.Talons.DRIVE_RIGHT_MOTOR_2).apply {
-        setNeutralMode(NeutralMode.Brake)
-        inverted = true
-    } + TalonSRX(RobotMap.Talons.DRIVE_RIGHT_MOTOR_1).apply {
-        setNeutralMode(NeutralMode.Brake)
-        inverted = true
-    } + TalonSRX(RobotMap.Talons.DRIVE_RIGHT_MOTOR_4).apply {
         setNeutralMode(NeutralMode.Brake)
         inverted = true
     }
