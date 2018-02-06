@@ -15,6 +15,7 @@ import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.powerup.Driver
 import org.team2471.frc.powerup.Robot
 import org.team2471.frc.powerup.RobotMap
+import org.team2471.frc.powerup.autonomi
 
 object Drivetrain {
 
@@ -84,14 +85,6 @@ object Drivetrain {
             leftMotors.neutralOutput()
             rightMotors.neutralOutput()
         }
-    }
-
-    suspend fun driveAlongPathByNames(autoName: String, pathName: String) {
-/*
-        val path = Robot.autonomi.getPath(autoName, pathName)
-        if (path!=null)
-            driveAlongPath(path)
-*/
     }
 
     private const val TICKS_PER_REV = 783
