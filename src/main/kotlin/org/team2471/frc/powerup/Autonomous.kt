@@ -3,7 +3,10 @@ package org.team2471.frc.powerup
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import org.team2471.frc.lib.control.experimental.Command
+import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Path2D
+
+var autonomi: Autonomi? = null
 
 object AutoChooser {
     private val dashboard = SendableChooser<Command>().apply {
@@ -12,11 +15,15 @@ object AutoChooser {
         addObject(middleKillerAuto.name, middleKillerAuto)
         addObject(rightKillerAuto.name, rightKillerAuto)
         addObject(leftKillerAuto.name, leftKillerAuto)
+        addObject(pathTest.name, pathTest)
 
         SmartDashboard.putData("Auto Chooser", this)
     }
     val chosenAuto: Command
-        get() = dashboard.selected
+        get() {
+            autonomi = Autonomi.initFromNetworkTables()
+            return dashboard.selected
+        }
 }
 
 val driveStraightAuto = Command("Drive Straight Auto", Drive) {
@@ -80,5 +87,14 @@ val leftKillerAuto = Command("Left Killer Auto", Drive, Arm, Intake) {
         Arm.intake = -1.0
     } finally {
         Arm.intake = 0.0
+    }
+}
+
+val pathTest = Command("Path Test", Drive) {
+    try {
+        val path = autonomi?.getPath("Path Test", "Start to Switch") ?: return@Command
+        Drive.driveAlongPath(path)
+    } finally {
+
     }
 }
