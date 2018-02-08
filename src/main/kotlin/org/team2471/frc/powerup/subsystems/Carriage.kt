@@ -15,7 +15,6 @@ import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.powerup.CoDriver
 
 import org.team2471.frc.powerup.RobotMap
-import org.team2471.frc.powerup.RobotMap.Solenoids.ARM_CLAMP
 import kotlin.math.absoluteValue
 
 object Carriage {
@@ -68,7 +67,7 @@ object Carriage {
             enableCurrentLimit(true)
         }
 
-        private val armClamp = Solenoid(ARM_CLAMP)
+        private val armClamp = Solenoid(RobotMap.Solenoids.INTAKE_CLAW)
 
         private val intakeMotorLeft = TalonSRX(RobotMap.Talons.INTAKE_MOTOR_LEFT).apply {
             configContinuousCurrentLimit(10, 10)
