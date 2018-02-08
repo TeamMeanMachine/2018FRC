@@ -41,6 +41,9 @@ object CoDriver {
     val invertIntake: Boolean
         get() = controller.bButton
 
+    val brake: Boolean
+        get() = controller.startButton
+
     val wristPivot: Double
         get() = controller.getRawAxis(5)
                 .deadband(.2)
@@ -51,6 +54,7 @@ object CoDriver {
         Carriage.Arm.toggleClampCommand.runWhen { controller.aButton }
         Carriage.dropOffToScale.runWhen { controller.yButton }
         Carriage.intakeCubeCommand.runWhen { controller.xButton }
+        Carriage.climb.runWhen { controller.yButtonPressed }
         Command("Arm Preset 0", Carriage.Arm) { Carriage.Arm.moveToAngle(0.0) }.runWhen { controller.pov == 0 }
         Command("Arm Preset 45", Carriage.Arm) { Carriage.Arm.moveToAngle(45.0) }.runWhen { controller.pov == 90 }
         Command("Arm Preset 90", Carriage.Arm) { Carriage.Arm.moveToAngle(90.0) }.runWhen { controller.pov == 180 }

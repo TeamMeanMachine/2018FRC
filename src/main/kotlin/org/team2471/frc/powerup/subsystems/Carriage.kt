@@ -52,6 +52,20 @@ object Carriage {
             motors.set(ControlMode.Position, value / CARRIAGE_SRX_UNITS_TO_INCHES)
         }
 
+    var diskBrake = Solenoid(RobotMap.Solenoids.BRAKE)
+
+    var brake: Boolean = false
+        set(value) {
+            field = value
+            diskBrake.set(brake)
+        }
+
+    enum class ShiftSetting {
+        FORCE_HIGH,
+        FORCE_LOW
+    }
+
+
     object Arm {
         private const val ARM_SRX_UNITS_TO_DEGREES = 1.0
         private val offset: Double = 170.0
@@ -134,6 +148,7 @@ object Carriage {
 
         init {
             CommandSystem.registerDefaultCommand(this, Command("Elevator Default", this) {
+                ShiftSetting.FORCE_LOW
                 var armAngle = armAngle
                 intake = 0.0
                 val animation = if (armAngle < -60 && armAngle > -180) {
@@ -145,6 +160,7 @@ object Carriage {
                 delay(Long.MAX_VALUE)
                 clamp = CoDriver.grab
                 speed = CoDriver.updown
+                brake = CoDriver.brake
                 periodic {
                     if (CoDriver.invertIntake) {
                         leftSpeed = -CoDriver.leftIntake
@@ -193,6 +209,7 @@ object Carriage {
                 val SCALE_POS = Pose(60.0, 180.0)
                 val SWITCH_POS = Pose(20.0, 15.0)
                 val SCALE_SAFETY = Pose(60.0, 90.0)
+                val CLIMB = Pose(40.0, 0.0)
             }
         }
 
@@ -209,6 +226,8 @@ object Carriage {
                 val INTAKE_TO_IDLE = Animation(0.0 to Pose.INTAKE_POS, 1.0 to Pose.IDLE)
                 val SWITCH_TO_IDLE = Animation(0.0 to Pose.SWITCH_POS, 1.0 to Pose.IDLE)
                 val INTAKE_TO_SCALE = Animation(0.0 to Pose.INTAKE_POS, 0.5 to Pose.SCALE_SAFETY, 1.0 to Pose.SCALE_POS)
+                val EXTEND_ELEVATOR = Animation(0.0 to Pose.IDLE, 1.0 to Pose.CLIMB)
+                val FINISH_CLIMB = Animation(0.0 to Pose.CLIMB, 1.0 to Pose.IDLE)
             }
 
             val armCurve: MotionCurve = MotionCurve().apply {
@@ -275,4 +294,16 @@ object Carriage {
             Carriage.Arm.intake = 1.0
         }
     }
+
+
+    val climb = Command("Climb", Carriage){
+        try{
+            Carriage.Arm.playAnimation(Carriage.Arm.Animation.EXTEND_ELEVATOR)
+            ShiftSetting.FORCE_HIGH
+            Carriage.Arm.playAnimation(Carriage.Arm.Animation.FINISH_CLIMB)
+        }finally {
+            ShiftSetting.FORCE_LOW
+        }
+    }
+
 }
