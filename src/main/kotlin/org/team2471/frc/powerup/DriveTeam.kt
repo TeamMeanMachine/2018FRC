@@ -5,10 +5,12 @@ import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.XboxController
 import kotlinx.coroutines.experimental.delay
 import org.team2471.frc.lib.control.experimental.Command
+import org.team2471.frc.lib.control.experimental.runWhen
 import org.team2471.frc.lib.control.experimental.runWhile
 import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.powerup.subsystems.Carriage
+import org.team2471.frc.powerup.subsystems.Wings
 
 object Driver {
     private val controller = XboxController(0)
@@ -25,6 +27,7 @@ object Driver {
         get() = -controller.getTriggerAxis(GenericHID.Hand.kLeft) + controller.getTriggerAxis(GenericHID.Hand.kRight)
 
     init {
+
         Command("Intake", Carriage) {
             try {
                 Carriage.Arm.clamp = false
@@ -46,6 +49,7 @@ object Driver {
             }
         }.runWhile { controller.getBumper(GenericHID.Hand.kLeft) }
     }
+
 }
 
 
@@ -76,10 +80,14 @@ object CoDriver {
     val wristPivot: Double
         get() = controller.getRawAxis(5)
                 .deadband(.2)
-
+    val climbGuide: Boolean
+        get() = controller.xButtonPressed
 
     init {
         println("Initialized")
+        Command("DeployClimbGuide", Wings) {
+                Wings.climbingGuideDeployed = !Wings.climbingGuideDeployed
+        }.runWhen { controller.xButtonPressed }
     }
 }
 
