@@ -9,13 +9,14 @@ import edu.wpi.first.wpilibj.Solenoid
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.periodic
+import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.lib.control.plus
 import org.team2471.frc.lib.math.DoubleRange
 import org.team2471.frc.lib.math.average
+import org.team2471.frc.lib.math.clamp
 import org.team2471.frc.powerup.CoDriver
 
 import org.team2471.frc.powerup.RobotMap
-import javax.naming.ldap.Control
 
 object Carriage {
     private const val CARRIAGE_SRX_UNITS_TO_INCHES = (1.75 * Math.PI) / 750 // TODO: check for later
@@ -61,20 +62,9 @@ object Carriage {
 
     private val shifter = Solenoid(RobotMap.Solenoids.CARRIAGE_SHIFT)
 
-    private val position: Double
-        get() = liftMotors.getSelectedSensorPosition(0) * CARRIAGE_SRX_UNITS_TO_INCHES
-
-    private var setpoint: Double = position
-        set(value) {
-            field = value
-            liftMotors.set(ControlMode.Position, value / CARRIAGE_SRX_UNITS_TO_INCHES)
-        }
-
     var height: Double
         get() = ticksToInches(liftMotors.activeTrajectoryPosition)
-        set(value) {
-            Carriage.setpoint = ticksToInches(value.toInt())
-        }
+        set(value) = liftMotors.set(ControlMode.Position, ticksToInches(value.toInt()))
 
     var isLowGear: Boolean
         get() = shifter.get()
@@ -89,9 +79,12 @@ object Carriage {
             periodic {
                 //                Arm.setpoint = CoDriver.wristPivot * 90.0 + 90.0
                 liftMotors.set(ControlMode.PercentOutput, CoDriver.updown * 0.8)
-                println("${liftMotors.getSelectedSensorPosition(0)} -> $height")
+                //                println("${liftMotors.getSelectedSensorPosition(0)} -> $height")
+                println("${Arm.pivotMotors.getSelectedSensorPosition(0)} -> ${Arm.angle}")
+
                 isBraking = CoDriver.brake
                 isLowGear = CoDriver.shift
+//                println(Carriage.Arm.cubeSensor.voltage)
             }
         })
     }
@@ -100,19 +93,14 @@ object Carriage {
     private const val SPOOL_DIAMETER_INCHES = 2.0
     private fun ticksToInches(ticks: Int) = ticks.toDouble() / TICKS_PER_REV * SPOOL_DIAMETER_INCHES * Math.PI
 
-
-
-
     suspend fun moveToPose(pose: Pose){
-
-    }
-
-    private fun armRange(height: Double): DoubleRange = when (height) {
-        in 0..6 -> 30.0..110.0
-        in 6..12 -> 0.0..110.0
-        in 12..24 -> 0.0..130.0
-        in 24..64 -> 0.0..180.0
-        else -> 30.0..110.0
+        val safeRange = 0.0..110.0
+        Arm.angle = safeRange.clamp(Arm.angle)
+        suspendUntil { Arm.angle in safeRange }
+        height = pose.inches
+        suspendUntil { /*Far enough to move the arm to position */ false }
+        Arm.angle = pose.armAngle
+        suspendUntil { /* done */ false }
     }
 
     class Pose(val inches: Double, val armAngle: Double) {
@@ -141,7 +129,7 @@ object Carriage {
             configContinuousCurrentLimit(10, 10)
             configPeakCurrentLimit(0, 10)
             enableCurrentLimit(true)
-            setSensorPhase(true)
+            setSensorPhase(false)
             inverted = true
         } + TalonSRX(RobotMap.Talons.ARM_MOTOR_2).apply {
             configContinuousCurrentLimit(10, 10)
@@ -174,10 +162,8 @@ object Carriage {
             set(value) = clawSolenoid.set(!value)
 
         var angle: Double
-            get() = nativeUnitsToDegrees(pivotMotors.activeTrajectoryPosition)
-            set(value) {
-                setpoint = degreesToNativeUnits(value)
-            }
+            get() = nativeUnitsToDegrees(pivotMotors.getSelectedSensorPosition(0))
+            set(value) = pivotMotors.set(ControlMode.Position, degreesToNativeUnits(value))
 
         var intake: Double
             get() = average(intakeMotorLeft.motorOutputVoltage, intakeMotorRight.motorOutputVoltage) / 12
@@ -187,18 +173,9 @@ object Carriage {
             }
 
         private const val ARM_TICKS_PER_DEGREE = 20.0 / 9.0
-        private const val ARM_OFFSET_NATIVE = -640.0
+        private const val ARM_OFFSET_NATIVE = -720.0
         private fun nativeUnitsToDegrees(nativeUnits: Int): Double = (nativeUnits - ARM_OFFSET_NATIVE) / ARM_TICKS_PER_DEGREE
         private fun degreesToNativeUnits(degrees: Double): Double = degrees * ARM_TICKS_PER_DEGREE + ARM_OFFSET_NATIVE
-
-        val position: Double
-            get() = nativeUnitsToDegrees(pivotMotors.getSelectedSensorPosition(0))
-
-        var setpoint: Double = position
-            set(value) {
-                field = value
-                pivotMotors.set(ControlMode.Position, degreesToNativeUnits(value))
-            }
 
         var clawClosed: Boolean
             get() = clawSolenoid.get()

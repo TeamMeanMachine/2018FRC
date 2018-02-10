@@ -87,7 +87,7 @@ object CoDriver {
         println("Initialized")
         Command("DeployClimbGuide", Wings) {
                 Wings.climbingGuideDeployed = !Wings.climbingGuideDeployed
-        }.runWhen { controller.xButtonPressed }
+        }.runWhen { controller.xButton }
     }
 }
 
