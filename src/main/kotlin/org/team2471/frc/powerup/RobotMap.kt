@@ -27,16 +27,16 @@ object RobotMap {
     }
 
     object Solenoids {
-        const val WINGS = 1
+        const val WINGS = 0
 
-        const val CLIMBING_GUIDE = 5
+        const val CLIMBING_GUIDE = 7
 
-        const val BRAKE = 6
+        const val BRAKE = 3 // good
 
-        const val CARRIAGE_SHIFT = 4
+        const val CARRIAGE_SHIFT = 6 // good
 
-        const val TENSION = 2
+        const val TENSION = 1
 
-        const val INTAKE_CLAW = 3
+        const val INTAKE_CLAW = 2
     }
 }
