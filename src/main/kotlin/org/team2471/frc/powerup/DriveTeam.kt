@@ -1,5 +1,6 @@
 package org.team2471.frc.powerup
 
+import com.sun.org.apache.xpath.internal.operations.Bool
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.XboxController
 import kotlinx.coroutines.experimental.delay
@@ -51,23 +52,26 @@ object Driver {
 object CoDriver {
     private val controller = XboxController(1)
     val updown: Double
-        get() = -controller.getRawAxis(5)
+        get() = -controller.getY(GenericHID.Hand.kLeft)
                 .deadband(.2) * 0.5
 
     val grab: Boolean
         get() = controller.aButtonPressed
 
-    val leftIntake: Double
-        get() = controller.getTriggerAxis(GenericHID.Hand.kLeft)
-
-    val rightIntake: Double
-        get() = controller.getTriggerAxis(GenericHID.Hand.kRight)
+//    val leftIntake: Double
+//        get() = controller.getTriggerAxis(GenericHID.Hand.kLeft)
+//
+//    val rightIntake: Double
+//        get() = controller.getTriggerAxis(GenericHID.Hand.kRight)
 
     val invertIntake: Boolean
         get() = controller.bButton
 
     val brake: Boolean
-        get() = controller.startButton
+        get() = controller.getBumper(GenericHID.Hand.kRight)
+
+    val shift: Boolean
+        get() = controller.getBumper(GenericHID.Hand.kLeft)
 
     val wristPivot: Double
         get() = controller.getRawAxis(5)

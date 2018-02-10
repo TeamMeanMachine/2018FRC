@@ -15,5 +15,6 @@ class Robot : IterativeRobot() {
 
     override fun robotPeriodic() {
         EventMapper.tick()
+        // println(Carriage.Arm.cubeSensor.voltage)
     }
 }
