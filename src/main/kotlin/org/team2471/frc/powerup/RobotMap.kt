@@ -17,8 +17,8 @@ object RobotMap {
         const val ELEVATOR_MOTOR_3 = 6
         const val ELEVATOR_MOTOR_4 = 3
 
-        const val ARM_MOTOR_1 = 12
-        const val ARM_MOTOR_2 = 11
+        const val ARM_MOTOR_1 = 11
+        const val ARM_MOTOR_2 = 12
         const val INTAKE_MOTOR_LEFT = 9
         const val INTAKE_MOTOR_RIGHT = 8
 

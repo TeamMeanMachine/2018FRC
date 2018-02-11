@@ -61,6 +61,10 @@ object CoDriver {
         get() = -controller.getY(GenericHID.Hand.kLeft)
                 .deadband(.2)
 
+    val rightStickUpDown: Double
+        get() = -controller.getY(GenericHID.Hand.kRight)
+                .deadband(.2)
+
     val grab: Boolean
         get() = controller.aButtonPressed
 
@@ -96,11 +100,11 @@ object CoDriver {
         }.runWhen { controller.aButton }
 
         Command("Position 2,", Carriage) {
-            Carriage.moveToHeight(Carriage.Pose.SWITCH_POS.inches)
+            Carriage.moveToHeight(Carriage.Pose.SWITCH.inches)
         }.runWhen { controller.bButton }
 
         Command("Position 3,", Carriage) {
-            Carriage.moveToHeight(Carriage.Pose.SCALE_POS.inches)
+            Carriage.moveToHeight(Carriage.Pose.SCALE.inches)
         }.runWhen { controller.yButton }
     }
 }
