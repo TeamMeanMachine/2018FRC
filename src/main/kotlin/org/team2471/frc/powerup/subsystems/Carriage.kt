@@ -6,22 +6,24 @@ import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import edu.wpi.first.wpilibj.AnalogInput
 import edu.wpi.first.wpilibj.Solenoid
+import edu.wpi.first.wpilibj.Timer
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.lib.control.plus
-import org.team2471.frc.lib.math.DoubleRange
 import org.team2471.frc.lib.math.average
 import org.team2471.frc.lib.math.clamp
+import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.powerup.CoDriver
 
 import org.team2471.frc.powerup.RobotMap
+import org.team2471.frc.powerup.subsystems.Carriage.Arm.armMotors
 
 object Carriage {
-    private const val CARRIAGE_SRX_UNITS_TO_INCHES = (1.75 * Math.PI) / 750 // TODO: check for later
-
     private const val TICKS_PER_INCH = 7550.0 / 64.25
+    private fun ticksToInches(ticks: Double) = ticks / TICKS_PER_INCH
+    private fun inchesToTicks(inches: Double) = inches * TICKS_PER_INCH
 
     private val liftMotors = TalonSRX(RobotMap.Talons.ELEVATOR_MOTOR_1).apply {
         configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10)
@@ -62,9 +64,14 @@ object Carriage {
 
     private val shifter = Solenoid(RobotMap.Solenoids.CARRIAGE_SHIFT)
 
-    var height: Double
-        get() = ticksToInches(liftMotors.activeTrajectoryPosition)
-        set(value) = liftMotors.set(ControlMode.Position, ticksToInches(value.toInt()))
+    val height: Double
+        get() = ticksToInches(liftMotors.getSelectedSensorPosition(0).toDouble())
+    var heightSetpoint: Double = height
+        set(value) {
+            liftMotors.set(ControlMode.Position, inchesToTicks(value))
+            field = value
+        }
+    val heightError = height - heightSetpoint
 
     var isLowGear: Boolean
         get() = shifter.get()
@@ -80,7 +87,7 @@ object Carriage {
                 //                Arm.setpoint = CoDriver.wristPivot * 90.0 + 90.0
                 liftMotors.set(ControlMode.PercentOutput, CoDriver.updown * 0.8)
                 //                println("${liftMotors.getSelectedSensorPosition(0)} -> $height")
-                println("${Arm.pivotMotors.getSelectedSensorPosition(0)} -> ${Arm.angle}")
+                println("${Arm.armMotors.getSelectedSensorPosition(0)} -> ${Arm.angle}")
 
                 isBraking = CoDriver.brake
                 isLowGear = CoDriver.shift
@@ -89,37 +96,20 @@ object Carriage {
         })
     }
 
-    private const val TICKS_PER_REV = 783
-    private const val SPOOL_DIAMETER_INCHES = 2.0
-    private fun ticksToInches(ticks: Int) = ticks.toDouble() / TICKS_PER_REV * SPOOL_DIAMETER_INCHES * Math.PI
-
     suspend fun moveToPose(pose: Pose){
         val safeRange = 0.0..110.0
-        Arm.angle = safeRange.clamp(Arm.angle)
+        Arm.setpoint = safeRange.clamp(Arm.angle)
         suspendUntil { Arm.angle in safeRange }
-        height = pose.inches
+        heightSetpoint = pose.inches
         suspendUntil { /*Far enough to move the arm to position */ false }
-        Arm.angle = pose.armAngle
+        Arm.setpoint = pose.armAngle
         suspendUntil { /* done */ false }
     }
-
-    class Pose(val inches: Double, val armAngle: Double) {
-        companion object {
-            val IDLE = Pose(0.0, 90.0)
-            val INTAKE_POS = Pose(0.0, 0.0)
-            val SCALE_POS = Pose(60.0, 180.0)
-            val SWITCH_POS = Pose(20.0, 15.0)
-            val SCALE_SAFETY = Pose(60.0, 90.0)
-            val CLIMB = Pose(40.0, 0.0)
-        }
-    }
-
-    private val currentPose get() = Pose(height, Arm.angle)
 
     object Arm {
         private val clawSolenoid = Solenoid(RobotMap.Solenoids.INTAKE_CLAW)
 
-        val pivotMotors = TalonSRX(RobotMap.Talons.ARM_MOTOR_1).apply {
+        val armMotors = TalonSRX(RobotMap.Talons.ARM_MOTOR_1).apply {
             configSelectedFeedbackSensor(FeedbackDevice.Analog, 0, 10)
             config_kP(0, 0.001, 10)
             config_kI(0, 0.0, 10)
@@ -161,9 +151,14 @@ object Carriage {
             get() = !clawSolenoid.get()
             set(value) = clawSolenoid.set(!value)
 
-        var angle: Double
-            get() = nativeUnitsToDegrees(pivotMotors.getSelectedSensorPosition(0))
-            set(value) = pivotMotors.set(ControlMode.Position, degreesToNativeUnits(value))
+        val angle: Double
+            get() = ticksToDegrees(armMotors.getSelectedSensorPosition(0).toDouble())
+        var setpoint: Double = angle
+            set(value) {
+                armMotors.set(ControlMode.Position, degreesToTicks(value))
+                field = value
+            }
+        val error = angle - setpoint
 
         var intake: Double
             get() = average(intakeMotorLeft.motorOutputVoltage, intakeMotorRight.motorOutputVoltage) / 12
@@ -174,13 +169,60 @@ object Carriage {
 
         private const val ARM_TICKS_PER_DEGREE = 20.0 / 9.0
         private const val ARM_OFFSET_NATIVE = -720.0
-        private fun nativeUnitsToDegrees(nativeUnits: Int): Double = (nativeUnits - ARM_OFFSET_NATIVE) / ARM_TICKS_PER_DEGREE
-        private fun degreesToNativeUnits(degrees: Double): Double = degrees * ARM_TICKS_PER_DEGREE + ARM_OFFSET_NATIVE
+        private fun ticksToDegrees(nativeUnits: Double): Double = (nativeUnits - ARM_OFFSET_NATIVE) / ARM_TICKS_PER_DEGREE
+        private fun degreesToTicks(degrees: Double): Double = degrees * ARM_TICKS_PER_DEGREE + ARM_OFFSET_NATIVE
 
         var clawClosed: Boolean
             get() = clawSolenoid.get()
             set(value) = clawSolenoid.set(value)
-
     }
 
+    class Pose(val inches: Double, val armAngle: Double) {
+        companion object {
+            val INTAKE = Pose(0.0, 0.0)
+            val CRITICAL_JUNCTION = Pose( 24.0, 110.0)
+            val SCALE = Pose(60.0, 180.0)
+            val IDLE = Pose(0.0, 90.0)
+            val SWITCH = Pose(20.0, 15.0)
+            val SCALE_SAFETY = Pose(60.0, 90.0)
+            val CLIMB = Pose(40.0, 0.0)
+        }
+    }
+
+    class Animation(vararg keyframes: Pair<Double, Pose>) {
+        companion object {
+            val INTAKE_TO_SCALE = Animation(0.0 to Pose.INTAKE, 5.0 to Pose.CRITICAL_JUNCTION, 10.0 to Pose.SCALE)
+        }
+
+        val lifterCurve: MotionCurve = MotionCurve().apply {
+            keyframes.forEach { (time, pose) ->
+                storeValue(time, pose.inches)
+            }
+        }
+
+        val armCurve: MotionCurve = MotionCurve().apply {
+            keyframes.forEach { (time, pose) ->
+                storeValue(time, pose.armAngle)
+            }
+        }
+
+        val length = lifterCurve.length
+    }
+
+    private val currentPose get() = Pose(height, Arm.angle)
+
+    suspend fun playAnimation(animation: Animation) {
+        val timer = Timer()
+        timer.reset()
+
+        val time = timer.get()
+        periodic(condition = { time < animation.length }) {
+            liftMotors.set( ControlMode.Position, animation.lifterCurve.getValue(time))
+            armMotors.set( ControlMode.Position, animation.armCurve.getValue(time))
+        }
+
+        suspendUntil {
+            Math.abs(heightError) < 1 && Math.abs(Arm.error) < 3
+        }
+    }
 }
