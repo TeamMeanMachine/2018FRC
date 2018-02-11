@@ -4,12 +4,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.motion_profiling.Path2D
+import org.team2471.frc.powerup.commands.testLifter
 import org.team2471.frc.powerup.subsystems.Carriage
 import org.team2471.frc.powerup.subsystems.Drivetrain
 
-//
-//object AutoChooser {
-//    private val dashboard = SendableChooser<Command>().apply {
+
+object AutoChooser {
+    private val dashboard = SendableChooser<Command>().apply {
 //        addDefault(driveStraightAuto.name, driveStraightAuto)
 //        addObject(circleTest.name, circleTest)
 //        addObject(middleScalePlusSwitch.name, middleScalePlusSwitch)
@@ -18,12 +19,13 @@ import org.team2471.frc.powerup.subsystems.Drivetrain
 //        addObject(middleSuperScale.name, middleSuperScale)
 //        addObject(rightSuperScale.name, rightSuperScale)
 //        addObject(leftSuperScale.name, leftSuperScale)
-//
-//        SmartDashboard.putData("Auto Chooser", this)
-//    }
-//    val chosenAuto: Command
-//        get() = dashboard.selected
-//}
+        addObject(armTestAuto.name, armTestAuto)
+
+        SmartDashboard.putData("Auto Chooser", this)
+    }
+    val chosenAuto: Command
+        get() = dashboard.selected
+}
 //
 //val driveStraightAuto = Command("Drive Straight Auto", Drivetrain) {
 //    Drivetrain.driveDistance(10.0, 2.0)
@@ -145,3 +147,12 @@ import org.team2471.frc.powerup.subsystems.Drivetrain
 //        Carriage.Arm.intake = 0.0
 //    }
 //}
+
+val armTestAuto = Command("Testing Arm", Carriage){
+    try {
+        testLifter
+        Carriage.Arm.intake = -1.0
+    }finally {
+        Carriage.Arm.intake = 0.0
+    }
+}

@@ -136,7 +136,7 @@ object Carriage {
     }
 
     suspend fun moveToHeight(height: Double) {
-        this.height = height
+        this.heightSetpoint = height
         try {
             isBraking = false
             isLowGear = false
