@@ -4,9 +4,11 @@ import com.ctre.phoenix.motorcontrol.ControlMode
 import com.ctre.phoenix.motorcontrol.FeedbackDevice
 import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
+import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.AnalogInput
 import edu.wpi.first.wpilibj.Solenoid
 import edu.wpi.first.wpilibj.Timer
+import kotlinx.coroutines.experimental.launch
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.periodic
@@ -16,7 +18,6 @@ import org.team2471.frc.lib.math.average
 import org.team2471.frc.lib.math.clamp
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.powerup.CoDriver
-
 import org.team2471.frc.powerup.RobotMap
 import org.team2471.frc.powerup.subsystems.Carriage.Arm.armMotors
 
@@ -24,6 +25,8 @@ object Carriage {
     private const val TICKS_PER_INCH = 7550.0 / 64.25
     private fun ticksToInches(ticks: Double) = ticks / TICKS_PER_INCH
     private fun inchesToTicks(inches: Double) = inches * TICKS_PER_INCH
+
+    private const val FEED_FORWARD_UP = 1.705
 
     private val liftMotors = TalonSRX(RobotMap.Talons.ELEVATOR_MOTOR_1).apply {
         configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10)
@@ -33,8 +36,15 @@ object Carriage {
         configPeakCurrentDuration(350, 10)
         enableCurrentLimit(true)
         setNeutralMode(NeutralMode.Brake)
-        configPeakOutputForward(2.4, 10)
-        configPeakOutputReverse(-2.4, 10)
+        configPeakOutputForward(1.0, 10)
+        configPeakOutputReverse(-1.0, 10)
+        config_kP(0, 0.0, 10)
+        config_kI(0, 0.0, 10)
+        config_kD(0, 0.0, 10)
+        config_kF(0, FEED_FORWARD_UP, 10)
+        configMotionCruiseVelocity(850, 10)
+        configMotionAcceleration(300, 10)
+
         inverted = true
         setSensorPhase(true)
     } + TalonSRX(RobotMap.Talons.ELEVATOR_MOTOR_2).apply {
@@ -69,6 +79,7 @@ object Carriage {
     var heightSetpoint: Double = height
         set(value) {
             liftMotors.set(ControlMode.Position, inchesToTicks(value))
+        	//liftMotors.set(ControlMode.MotionMagic, ticksToInches(value.toInt()))
             field = value
         }
     val heightError = height - heightSetpoint
@@ -89,14 +100,54 @@ object Carriage {
                 //                println("${liftMotors.getSelectedSensorPosition(0)} -> $height")
                 println("${Arm.armMotors.getSelectedSensorPosition(0)} -> ${Arm.angle}")
 
-                isBraking = CoDriver.brake
+                val liftSpeed = CoDriver.updown
+                liftMotors.set(ControlMode.PercentOutput, liftSpeed)
+                isBraking = liftSpeed == 0.0
                 isLowGear = CoDriver.shift
-//                println(Carriage.Arm.cubeSensor.voltage)
             }
         })
+
+        launch {
+            val table = NetworkTableInstance.getDefault().getTable("Carriage")
+            val sensorPositionEntry = table.getEntry("Sensor Position")
+            val sensorVelocityEntry = table.getEntry("Sensor Velocity")
+            val activeTrajectoryPositionEntry = table.getEntry("Active Trajectory Position")
+            val activeTrajectoryVelocityEntry = table.getEntry("Active Trajectory Velocity")
+            val appliedMotorOutputEntry = table.getEntry("Applied Motor Output")
+            val closedLoopErrEntry = table.getEntry("Closed Loop Error")
+            val minVelocityEntry = table.getEntry("Minimum Velocity")
+            val maxVelocityEntry = table.getEntry("Maximum Velocity")
+
+            var prevVelocity = 0.0
+            periodic {
+                sensorPositionEntry.setDouble(liftMotors.getSelectedSensorPosition(0).toDouble())
+                val velocity = liftMotors.getSelectedSensorVelocity(0).toDouble()
+                prevVelocity = velocity
+                sensorVelocityEntry.setDouble(velocity)
+                activeTrajectoryPositionEntry.setDouble(liftMotors.activeTrajectoryPosition.toDouble())
+                activeTrajectoryVelocityEntry.setDouble(liftMotors.activeTrajectoryVelocity.toDouble())
+                appliedMotorOutputEntry.setDouble(liftMotors.motorOutputPercent)
+                closedLoopErrEntry.setDouble(liftMotors.getClosedLoopError(0).toDouble())
+                minVelocityEntry.setDouble(Math.min(velocity, minVelocityEntry.getDouble(0.0)))
+                maxVelocityEntry.setDouble(Math.max(velocity, maxVelocityEntry.getDouble(0.0)))
+            }
+
+        }
     }
 
-    suspend fun moveToPose(pose: Pose){
+    suspend fun moveToHeight(height: Double) {
+        this.height = height
+        try {
+            isBraking = false
+            isLowGear = false
+            suspendUntil { Math.abs(this.height - height) < 2.5 }
+        } finally {
+            isBraking = true
+            isLowGear = true
+        }
+    }
+
+    suspend fun moveToPose(pose: Pose) {
         val safeRange = 0.0..110.0
         Arm.setpoint = safeRange.clamp(Arm.angle)
         suspendUntil { Arm.angle in safeRange }
@@ -146,6 +197,9 @@ object Carriage {
         }
 
         val cubeSensor = AnalogInput(3)
+
+        val hasCube: Boolean
+            get() = cubeSensor.voltage < 0.15
 
         var clamp: Boolean
             get() = !clawSolenoid.get()

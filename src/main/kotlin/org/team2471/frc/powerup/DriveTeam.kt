@@ -1,12 +1,12 @@
 package org.team2471.frc.powerup
 
-import com.sun.org.apache.xpath.internal.operations.Bool
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.XboxController
 import kotlinx.coroutines.experimental.delay
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.runWhen
 import org.team2471.frc.lib.control.experimental.runWhile
+import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.powerup.subsystems.Carriage
@@ -31,8 +31,10 @@ object Driver {
         Command("Intake", Carriage) {
             try {
                 Carriage.Arm.clamp = false
-                Carriage.Arm.intake = 1.0
-                delay(Long.MAX_VALUE)
+                Carriage.Arm.intake = .75
+                suspendUntil { Carriage.Arm.hasCube }
+                Carriage.Arm.clamp = true
+                delay(300)
             } finally {
                 Carriage.Arm.clamp = true
                 Carriage.Arm.intake = 0.0
@@ -57,7 +59,7 @@ object CoDriver {
     private val controller = XboxController(1)
     val updown: Double
         get() = -controller.getY(GenericHID.Hand.kLeft)
-                .deadband(.2) * 0.5
+                .deadband(.2)
 
     val grab: Boolean
         get() = controller.aButtonPressed
@@ -88,6 +90,18 @@ object CoDriver {
         Command("DeployClimbGuide", Wings) {
                 Wings.climbingGuideDeployed = !Wings.climbingGuideDeployed
         }.runWhen { controller.xButton }
+
+        Command("Position 1,", Carriage) {
+            Carriage.moveToHeight(Carriage.Pose.IDLE.inches)
+        }.runWhen { controller.aButton }
+
+        Command("Position 2,", Carriage) {
+            Carriage.moveToHeight(Carriage.Pose.SWITCH_POS.inches)
+        }.runWhen { controller.bButton }
+
+        Command("Position 3,", Carriage) {
+            Carriage.moveToHeight(Carriage.Pose.SCALE_POS.inches)
+        }.runWhen { controller.yButton }
     }
 }
 
