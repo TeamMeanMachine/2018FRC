@@ -4,11 +4,12 @@ import com.ctre.phoenix.motorcontrol.ControlMode
 import com.ctre.phoenix.motorcontrol.FeedbackDevice
 import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
-import com.sun.org.apache.xpath.internal.operations.Bool
-import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.*
+import edu.wpi.first.wpilibj.AnalogInput
+import edu.wpi.first.wpilibj.DigitalInput
+import edu.wpi.first.wpilibj.Solenoid
+import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import kotlinx.coroutines.experimental.launch
+import org.team2471.frc.lib.control.PIDController
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.periodic
@@ -114,35 +115,35 @@ object Carriage {
 
                 val rightStick = CoDriver.rightStickUpDown
                 Arm.setpoint = rightStick * 45 + 45
-                println("Setpoint:${Arm.setpoint} Output:${armMotors.motorOutputPercent} Raw:${Arm.armMotors.getSelectedSensorPosition(0)} Angle:${Arm.angle}")
-                SmartDashboard.putNumber("Arm Error", armMotors.getClosedLoopError(0).toDouble())
+//                println("Setpoint:${Arm.setpoint} Output:${armMotors.motorOutputPercent} Raw:${Arm.armMotors.getSelectedSensorPosition(0)} Angle:${Arm.angle}")
+//                SmartDashboard.putNumber("Arm Error", armMotors.getClosedLoopError(0).toDouble())
             }
         })
 
-        launch {
-            val table = NetworkTableInstance.getDefault().getTable("Carriage")
-            val sensorPositionEntry = table.getEntry("Sensor Position")
-            val sensorVelocityEntry = table.getEntry("Sensor Velocity")
-            val activeTrajectoryPositionEntry = table.getEntry("Active Trajectory Position")
-            val activeTrajectoryVelocityEntry = table.getEntry("Active Trajectory Velocity")
-            val appliedMotorOutputEntry = table.getEntry("Applied Motor Output")
-            val closedLoopErrEntry = table.getEntry("Closed Loop Error")
-            val minVelocityEntry = table.getEntry("Minimum Velocity")
-            val maxVelocityEntry = table.getEntry("Maximum Velocity")
-
-            periodic {
-                sensorPositionEntry.setDouble(liftMotors.getSelectedSensorPosition(0).toDouble())
-                val velocity = liftMotors.getSelectedSensorVelocity(0).toDouble()
-                sensorVelocityEntry.setDouble(velocity)
-                activeTrajectoryPositionEntry.setDouble(liftMotors.activeTrajectoryPosition.toDouble())
-                activeTrajectoryVelocityEntry.setDouble(liftMotors.activeTrajectoryVelocity.toDouble())
-                appliedMotorOutputEntry.setDouble(liftMotors.motorOutputPercent)
-                closedLoopErrEntry.setDouble(liftMotors.getClosedLoopError(0).toDouble())
-                minVelocityEntry.setDouble(Math.min(velocity, minVelocityEntry.getDouble(0.0)))
-                maxVelocityEntry.setDouble(Math.max(velocity, maxVelocityEntry.getDouble(0.0)))
-            }
-
-        }
+//        launch {
+//            val table = NetworkTableInstance.getDefault().getTable("Carriage")
+//            val sensorPositionEntry = table.getEntry("Sensor Position")
+//            val sensorVelocityEntry = table.getEntry("Sensor Velocity")
+//            val activeTrajectoryPositionEntry = table.getEntry("Active Trajectory Position")
+//            val activeTrajectoryVelocityEntry = table.getEntry("Active Trajectory Velocity")
+//            val appliedMotorOutputEntry = table.getEntry("Applied Motor Output")
+//            val closedLoopErrEntry = table.getEntry("Closed Loop Error")
+//            val minVelocityEntry = table.getEntry("Minimum Velocity")
+//            val maxVelocityEntry = table.getEntry("Maximum Velocity")
+//
+//            periodic {
+//                sensorPositionEntry.setDouble(liftMotors.getSelectedSensorPosition(0).toDouble())
+//                val velocity = liftMotors.getSelectedSensorVelocity(0).toDouble()
+//                sensorVelocityEntry.setDouble(velocity)
+//                activeTrajectoryPositionEntry.setDouble(liftMotors.activeTrajectoryPosition.toDouble())
+//                activeTrajectoryVelocityEntry.setDouble(liftMotors.activeTrajectoryVelocity.toDouble())
+//                appliedMotorOutputEntry.setDouble(liftMotors.motorOutputPercent)
+//                closedLoopErrEntry.setDouble(liftMotors.getClosedLoopError(0).toDouble())
+//                minVelocityEntry.setDouble(Math.min(velocity, minVelocityEntry.getDouble(0.0)))
+//                maxVelocityEntry.setDouble(Math.max(velocity, maxVelocityEntry.getDouble(0.0)))
+//            }
+//
+//        }
     }
 
     suspend fun moveToHeight(height: Double) {
@@ -172,10 +173,10 @@ object Carriage {
 
         val armMotors = TalonSRX(RobotMap.Talons.ARM_MOTOR_1).apply {
             configSelectedFeedbackSensor(FeedbackDevice.Analog, 0, 10)
-//            config_kP(0, 5.0, 10)
-//            config_kI(0, 0.0, 10)
-//            config_kD(0, 0.0, 10)
-//            config_kF(0, 0.0, 10)
+            config_kP(0, 5.0, 10)
+            config_kI(0, 0.0, 10)
+            config_kD(0, 0.0, 10)
+            config_kF(0, 0.0, 10)
 
             configContinuousCurrentLimit(10, 10)
             configPeakCurrentLimit(0, 10)
@@ -188,7 +189,12 @@ object Carriage {
             enableCurrentLimit(true)
             inverted = true
         }
-        val armPID = PIDController(.001, 0.0, 0.0, )
+        val armPID = PIDController(.001, 0.0, 0.0, 0.0, {
+            ticksToDegrees(armMotors.getSelectedSensorPosition(0).toDouble())
+        }, { armMotors.set(ControlMode.PercentOutput, it) }).apply {
+            isEnabled = true
+            SmartDashboard.putData("Arm PID", this)
+        }
 
         private val intakeMotorLeft = TalonSRX(RobotMap.Talons.INTAKE_MOTOR_LEFT).apply {
             inverted = true
@@ -219,10 +225,10 @@ object Carriage {
         val angle: Double
             get() = ticksToDegrees(armMotors.getSelectedSensorPosition(0).toDouble())
 
-        var setpoint: Double = angle
+        var setpoint: Double
+            get() = armPID.setpoint
             set(value) {
-                armMotors.set(ControlMode.Position, degreesToTicks(value))
-                field = value
+                armPID.setpoint = value
             }
         val error = angle - setpoint
 

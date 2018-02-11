@@ -37,6 +37,7 @@ object Drivetrain {
             leftPower /= maxPower
             rightPower /= maxPower
         }
+
         leftMotors.set(ControlMode.PercentOutput, leftPower)
         rightMotors.set(ControlMode.PercentOutput, rightPower)
     }
