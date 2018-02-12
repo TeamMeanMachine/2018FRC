@@ -17,20 +17,51 @@ import org.team2471.frc.powerup.RobotMap
 object Drivetrain {
     private val leftMotors = TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_1).apply {
         setNeutralMode(NeutralMode.Brake)
+        configPeakCurrentLimit(25, 10)
+        configContinuousCurrentLimit(20, 10)
+        configPeakCurrentDuration(500, 10)
+        enableCurrentLimit(true)
+        inverted = true
+        configOpenloopRamp(0.25, 10)
     } + TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_2).apply {
         setNeutralMode(NeutralMode.Brake)
+        configPeakCurrentLimit(25, 10)
+        configContinuousCurrentLimit(20, 10)
+        configPeakCurrentDuration(500, 10)
+        enableCurrentLimit(true)
+        inverted = true
+    } + TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_3).apply {
+        setNeutralMode(NeutralMode.Brake)
+        configPeakCurrentLimit(25, 10)
+        configContinuousCurrentLimit(20, 10)
+        configPeakCurrentDuration(500, 10)
+        enableCurrentLimit(true)
+        inverted = true
     }
     private val rightMotors = TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_1).apply {
         setNeutralMode(NeutralMode.Brake)
-        inverted = true
+        configPeakCurrentLimit(25, 10)
+        configContinuousCurrentLimit(20, 10)
+        configPeakCurrentDuration(500, 10)
+        enableCurrentLimit(true)
+        configOpenloopRamp(0.25, 10)
     } + TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_2).apply {
         setNeutralMode(NeutralMode.Brake)
-        inverted = true
+        configPeakCurrentLimit(25, 10)
+        configContinuousCurrentLimit(20, 10)
+        configPeakCurrentDuration(500, 10)
+        enableCurrentLimit(true)
+    } + TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_3).apply {
+        setNeutralMode(NeutralMode.Brake)
+        configPeakCurrentLimit(25, 10)
+        configContinuousCurrentLimit(20, 10)
+        configPeakCurrentDuration(500, 10)
+        enableCurrentLimit(true)
     }
 
     fun drive(throttle: Double, softTurn: Double, hardTurn: Double) {
-        var leftPower = throttle + (softTurn * Math.abs(throttle)) + hardTurn
-        var rightPower = throttle - (softTurn * Math.abs(throttle)) - hardTurn
+        var leftPower = throttle + (softTurn * Math.abs(throttle)) + (hardTurn * 0.8)
+        var rightPower = throttle - (softTurn * Math.abs(throttle)) - (hardTurn * 0.8)
 
         val maxPower = Math.max(Math.abs(leftPower), Math.abs(rightPower))
         if (maxPower > 1) {

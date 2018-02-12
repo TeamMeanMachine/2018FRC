@@ -2,6 +2,7 @@ package org.team2471.frc.powerup
 
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import kotlinx.coroutines.experimental.delay
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.powerup.commands.testLifter
@@ -19,11 +20,11 @@ object AutoChooser {
 //        addObject(middleSuperScale.name, middleSuperScale)
 //        addObject(rightSuperScale.name, rightSuperScale)
 //        addObject(leftSuperScale.name, leftSuperScale)
-        addObject(armTestAuto.name, armTestAuto)
+        addDefault(armTestAuto.name, armTestAuto)
 
         SmartDashboard.putData("Auto Chooser", this)
     }
-    val chosenAuto: Command
+    val chosenAuto: Command?
         get() = dashboard.selected
 }
 //
@@ -150,9 +151,10 @@ object AutoChooser {
 
 val armTestAuto = Command("Testing Arm", Carriage){
     try {
-        testLifter
+        testLifter.invoke(coroutineContext)
         Carriage.Arm.intake = -1.0
-    }finally {
+        delay(300)
+    } finally {
         Carriage.Arm.intake = 0.0
     }
 }

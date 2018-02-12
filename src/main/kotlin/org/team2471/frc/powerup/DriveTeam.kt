@@ -63,7 +63,7 @@ object CoDriver {
 
     val rightStickUpDown: Double
         get() = -controller.getY(GenericHID.Hand.kRight)
-                .deadband(.2)
+    //.deadband(.2)
 
     val grab: Boolean
         get() = controller.aButtonPressed

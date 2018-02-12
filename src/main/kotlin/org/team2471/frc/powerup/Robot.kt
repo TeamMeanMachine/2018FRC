@@ -10,6 +10,11 @@ class Robot : IterativeRobot() {
         Drivetrain
         Carriage
         Driver
+        AutoChooser
+    }
+
+    override fun autonomousInit() {
+        AutoChooser.chosenAuto?.launch()
     }
 
     override fun robotPeriodic() {

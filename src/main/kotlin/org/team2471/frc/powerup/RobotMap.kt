@@ -9,8 +9,11 @@ object RobotMap {
     object Talons {
         const val RIGHT_DRIVE_MOTOR_1 = 15
         const val RIGHT_DRIVE_MOTOR_2 = 14
+        const val RIGHT_DRIVE_MOTOR_3 = 13
         const val LEFT_DRIVE_MOTOR_1 = 0
         const val LEFT_DRIVE_MOTOR_2 = 1
+        const val LEFT_DRIVE_MOTOR_3 = 2
+
 
         const val ELEVATOR_MOTOR_1 = 7
         const val ELEVATOR_MOTOR_2 = 4
@@ -22,8 +25,7 @@ object RobotMap {
         const val INTAKE_MOTOR_LEFT = 9
         const val INTAKE_MOTOR_RIGHT = 8
 
-        const val SPARE_1 = 13
-        const val SPARE_2 = 2
+
     }
 
     object Solenoids {

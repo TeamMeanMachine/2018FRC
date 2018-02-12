@@ -19,6 +19,7 @@ plugins {
 
 def TEAM = 2471
 def ROBOT_CLASS = "org.team2471.frc.powerup.Robot"
+//def ROBOT_CLASS = "SandboxRobot"
 
 deploy {
     targets {
