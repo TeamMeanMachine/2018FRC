@@ -139,8 +139,10 @@ object Carriage {
 
     suspend fun zero() {
         periodic(condition = { liftMotors.outputCurrent > 5.0 }) {
-
+            liftMotors.set(ControlMode.PercentOutput, 0.2)
         }
+        liftMotors.set(ControlMode.PercentOutput, 0.0)
+        liftMotors.setSelectedSensorPosition(0, 0, 10)
     }
 
     class Pose(val inches: Double, val armAngle: Double) {
