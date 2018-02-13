@@ -11,3 +11,7 @@ val testLifter = Command("Test Lifter", Carriage) {
     finally {
     }
 }
+
+val zeroCarriage = Command("Zero Carriage", Carriage) {
+
+}

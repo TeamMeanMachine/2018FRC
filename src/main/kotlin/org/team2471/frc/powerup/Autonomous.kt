@@ -151,7 +151,9 @@ object AutoChooser {
 
 val armTestAuto = Command("Testing Arm", Carriage){
     try {
+        println("Starting Test Lifter")
         testLifter.invoke(coroutineContext)
+        println("Test lifter completed")
         Carriage.Arm.intake = -1.0
         delay(300)
     } finally {

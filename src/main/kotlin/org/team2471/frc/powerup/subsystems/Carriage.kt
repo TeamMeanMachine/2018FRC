@@ -16,11 +16,9 @@ import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.lib.control.plus
 import org.team2471.frc.lib.math.average
 import org.team2471.frc.lib.math.clamp
-import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.powerup.CoDriver
 import org.team2471.frc.powerup.RobotMap
-import org.team2471.frc.powerup.subsystems.Carriage.Arm.armMotors
 
 object Carriage {
     private const val TICKS_PER_INCH = 7550.0 / 64.25
@@ -107,6 +105,12 @@ object Carriage {
             periodic {
                 val rightStick = CoDriver.rightStickUpDown
                 Arm.setpoint = rightStick * 45 + 90
+
+                val leftStick = CoDriver.leftStickUpDown
+                heightSetpoint = leftStick * 12 + 0
+
+                isLowGear = false
+                isBraking = false
             }
         })
     }
@@ -131,6 +135,71 @@ object Carriage {
         suspendUntil { /*Far enough to move the arm to position */ false }
         Arm.setpoint = pose.armAngle
         suspendUntil { /* done */ false }
+    }
+
+    suspend fun zero() {
+        periodic(condition = { liftMotors.outputCurrent > 5.0 }) {
+
+        }
+    }
+
+    class Pose(val inches: Double, val armAngle: Double) {
+        companion object {
+            val INTAKE = Pose(0.0, 0.0)
+            val CRITICAL_JUNCTION = Pose(24.0, 110.0)
+            val SCALE = Pose(60.0, 180.0)
+            val IDLE = Pose(0.0, 90.0)
+            val SWITCH = Pose(20.0, 0.0)
+            val SCALE_SAFETY = Pose(60.0, 90.0)
+            val CLIMB = Pose(40.0, 0.0)
+        }
+    }
+
+    class Animation(vararg keyframes: Pair<Double, Pose>) {
+        companion object {
+            val INTAKE_TO_SCALE = Animation(0.0 to Pose.INTAKE, 5.0 to Pose.CRITICAL_JUNCTION, 10.0 to Pose.SCALE)
+            val INITIAL_TEST = Animation(0.0 to Pose.INTAKE, 2.0 to Pose.SWITCH)
+        }
+
+        val lifterCurve: MotionCurve = MotionCurve().apply {
+            keyframes.forEach { (time, pose) ->
+                storeValue(time, pose.inches)
+            }
+        }
+
+        val armCurve: MotionCurve = MotionCurve().apply {
+            keyframes.forEach { (time, pose) ->
+                storeValue(time, pose.armAngle)
+            }
+        }
+
+        val length = lifterCurve.length
+    }
+
+    private val currentPose get() = Pose(height, Arm.angle)
+
+    suspend fun playAnimation(animation: Animation) {
+        val timer = Timer()
+        timer.reset()
+        try {
+            isLowGear = false
+            isBraking = false
+
+            var time = 0.0
+            periodic(condition = { time = timer.get();time < animation.length }) {
+                heightSetpoint = animation.lifterCurve.getValue(time)
+                Arm.setpoint = animation.armCurve.getValue(time)
+                SmartDashboard.putNumber("Elevator Setpoint", heightSetpoint)
+                SmartDashboard.putNumber("Arm Setpoint", Arm.setpoint)
+            }
+
+            suspendUntil {
+                Math.abs(heightError) < 1 && Math.abs(Arm.error) < 3
+            }
+        } finally {
+            isLowGear = true
+            isBraking = true
+        }
     }
 
     object Arm {
@@ -235,60 +304,4 @@ object Carriage {
             set(value) = clawSolenoid.set(value)
     }
 
-    class Pose(val inches: Double, val armAngle: Double) {
-        companion object {
-            val INTAKE = Pose(0.0, 0.0)
-            val CRITICAL_JUNCTION = Pose(24.0, 110.0)
-            val SCALE = Pose(60.0, 180.0)
-            val IDLE = Pose(0.0, 90.0)
-            val SWITCH = Pose(20.0, 15.0)
-            val SCALE_SAFETY = Pose(60.0, 90.0)
-            val CLIMB = Pose(40.0, 0.0)
-        }
-    }
-
-    class Animation(vararg keyframes: Pair<Double, Pose>) {
-        companion object {
-            val INTAKE_TO_SCALE = Animation(0.0 to Pose.INTAKE, 5.0 to Pose.CRITICAL_JUNCTION, 10.0 to Pose.SCALE)
-            val INITIAL_TEST = Animation(0.0 to Pose.INTAKE, 2.0 to Pose.SWITCH)
-        }
-
-        val lifterCurve: MotionCurve = MotionCurve().apply {
-            keyframes.forEach { (time, pose) ->
-                storeValue(time, pose.inches)
-            }
-        }
-
-        val armCurve: MotionCurve = MotionCurve().apply {
-            keyframes.forEach { (time, pose) ->
-                storeValue(time, pose.armAngle)
-            }
-        }
-
-        val length = lifterCurve.length
-    }
-
-    private val currentPose get() = Pose(height, Arm.angle)
-
-    suspend fun playAnimation(animation: Animation) {
-        val timer = Timer()
-        timer.reset()
-        try {
-            isLowGear = false
-            isBraking = false
-
-            val time = timer.get()
-            periodic(condition = { time < animation.length }) {
-                heightSetpoint = animation.lifterCurve.getValue(time)
-                Arm.setpoint = animation.armCurve.getValue(time)
-            }
-
-            suspendUntil {
-                Math.abs(heightError) < 1 && Math.abs(Arm.error) < 3
-            }
-        } finally {
-            isLowGear = true
-            isBraking = true
-        }
-    }
 }

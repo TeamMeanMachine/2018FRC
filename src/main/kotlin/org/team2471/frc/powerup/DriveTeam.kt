@@ -57,7 +57,7 @@ object Driver {
 
 object CoDriver {
     private val controller = XboxController(1)
-    val updown: Double
+    val leftStickUpDown: Double
         get() = -controller.getY(GenericHID.Hand.kLeft)
                 .deadband(.2)
 
