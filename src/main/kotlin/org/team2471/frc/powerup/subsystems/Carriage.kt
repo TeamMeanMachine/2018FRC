@@ -8,7 +8,6 @@ import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.*
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.experimental.launch
-import org.team2471.frc.lib.control.PIDController
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.periodic
@@ -100,17 +99,33 @@ object Carriage {
     val amperage: Double
         get() = liftMotors.outputCurrent
 
+    var animationTime = 0.0
+
     init {
         CommandSystem.registerDefaultCommand(this, Command("Carriage Default", this) {
+            var previousTime = RobotController.getFPGATime()
             periodic {
-                val rightStick = CoDriver.rightStickUpDown
-                Arm.setpoint = rightStick * 45 + 90
+                SmartDashboard.putNumber("Height Number: ", height)
+                SmartDashboard.putNumber("Arm Angle: ", Arm.angle)
+//                val rightStick = CoDriver.rightStickUpDown
+//                Arm.armMotors.set(ControlMode.PercentOutput, rightStick * 0.4)
+//                //Arm.setpoint = rightStick * 45 + 90
+//
+//                val leftStick = CoDriver.leftStickUpDown
+//                liftMotors.set(ControlMode.PercentOutput, leftStick * 0.4)
+////                heightSetpoint = leftStick * 12 + 0
 
                 val leftStick = CoDriver.leftStickUpDown
-                heightSetpoint = leftStick * 12 + 0
+                val currentTime = RobotController.getFPGATime()
+                val deltaTime = currentTime - previousTime
 
+                animationTime += deltaTime * leftStick
+                previousTime = currentTime
+
+                heightSetpoint = Carriage.Animation.INTAKE_TO_SCALE.lifterCurve.getValue(animationTime)
+                Arm.setpoint = Carriage.Animation.INTAKE_TO_SCALE.armCurve.getValue(animationTime)
                 isLowGear = false
-                isBraking = false
+                isBraking = liftMotors.motorOutputPercent < 0.1
             }
         })
     }
@@ -145,19 +160,20 @@ object Carriage {
 
     class Pose(val inches: Double, val armAngle: Double) {
         companion object {
-            val INTAKE = Pose(0.0, 0.0)
+            val INTAKE = Pose(6.0, 0.0)
             val CRITICAL_JUNCTION = Pose(24.0, 110.0)
-            val SCALE = Pose(60.0, 180.0)
+            val SCALE = Pose(50.0, 190.0)
             val IDLE = Pose(0.0, 90.0)
-            val SWITCH = Pose(20.0, 0.0)
+            val SWITCH = Pose(20.0, 20.0)
             val SCALE_SAFETY = Pose(60.0, 90.0)
             val CLIMB = Pose(40.0, 0.0)
+            val NINE_INCHES = Pose(9.0, 0.0)
         }
     }
 
     class Animation(vararg keyframes: Pair<Double, Pose>) {
         companion object {
-            val INTAKE_TO_SCALE = Animation(0.0 to Pose.INTAKE, 5.0 to Pose.CRITICAL_JUNCTION, 10.0 to Pose.SCALE)
+            val INTAKE_TO_SCALE = Animation(0.0 to Pose.INTAKE, 0.25 to Pose.NINE_INCHES, 1.0 to Pose.CRITICAL_JUNCTION, 2.0 to Pose.SCALE)
             val INITIAL_TEST = Animation(0.0 to Pose.INTAKE, 2.0 to Pose.SWITCH)
         }
 
@@ -180,17 +196,20 @@ object Carriage {
 
     suspend fun playAnimation(animation: Animation) {
         val timer = Timer()
-        timer.reset()
+        timer.start()
+
         try {
             isLowGear = false
             isBraking = false
 
             var time = 0.0
-            periodic(condition = { time = timer.get();time < animation.length }) {
+            periodic(condition = { time < animation.length }) {
                 heightSetpoint = animation.lifterCurve.getValue(time)
                 Arm.setpoint = animation.armCurve.getValue(time)
                 SmartDashboard.putNumber("Elevator Setpoint", heightSetpoint)
                 SmartDashboard.putNumber("Arm Setpoint", Arm.setpoint)
+                time = timer.get()
+                println("Time: $time")
             }
 
             suspendUntil {
@@ -205,9 +224,9 @@ object Carriage {
     object Arm {
         private val clawSolenoid = Solenoid(RobotMap.Solenoids.INTAKE_CLAW)
 
-        private val armMotors = TalonSRX(RobotMap.Talons.ARM_MOTOR_1).apply {
+        val armMotors = TalonSRX(RobotMap.Talons.ARM_MOTOR_1).apply {
             configSelectedFeedbackSensor(FeedbackDevice.Analog, 0, 10)
-            config_kP(0, 5.0, 10)
+            config_kP(0, 20.0, 10)
             config_kI(0, 0.0, 10)
             config_kD(0, 0.0, 10)
             config_kF(0, 0.0, 10)
@@ -238,17 +257,10 @@ object Carriage {
                     val raw = armMotors.getSelectedSensorPosition(0).toDouble()
                     rawEntry.setDouble(raw)
                     normalEntry.setDouble(ticksToDegrees(raw))
-                    errorEntry.setDouble(armPID.error)
-                    setpointError.setDouble(armPID.setpoint)
+//                    errorEntry.setDouble(armPID.error)
+//                    setpointError.setDouble(armPID.setpoint)
                 }
             }
-        }
-
-        val armPID = PIDController(.04, 0.0, 0.01, 0.0, {
-            ticksToDegrees(armMotors.getSelectedSensorPosition(0).toDouble())
-        }, { armMotors.set(ControlMode.PercentOutput, it) }, { armMotors.motorOutputPercent }).apply {
-            isEnabled = true
-            SmartDashboard.putData("Arm PID", this)
         }
 
         private val intakeMotorLeft = TalonSRX(RobotMap.Talons.INTAKE_MOTOR_LEFT).apply {
@@ -280,12 +292,12 @@ object Carriage {
         val angle: Double
             get() = ticksToDegrees(armMotors.getSelectedSensorPosition(0).toDouble())
 
-        var setpoint: Double
-            get() = armPID.setpoint
+        var setpoint: Double = angle
             set(value) {
-                armPID.setpoint = value
+                armMotors.set(ControlMode.Position, degreesToTicks(value))
+                field = value
             }
-        val error = angle - setpoint
+        val error get() = angle - setpoint
 
         var intake: Double
             get() = average(intakeMotorLeft.motorOutputVoltage, intakeMotorRight.motorOutputVoltage) / 12
