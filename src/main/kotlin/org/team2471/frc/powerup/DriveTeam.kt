@@ -1,5 +1,6 @@
 package org.team2471.frc.powerup
 
+import com.sun.org.apache.xpath.internal.operations.Bool
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.XboxController
 import kotlinx.coroutines.experimental.delay
@@ -9,6 +10,7 @@ import org.team2471.frc.lib.control.experimental.runWhile
 import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareWithSign
+import org.team2471.frc.powerup.commands.zeroCarriage
 import org.team2471.frc.powerup.subsystems.Carriage
 import org.team2471.frc.powerup.subsystems.Wings
 
@@ -95,17 +97,7 @@ object CoDriver {
                 Wings.climbingGuideDeployed = !Wings.climbingGuideDeployed
         }.runWhen { controller.xButton }
 
-        Command("Position 1,", Carriage) {
-            Carriage.moveToHeight(Carriage.Pose.IDLE.inches)
-        }.runWhen { controller.aButton }
-
-        Command("Position 2,", Carriage) {
-            Carriage.moveToHeight(Carriage.Pose.SWITCH.inches)
-        }.runWhen { controller.bButton }
-
-        Command("Position 3,", Carriage) {
-            Carriage.moveToHeight(Carriage.Pose.SCALE.inches)
-        }.runWhen { controller.yButton }
+        zeroCarriage.runWhen { controller.backButton }
     }
 }
 
