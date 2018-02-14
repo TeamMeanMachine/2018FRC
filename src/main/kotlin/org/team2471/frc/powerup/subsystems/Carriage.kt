@@ -14,13 +14,12 @@ import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.lib.control.plus
 import org.team2471.frc.lib.math.average
-import org.team2471.frc.lib.math.clamp
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.powerup.CoDriver
 import org.team2471.frc.powerup.RobotMap
 
 object Carriage {
-    private const val TICKS_PER_INCH = 7550.0 / 64.25
+    private const val TICKS_PER_INCH = 9437 / 64.25
     private fun ticksToInches(ticks: Double) = ticks / TICKS_PER_INCH
     private fun inchesToTicks(inches: Double) = inches * TICKS_PER_INCH
 
@@ -83,6 +82,11 @@ object Carriage {
             field = value
         }
 
+    var heightRawSpeed: Double = 0.0
+        set(value) {
+            liftMotors.set(ControlMode.PercentOutput, value)
+            field = value
+        }
     val heightError = height - heightSetpoint
 
     var isLowGear: Boolean
@@ -103,7 +107,7 @@ object Carriage {
 
     init {
         CommandSystem.registerDefaultCommand(this, Command("Carriage Default", this) {
-            var previousTime = RobotController.getFPGATime()
+            var previousTime = Timer.getFPGATimestamp()
             periodic {
                 SmartDashboard.putNumber("Height Number: ", height)
                 SmartDashboard.putNumber("Arm Angle: ", Arm.angle)
@@ -116,7 +120,7 @@ object Carriage {
 ////                heightSetpoint = leftStick * 12 + 0
 
                 val leftStick = CoDriver.leftStickUpDown
-                val currentTime = RobotController.getFPGATime()
+                val currentTime = Timer.getFPGATimestamp()
                 val deltaTime = currentTime - previousTime
 
                 animationTime += deltaTime * leftStick
@@ -124,8 +128,12 @@ object Carriage {
 
                 heightSetpoint = Carriage.Animation.INTAKE_TO_SCALE.lifterCurve.getValue(animationTime)
                 Arm.setpoint = Carriage.Animation.INTAKE_TO_SCALE.armCurve.getValue(animationTime)
+
+                if (RobotState.isEnabled())
+                    println("height setpoint: $heightSetpoint | arm setpoint: ${Arm.setpoint}")
+
                 isLowGear = false
-                isBraking = liftMotors.motorOutputPercent < 0.1
+                isBraking = false
             }
         })
     }
@@ -142,44 +150,25 @@ object Carriage {
         }
     }
 
-    suspend fun moveToPose(pose: Pose) {
-        val safeRange = 0.0..110.0
-        Arm.setpoint = safeRange.clamp(Arm.angle)
-        suspendUntil { Arm.angle in safeRange }
-        heightSetpoint = pose.inches
-        suspendUntil { /*Far enough to move the arm to position */ false }
-        Arm.setpoint = pose.armAngle
-        suspendUntil { /* done */ false }
-    }
-
-    suspend fun zero() {
-        try {
-            periodic(condition = { liftMotors.outputCurrent < 5.0 }) {
-                liftMotors.set(ControlMode.PercentOutput, -0.2)
-            }
-        } finally {
-            liftMotors.neutralOutput()
-        }
-
+    fun zero() {
         liftMotors.setSelectedSensorPosition(0, 0, 10)
     }
 
     class Pose(val inches: Double, val armAngle: Double) {
         companion object {
-            val INTAKE = Pose(6.0, 0.0)
+            val INTAKE = Pose(8.0, 0.0)
             val CRITICAL_JUNCTION = Pose(24.0, 110.0)
             val SCALE = Pose(50.0, 190.0)
             val IDLE = Pose(0.0, 90.0)
             val SWITCH = Pose(20.0, 20.0)
             val SCALE_SAFETY = Pose(60.0, 90.0)
             val CLIMB = Pose(40.0, 0.0)
-            val NINE_INCHES = Pose(9.0, 0.0)
         }
     }
 
     class Animation(vararg keyframes: Pair<Double, Pose>) {
         companion object {
-            val INTAKE_TO_SCALE = Animation(0.0 to Pose.INTAKE, 0.25 to Pose.NINE_INCHES, 1.0 to Pose.CRITICAL_JUNCTION, 2.0 to Pose.SCALE)
+            val INTAKE_TO_SCALE = Animation(0.0 to Pose.INTAKE, 1.0 to Pose.CRITICAL_JUNCTION, 2.0 to Pose.SCALE)
             val INITIAL_TEST = Animation(0.0 to Pose.INTAKE, 2.0 to Pose.SWITCH)
         }
 

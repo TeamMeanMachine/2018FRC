@@ -1,16 +1,14 @@
 package org.team2471.frc.powerup
 
-import com.sun.org.apache.xpath.internal.operations.Bool
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.XboxController
 import kotlinx.coroutines.experimental.delay
-import org.team2471.frc.lib.control.experimental.Command
-import org.team2471.frc.lib.control.experimental.runWhen
-import org.team2471.frc.lib.control.experimental.runWhile
-import org.team2471.frc.lib.control.experimental.suspendUntil
+import org.team2471.frc.lib.control.experimental.*
 import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareWithSign
-import org.team2471.frc.powerup.commands.zeroCarriage
+import org.team2471.frc.powerup.commands.zero
+import org.team2471.frc.powerup.commands.softRelease
+import org.team2471.frc.powerup.commands.spit
 import org.team2471.frc.powerup.subsystems.Carriage
 import org.team2471.frc.powerup.subsystems.Wings
 
@@ -28,6 +26,7 @@ object Driver {
     val hardTurn: Double
         get() = -controller.getTriggerAxis(GenericHID.Hand.kLeft) + controller.getTriggerAxis(GenericHID.Hand.kRight)
 
+
     init {
 
         Command("Intake", Carriage) {
@@ -42,7 +41,7 @@ object Driver {
                 Carriage.Arm.intake = 0.0
             }
         }.runWhile { controller.getBumper(GenericHID.Hand.kRight) }
-        Command("Spit", Carriage) {
+        Command("Driver Spit", Carriage) {
             try {
                 Carriage.Arm.clamp = false
                 Carriage.Arm.intake = -1.0
@@ -65,7 +64,11 @@ object CoDriver {
 
     val rightStickUpDown: Double
         get() = -controller.getY(GenericHID.Hand.kRight)
-    //.deadband(.2)
+                .deadband(.2)
+
+
+    val spitSpeed: Double
+        get() = controller.getTriggerAxis(GenericHID.Hand.kRight)
 
     val grab: Boolean
         get() = controller.aButtonPressed
@@ -94,13 +97,13 @@ object CoDriver {
     init {
         println("Initialized")
         Command("DeployClimbGuide", Wings) {
-                Wings.climbingGuideDeployed = !Wings.climbingGuideDeployed
+            Wings.climbingGuideDeployed = !Wings.climbingGuideDeployed
         }.runWhen { controller.xButton }
 
-        zeroCarriage.runWhen { controller.backButton }
+        spit.runWhile { controller.getTriggerAxis(GenericHID.Hand.kRight) > 0.1 }
+
+        softRelease.runWhile { controller.getBumper(GenericHID.Hand.kRight) }
+
+        zero.toggleWhen { controller.backButton }
     }
-}
-
-fun startDriveTeamLogger() {
-
 }
