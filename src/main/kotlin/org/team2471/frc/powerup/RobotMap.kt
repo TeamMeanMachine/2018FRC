@@ -1,10 +1,12 @@
 package org.team2471.frc.powerup
 
+import edu.wpi.first.wpilibj.Compressor
 import edu.wpi.first.wpilibj.PowerDistributionPanel
 
 object RobotMap {
 
     val pdp = PowerDistributionPanel()
+    val compressor = Compressor()
 
     object Talons {
         const val RIGHT_DRIVE_MOTOR_1 = 15

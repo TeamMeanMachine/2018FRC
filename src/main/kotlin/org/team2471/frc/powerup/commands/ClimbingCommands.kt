@@ -16,7 +16,7 @@ val climbCommand = Command("Climb", Carriage, Drivetrain, Wings) {
     }
 
 
-    periodic(condition = { elevatorToTop.isCompleted && Carriage.amperage > 9.5 }) {
+    periodic(condition = { elevatorToTop.isCompleted && Carriage.Lifter.meanAmperage > 9.5 }) {
         Drivetrain.drive(Driver.throttle, Driver.softTurn, Driver.hardTurn)
     }
 }

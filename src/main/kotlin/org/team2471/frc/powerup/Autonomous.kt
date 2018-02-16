@@ -5,7 +5,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.experimental.delay
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.motion_profiling.Path2D
-import org.team2471.frc.powerup.commands.testLifter
 import org.team2471.frc.powerup.subsystems.Carriage
 import org.team2471.frc.powerup.subsystems.Drivetrain
 
@@ -151,7 +150,6 @@ object AutoChooser {
 
 val armTestAuto = Command("Testing Arm", Carriage){
     try {
-        testLifter.invoke(coroutineContext)
         Carriage.Arm.intake = -0.2
         Carriage.Arm.clamp = false
         delay(600)
