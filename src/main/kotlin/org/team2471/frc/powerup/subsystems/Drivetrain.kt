@@ -1,6 +1,7 @@
 package org.team2471.frc.powerup.subsystems
 
 import com.ctre.phoenix.motorcontrol.ControlMode
+import com.ctre.phoenix.motorcontrol.FeedbackDevice
 import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import edu.wpi.first.wpilibj.Timer
@@ -16,6 +17,7 @@ import org.team2471.frc.powerup.RobotMap
 
 object Drivetrain {
     private val leftMotors = TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_1).apply {
+        configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10)
         setNeutralMode(NeutralMode.Brake)
         configPeakCurrentLimit(25, 10)
         configContinuousCurrentLimit(20, 10)
@@ -24,21 +26,23 @@ object Drivetrain {
         inverted = true
         configOpenloopRamp(0.25, 10)
     } + TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_2).apply {
-        setNeutralMode(NeutralMode.Brake)
+        setNeutralMode(NeutralMode.Coast)
         configPeakCurrentLimit(25, 10)
         configContinuousCurrentLimit(20, 10)
         configPeakCurrentDuration(500, 10)
         enableCurrentLimit(true)
         inverted = true
     } + TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_3).apply {
-        setNeutralMode(NeutralMode.Brake)
+        setNeutralMode(NeutralMode.Coast)
         configPeakCurrentLimit(25, 10)
         configContinuousCurrentLimit(20, 10)
         configPeakCurrentDuration(500, 10)
         enableCurrentLimit(true)
         inverted = true
     }
+
     private val rightMotors = TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_1).apply {
+        configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10)
         setNeutralMode(NeutralMode.Brake)
         configPeakCurrentLimit(25, 10)
         configContinuousCurrentLimit(20, 10)
@@ -46,17 +50,27 @@ object Drivetrain {
         enableCurrentLimit(true)
         configOpenloopRamp(0.25, 10)
     } + TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_2).apply {
-        setNeutralMode(NeutralMode.Brake)
+        setNeutralMode(NeutralMode.Coast)
         configPeakCurrentLimit(25, 10)
         configContinuousCurrentLimit(20, 10)
         configPeakCurrentDuration(500, 10)
         enableCurrentLimit(true)
     } + TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_3).apply {
-        setNeutralMode(NeutralMode.Brake)
+        setNeutralMode(NeutralMode.Coast)
         configPeakCurrentLimit(25, 10)
         configContinuousCurrentLimit(20, 10)
         configPeakCurrentDuration(500, 10)
         enableCurrentLimit(true)
+    }
+
+    private const val TICKS_PER_REV = 783
+    private const val WHEEL_DIAMETER_INCHES = 5.0
+    fun ticksToFeet(ticks: Int) = ticks.toDouble() / TICKS_PER_REV * WHEEL_DIAMETER_INCHES * Math.PI / 12.0
+    fun feetToTicks(feet: Double) = feet * 12.0 / Math.PI / WHEEL_DIAMETER_INCHES * TICKS_PER_REV
+
+    private val rampRateCurve = MotionCurve().apply {
+        storeValue(Carriage.Pose.INTAKE.inches, 0.1)
+        storeValue(Carriage.Pose.SCALE_HIGH.inches, 0.45)
     }
 
     fun drive(throttle: Double, softTurn: Double, hardTurn: Double) {
@@ -69,9 +83,14 @@ object Drivetrain {
             rightPower /= maxPower
         }
 
+        val rampRate = rampRateCurve.getValue(Carriage.Lifter.height)
+        leftMotors.configOpenloopRamp(rampRate, 0)
+        rightMotors.configOpenloopRamp(rampRate, 0)
+
         leftMotors.set(ControlMode.PercentOutput, leftPower)
         rightMotors.set(ControlMode.PercentOutput, rightPower)
     }
+
     suspend fun driveDistance(distance: Double, time: Double) {
         val curve = MotionCurve()
         curve.storeValue(0.0, 0.0)
@@ -93,6 +112,7 @@ object Drivetrain {
             rightMotors.neutralOutput()
         }
     }
+
     suspend fun driveAlongPath(path2D: Path2D) {
         var leftDistance = 0.0
         var rightDistance = 0.0
@@ -113,11 +133,6 @@ object Drivetrain {
             rightMotors.neutralOutput()
         }
     }
-
-    private const val TICKS_PER_REV = 783
-    private const val WHEEL_DIAMETER_INCHES = 6.0
-    fun ticksToFeet(ticks: Int) = ticks.toDouble() / TICKS_PER_REV * WHEEL_DIAMETER_INCHES * Math.PI / 12.0
-    fun feetToTicks(feet: Double) = feet * 12.0 / Math.PI / WHEEL_DIAMETER_INCHES * TICKS_PER_REV
 
     init {
         CommandSystem.registerDefaultCommand(this, Command("Drivetrain Default", this) {

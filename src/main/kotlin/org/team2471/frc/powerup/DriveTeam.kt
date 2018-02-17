@@ -10,6 +10,7 @@ import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.powerup.commands.*
 import org.team2471.frc.powerup.subsystems.Wings
+import java.lang.Double.max
 
 object Driver {
     private val controller = XboxController(0)
@@ -33,22 +34,33 @@ object Driver {
     val hardTurn: Double
         get() = -controller.getTriggerAxis(GenericHID.Hand.kLeft) + controller.getTriggerAxis(GenericHID.Hand.kRight)
 
+    val intaking: Boolean
+        get() = controller.getBumper(GenericHID.Hand.kRight)
+
+    val acquireRung: Boolean
+        get() = controller.backButton
 
     init {
-        driverIntake.runWhile { controller.getBumper(GenericHID.Hand.kRight) }
+        driverIntake.runWhen { intaking }
         driverSpit.runWhile { controller.getBumper(GenericHID.Hand.kLeft) }
+        climbCommand.toggleWhen { controller.startButton }
     }
 }
-
 
 object CoDriver {
     private val controller = XboxController(1)
 
     var rumble = 0.0
         set(value) {
-            controller.setRumble(GenericHID.RumbleType.kLeftRumble, value)
-            controller.setRumble(GenericHID.RumbleType.kRightRumble, value)
+            controller.setRumble(GenericHID.RumbleType.kLeftRumble, max(value, passiveRumble))
+            controller.setRumble(GenericHID.RumbleType.kRightRumble, max(value, passiveRumble))
             field = value
+        }
+
+    var passiveRumble = 0.0
+        set(value) {
+            field = value
+            rumble = rumble
         }
 
     val leftStickUpDown: Double
@@ -58,7 +70,6 @@ object CoDriver {
     val rightStickUpDown: Double
         get() = -controller.getY(GenericHID.Hand.kRight)
                 .deadband(.2)
-
 
     val spitSpeed: Double
         get() = (controller.getTriggerAxis(GenericHID.Hand.kRight) * 0.8)
@@ -75,13 +86,12 @@ object CoDriver {
 
 
         zero.toggleWhen { controller.backButton }
-
+        goToSwitch.runWhen { controller.getStickButton(GenericHID.Hand.kRight) }
         goToScaleLowPreset.runWhen { controller.aButton }
-
         goToScaleMediumPreset.runWhen { controller.xButton }
-
         goToScaleHighPreset.runWhen { controller.yButton }
-
         returnToIntakePosition.runWhen { controller.bButton }
+        incrementScaleStackHeight.runWhen { controller.pov == 0 }
+        decrementScaleStackHeight.runWhen { controller.pov == 180 }
     }
 }

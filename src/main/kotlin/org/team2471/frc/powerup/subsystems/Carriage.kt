@@ -5,13 +5,15 @@ import com.ctre.phoenix.motorcontrol.FeedbackDevice
 import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.*
+import edu.wpi.first.wpilibj.AnalogInput
+import edu.wpi.first.wpilibj.DigitalInput
+import edu.wpi.first.wpilibj.Solenoid
+import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.experimental.launch
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.periodic
-import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.lib.control.plus
 import org.team2471.frc.lib.math.average
 import org.team2471.frc.lib.motion_profiling.MotionCurve
@@ -45,7 +47,8 @@ object Carriage {
                     val releaseClamp = CoDriver.release
                     Arm.clamp = !releaseClamp
                     val spit = CoDriver.spitSpeed
-                    Arm.intake = if (spit == 0.0) 0.2 else -spit
+
+                    Arm.intake = if (Arm.hasCube && spit == 0.0) 0.2 else -spit
 
                     val releasing = releaseClamp || spit != 0.0
                     if (!releasing && prevReleasing) returnToIntakePosition.launch()
@@ -61,9 +64,6 @@ object Carriage {
                     adjustAnimationTime(deltaTime * leftStick)
                     previousTime = currentTime
 
-                    if (RobotState.isEnabled())
-                        println("height setpoint: ${Lifter.heightSetpoint} | arm setpoint: ${Arm.setpoint}")
-
                     SmartDashboard.putNumberArray("Amperages", Lifter.amperages)
                     Lifter.isLowGear = false
                     Lifter.isBraking = false
@@ -71,7 +71,6 @@ object Carriage {
             } finally {
                 Arm.clamp = true
                 Arm.intake = 0.0
-
             }
         })
     }
@@ -83,9 +82,11 @@ object Carriage {
         SCALE_MED(33.0, 190.0),
         SCALE_HIGH(44.0, 190.0),
         IDLE(0.0, 90.0),
-        SWITCH(20.0, 20.0),
+        SWITCH(32.0, 20.0),
         SCALE_SAFETY(60.0, 90.0),
-        CLIMB(40.0, 0.0)
+        CLIMB(58.0, 0.0),
+        CLIMB_ACQUIRE_RUNG(26.0, 0.0),
+        FACE_THE_BOSS(8.0, 0.0),
     }
 
     fun adjustAnimationTime(dt: Double) {
@@ -93,14 +94,9 @@ object Carriage {
 
         Lifter.heightSetpoint = Lifter.curve.getValue(animationTime)
         Arm.setpoint = Arm.curve.getValue(animationTime)
-        if (RobotState.isEnabled()) {
-            println("Lifter: ${Lifter.heightSetpoint} Arm: ${Arm.setpoint}")
-            println("Animation Time: $animationTime")
-        }
-
     }
 
-    suspend fun animateToPose(height: Double, angle: Double) {
+    fun setAnimation(height: Double, angle: Double) {
         Lifter.curve = MotionCurve()
         Arm.curve = MotionCurve()
         Lifter.curve.storeValue(0.0, Lifter.height)
@@ -110,14 +106,15 @@ object Carriage {
         Arm.curve.storeValue(1.5, angle)
 
         animationTime = 0.0
+    }
+
+    suspend fun animateToPose(height: Double, angle: Double) {
+        setAnimation(height, angle)
 
         val timer = Timer()
         timer.start()
         var previousTime = 0.0
-        periodic(condition = {
-            println("Previous time: $previousTime, length: ${Lifter.curve.length}")
-            previousTime < Lifter.curve.length
-        }) {
+        periodic(condition = { previousTime < Lifter.curve.length }) {
             val time = timer.get()
             adjustAnimationTime(time - previousTime)
 
@@ -169,7 +166,7 @@ object Carriage {
 
         private val shifter = Solenoid(RobotMap.Solenoids.CARRIAGE_SHIFT)
 
-        private val magnetSensor = DigitalInput(0)
+        //private val magnetSensor = DigitalInput(0)
 
         init {
             launch {
@@ -253,16 +250,13 @@ object Carriage {
 
         init {
             launch {
-                val rawEntry = table.getEntry("Raw Angle")
-                val normalEntry = table.getEntry("Angle")
-                val errorEntry = table.getEntry("Error")
-                val setpointError = table.getEntry("Setpoint")
                 periodic {
-                    val raw = armMotors.getSelectedSensorPosition(0).toDouble()
-                    rawEntry.setDouble(raw)
-                    normalEntry.setDouble(ticksToDegrees(raw))
-//                    errorEntry.setDouble(armPID.error)
-//                    setpointError.setDouble(armPID.setpoint)
+                    if (cubeSensor.voltage < 0.15) {
+                        hasCube = true
+                    } else if (!clamp || intakeMotorLeft.motorOutputPercent < -0.1) {
+                        hasCube = false
+                    }
+                    CoDriver.passiveRumble = if (hasCube) 0.25 else 0.0
                 }
             }
         }
@@ -292,8 +286,8 @@ object Carriage {
             storeValue(1.5, Pose.SCALE_LOW.armAngle)
         }
 
-        val hasCube: Boolean
-            get() = cubeSensor.voltage < 0.15
+        var hasCube = false
+            private set
 
         var clamp: Boolean
             get() = !clawSolenoid.get()

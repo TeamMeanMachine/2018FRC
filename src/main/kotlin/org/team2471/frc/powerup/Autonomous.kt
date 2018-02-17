@@ -4,14 +4,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.experimental.delay
 import org.team2471.frc.lib.control.experimental.Command
-import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.powerup.subsystems.Carriage
-import org.team2471.frc.powerup.subsystems.Drivetrain
 
 
 object AutoChooser {
     private val dashboard = SendableChooser<Command>().apply {
-//        addDefault(driveStraightAuto.name, driveStraightAuto)
+        //        addDefault(driveStraightAuto.name, driveStraightAuto)
 //        addObject(circleTest.name, circleTest)
 //        addObject(middleScalePlusSwitch.name, middleScalePlusSwitch)
 //        addObject(rightScalePlusSwitch.name, rightScalePlusSwitch)
@@ -148,7 +146,7 @@ object AutoChooser {
 //    }
 //}
 
-val armTestAuto = Command("Testing Arm", Carriage){
+val armTestAuto = Command("Testing Arm", Carriage) {
     try {
         Carriage.Arm.intake = -0.2
         Carriage.Arm.clamp = false

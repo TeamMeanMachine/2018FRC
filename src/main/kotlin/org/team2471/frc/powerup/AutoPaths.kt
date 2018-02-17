@@ -57,34 +57,33 @@ val toSecondCube = Path2D().apply {
 val backFromFirstCube = Path2D().apply {
     setPathDefaults()
     travelDirection = -1.0
-        isMirrored = gameData[0] == 'R'
-        addPointAndTangent(0.0, 0.0, 0.0, -4.0)
-        addPointAndTangent(-2.0, -5.0, 0.0, -4.0)
-        addEasePoint(0.0, 0.0)
-        addEasePoint(1.9, 1.0)
+    isMirrored = gameData[0] == 'R'
+    addPointAndTangent(0.0, 0.0, 0.0, -4.0)
+    addPointAndTangent(-2.0, -5.0, 0.0, -4.0)
+    addEasePoint(0.0, 0.0)
+    addEasePoint(1.9, 1.0)
 }
 
 val backFromSecondCube = Path2D().apply {
     setPathDefaults()
     travelDirection = -1.0
-        isMirrored = gameData[0] == 'R'
-        addPointAndTangent(0.0, 0.0, 0.0, -4.0)
-        addPointAndTangent(-4.0, -5.0, 0.0, -4.0)
-        addEasePoint(0.0, 0.0)
-        addEasePoint(1.9, 1.0)
+    isMirrored = gameData[0] == 'R'
+    addPointAndTangent(0.0, 0.0, 0.0, -4.0)
+    addPointAndTangent(-4.0, -5.0, 0.0, -4.0)
+    addEasePoint(0.0, 0.0)
+    addEasePoint(1.9, 1.0)
 }
 
 val rightToScale = Path2D().apply {
     setPathDefaults()
     travelDirection = -1.0
-    if (gameData[1] == 'R'){
+    if (gameData[1] == 'R') {
         addPointAndTangent(0.0, 0.0, 0.0, -8.0)
         addPointAndTangent(2.0, -11.5, 0.5, 16.0)
         addPointAndTangent(3.75, -22.5, 0.0, -11.0)
         addEasePoint(0.0, 0.0)
         addEasePoint(3.0, 1.0)
-    }
-    else{
+    } else {
         addPointAndTangent(0.0, 0.0, 0.0, -8.0)
         addPointAndTangent(2.0, -17.0, 10.0, 0.0)
         addPointAndTangent(16.75, -17.0, 0.0, 11.0)
@@ -98,14 +97,13 @@ val rightToScale = Path2D().apply {
 val leftToScale = Path2D().apply {
     setPathDefaults()
     travelDirection = -1.0
-    if (gameData[1] == 'L'){
-        addPointAndTangent(0.0, 0.0, 0.0,  -8.0)
+    if (gameData[1] == 'L') {
+        addPointAndTangent(0.0, 0.0, 0.0, -8.0)
         addPointAndTangent(-2.0, -11.5, -0.5, 16.0)
         addPointAndTangent(-3.75, -22.5, 0.0, -11.0)
         addEasePoint(0.0, 0.0)
         addEasePoint(3.0, 1.0)
-    }
-    else{ // if scale is far side, maybe go to switch first, then scale?
+    } else { // if scale is far side, maybe go to switch first, then scale?
         addPointAndTangent(0.0, 0.0, 0.0, -8.0)
         addPointAndTangent(-2.0, -17.0, 10.0, 0.0)
         addPointAndTangent(-16.75, -17.0, 0.0, 11.0)

@@ -27,7 +27,6 @@ object RobotMap {
         const val INTAKE_MOTOR_LEFT = 9
         const val INTAKE_MOTOR_RIGHT = 8
 
-
     }
 
     object Solenoids {
@@ -42,5 +41,9 @@ object RobotMap {
         const val TENSION = 1
 
         const val INTAKE_CLAW = 2
+    }
+
+    object DIO {
+        const val CLIMB_BUTTON = 0
     }
 }
