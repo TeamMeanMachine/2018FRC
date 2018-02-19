@@ -14,11 +14,11 @@ import org.team2471.frc.powerup.subsystems.Wings
 
 val climbCommand = Command("Climb", Carriage, Drivetrain, Wings) {
     val acquireRung = launch(coroutineContext) {
-        Carriage.animateToPose(Carriage.Pose.CLIMB.inches, Carriage.Pose.CLIMB.armAngle)
+        Carriage.animateToPose(Carriage.Pose.CLIMB)
         println("Carriage Up")
         suspendUntil { Driver.acquireRung }
         println("Button Recieved")
-        Carriage.animateToPose(Carriage.Pose.CLIMB_ACQUIRE_RUNG.inches, Carriage.Pose.CLIMB_ACQUIRE_RUNG.armAngle)
+        Carriage.animateToPose(Carriage.Pose.CLIMB_ACQUIRE_RUNG)
         println("Arm Move Down")
     }
 
@@ -32,7 +32,7 @@ val climbCommand = Command("Climb", Carriage, Drivetrain, Wings) {
         Carriage.Lifter.isLowGear = true
         Wings.wingsDeployed = true
 
-        Carriage.setAnimation(Carriage.Pose.FACE_THE_BOSS.inches, Carriage.Pose.FACE_THE_BOSS.armAngle)
+        Carriage.setAnimation(Carriage.Pose.FACE_THE_BOSS)
 
         val timer = Timer()
         timer.start()

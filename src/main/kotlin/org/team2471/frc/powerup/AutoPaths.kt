@@ -4,8 +4,8 @@ import edu.wpi.first.wpilibj.DriverStation
 import org.team2471.frc.lib.motion_profiling.Path2D
 
 fun Path2D.setPathDefaults() {
-    val tankDriveFudgeFactor = 1.097
-    robotWidth = 35.0 / 12.0 * tankDriveFudgeFactor
+    val tankDriveFudgeFactor = 1.12
+    robotWidth = 25.0 / 12.0 * tankDriveFudgeFactor
     println(gameData)
     //isMirrored = gameData[1] == 'L' // can't be true because of side to scale
 }
@@ -111,4 +111,20 @@ val leftToScale = Path2D().apply {
         addEasePoint(0.0, 0.0)
         addEasePoint(5.0, 1.0)
     }
+}
+
+val circle = Path2D().apply {
+    setPathDefaults()
+    name = "Circle"
+    travelDirection = 1.0
+    val tangentLength = 6.0
+
+    addPointAndTangent(0.0, 0.0, 0.0, tangentLength)
+    addPointAndTangent(4.0, 4.0, tangentLength, 0.0)
+    addPointAndTangent(8.0, 0.0, 0.0, -tangentLength)
+    addPointAndTangent(4.0, -4.0, -tangentLength, 0.0)
+    addPointAndTangent(0.0, 0.0, 0.0, tangentLength)
+
+    addEasePoint(0.0, 0.0)
+    addEasePoint(16.0, 1.0)
 }

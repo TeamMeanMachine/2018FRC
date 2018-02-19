@@ -1,158 +1,88 @@
 package org.team2471.frc.powerup
 
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import kotlinx.coroutines.experimental.CancellationException
 import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
 import org.team2471.frc.lib.control.experimental.Command
+import org.team2471.frc.lib.control.experimental.periodic
+import org.team2471.frc.lib.motion_profiling.Autonomi
+import org.team2471.frc.lib.motion_profiling.Autonomous
 import org.team2471.frc.powerup.subsystems.Carriage
+import org.team2471.frc.powerup.subsystems.Drivetrain
 
+private fun Autonomi.getAutoOrCancel(autoName: String) =
+        this[autoName] ?: run {
+            val message = "Failed to find auto $autoName"
+            DriverStation.reportError(message, false)
+            throw CancellationException(message)
+        }
+
+private fun Autonomous.getPathOrCancel(pathName: String) =
+        this[pathName] ?: run {
+            val message = "Failed to find path $pathName"
+            DriverStation.reportError(message, false)
+            throw CancellationException(message)
+        }
 
 object AutoChooser {
     private val dashboard = SendableChooser<Command>().apply {
-        //        addDefault(driveStraightAuto.name, driveStraightAuto)
-//        addObject(circleTest.name, circleTest)
+        addDefault(driveStraightAuto.name, driveStraightAuto)
+        addObject(circleTest.name, circleTest)
+        addObject(rightScScSc.name, rightScScSc)
 //        addObject(middleScalePlusSwitch.name, middleScalePlusSwitch)
 //        addObject(rightScalePlusSwitch.name, rightScalePlusSwitch)
 //        addObject(leftScalePlusSwitch.name, leftScalePlusSwitch)
 //        addObject(middleSuperScale.name, middleSuperScale)
 //        addObject(rightSuperScale.name, rightSuperScale)
 //        addObject(leftSuperScale.name, leftSuperScale)
-        addDefault(armTestAuto.name, armTestAuto)
+//        addDefault(armTestAuto.name, armTestAuto)
 
         SmartDashboard.putData("Auto Chooser", this)
     }
-    val chosenAuto: Command?
-        get() = dashboard.selected
+    val auto: Command
+        get() = Command("Autonomous", Drivetrain, Carriage) {
+            Carriage.Arm.stop()
+            Carriage.Lifter.stop()
+            dashboard.selected?.invoke(coroutineContext)
+        }
 }
-//
-//val driveStraightAuto = Command("Drive Straight Auto", Drivetrain) {
-//    Drivetrain.driveDistance(10.0, 2.0)
-//}
-//
-//val circleTest = Command("Circle Test Auto", Drivetrain) {
-//    Drivetrain.driveAlongPath(Path2D().apply {
-//        travelDirection = 1.0
-//        val tankDriveFudgeFactor = 1.097  // bigger factor will turn more, smaller less
-//        robotWidth = 35.0 / 12.0 * tankDriveFudgeFactor  // width in inches turned into feet
-//        val tangent = 6.0
-//        isMirrored = true
-//
-//        addPointAndTangent(0.0, 0.0, 0.0, tangent)
-//        addPointAndTangent(4.0, 4.0, tangent, 0.0)
-//        addPointAndTangent(8.0, 0.0, 0.0, -tangent)
-//        addPointAndTangent(4.0, -4.0, -tangent, 0.0)
-//        addPointAndTangent(0.0, 0.0, 0.0, tangent)
-//
-//        addEasePoint(0.0, 0.0)
-//        addEasePoint(16.0, 1.0)
-//    })
-//}
-//
-//val middleScalePlusSwitch = Command("Middle Scale plus Switch Auto", Drivetrain, Carriage) {
-//    try {
-//        Drivetrain.driveAlongPath(centerToScale)
-//        dropOffToScaleAuto
-//        Carriage.Arm.playAnimation(Carriage.Arm.Animation.SCALE_TO_INTAKE)
-//        Drivetrain.driveAlongPath(fromScaleToSwitch)
-//        Carriage.Arm.intake = 1.0
-//        Carriage.Arm.clamp = true
-//        Carriage.Arm.playAnimation(Carriage.Arm.Animation.INTAKE_TO_SWITCH)
-//        Carriage.Arm.intake = -1.0
-//    } finally {
-//        Carriage.Arm.intake = 0.0
-//    }
-//}
-//
-//val rightScalePlusSwitch = Command("Right Scale plus Switch Auto", Drivetrain, Carriage) {
-//    try {
-//        Drivetrain.driveAlongPath(rightToScale)
-//        dropOffToScaleAuto
-//        Drivetrain.driveAlongPath(fromScaleToSwitch)
-//        Carriage.Arm.clamp = true
-//        Carriage.Arm.playAnimation(Carriage.Arm.Animation.INTAKE_TO_SWITCH)
-//        Carriage.Arm.intake = -1.0
-//    } finally {
-//        Carriage.Arm.intake = 0.0
-//    }
-//}
-//
-//val leftScalePlusSwitch = Command("Left Scale plus Switch Auto", Drivetrain, Carriage) {
-//    try {
-//        Drivetrain.driveAlongPath(leftToScale)
-//        dropOffToScaleAuto
-//        Drivetrain.driveAlongPath(fromScaleToSwitch)
-//        Carriage.Arm.clamp = true
-//        Carriage.Arm.playAnimation(Carriage.Arm.Animation.INTAKE_TO_SWITCH)
-//        Carriage.Arm.intake = -1.0
-//    } finally {
-//        Carriage.Arm.intake = 0.0
-//    }
-//}
-////scale - switch - scale - scale - scale...
-//val middleSuperScale = Command("Middle Super Scale Auto", Drivetrain, Carriage){
-//    try {
-//        Drivetrain.driveAlongPath(centerToScale)
-//        dropOffToScaleAuto
-//        Drivetrain.driveAlongPath(fromScaleToSwitch)
-//        Carriage.Arm.clamp = true
-//        Carriage.Arm.playAnimation(Carriage.Arm.Animation.INTAKE_TO_SCALE)
-//        Drivetrain.driveAlongPath(backFromFirstCube)
-//        dropOffToScaleAuto
-//        Drivetrain.driveAlongPath(toSecondCube)
-//        Carriage.Arm.clamp = true
-//        Carriage.Arm.playAnimation(Carriage.Arm.Animation.INTAKE_TO_SCALE)
-//        Drivetrain.driveAlongPath(backFromSecondCube)
-//        dropOffToScaleAuto
-//    } finally {
-//        Carriage.Arm.intake = 0.0
-//    }
-//}
-//
-//val rightSuperScale = Command("Right Super Scale Auto", Drivetrain, Carriage){
-//    try {
-//        Drivetrain.driveAlongPath(rightToScale)
-//        dropOffToScaleAuto
-//        Drivetrain.driveAlongPath(fromScaleToSwitch)
-//        Carriage.Arm.clamp = true
-//        Carriage.Arm.playAnimation(Carriage.Arm.Animation.INTAKE_TO_SCALE)
-//        Drivetrain.driveAlongPath(backFromFirstCube)
-//        dropOffToScaleAuto
-//        Drivetrain.driveAlongPath(toSecondCube)
-//        Carriage.Arm.clamp = true
-//        Carriage.Arm.playAnimation(Carriage.Arm.Animation.INTAKE_TO_SCALE)
-//        Drivetrain.driveAlongPath(backFromSecondCube)
-//        dropOffToScaleAuto
-//    } finally {
-//        Carriage.Arm.intake = 0.0
-//    }
-//}
-//
-//val leftSuperScale = Command("Left Super Scale Auto", Drivetrain, Carriage){
-//    try {
-//        Drivetrain.driveAlongPath(leftToScale)
-//        dropOffToScaleAuto
-//        Drivetrain.driveAlongPath(fromScaleToSwitch)
-//        Carriage.Arm.clamp = true
-//        Carriage.Arm.playAnimation(Carriage.Arm.Animation.INTAKE_TO_SCALE)
-//        Drivetrain.driveAlongPath(backFromFirstCube)
-//        dropOffToScaleAuto
-//        Drivetrain.driveAlongPath(toSecondCube)
-//        Carriage.Arm.clamp = true
-//        Carriage.Arm.playAnimation(Carriage.Arm.Animation.INTAKE_TO_SCALE)
-//        Drivetrain.driveAlongPath(backFromSecondCube)
-//        dropOffToScaleAuto
-//    } finally {
-//        Carriage.Arm.intake = 0.0
-//    }
-//}
 
-val armTestAuto = Command("Testing Arm", Carriage) {
+val driveStraightAuto = Command("Drive Straight Auto", Drivetrain) {
+    launch(coroutineContext) {
+        Carriage.animateToPose(Carriage.Pose.INTAKE)
+    }
+    Drivetrain.driveDistance(10.0, 4.0)
+}
+
+val rightScScSc = Command("RightScScSc", Drivetrain, Carriage) {
+    val autonomous = autonomi.getAutoOrCancel("RightScScSc")
+    launch(coroutineContext) {
+        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("RightToNearScale"))
+    }
+    delay(3500)
+    Carriage.animateToPose(Carriage.Pose.SCALE_MED)
+    Carriage.Arm.isClamping = false
     try {
-        Carriage.Arm.intake = -0.2
-        Carriage.Arm.clamp = false
-        delay(600)
+        delay(200)
+        launch(coroutineContext) {
+            Carriage.animateToPose(Carriage.Pose.INTAKE)
+        }
+        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("RightScaleToCube1"))
     } finally {
-        Carriage.Arm.clamp = true
-        Carriage.Arm.intake = 0.0
+        Carriage.Arm.isClamping = true
+    }
+}
+
+val circleTest = Command("Circle Test Auto", Drivetrain) {
+    Drivetrain.driveAlongPath(circle)
+}
+
+val driveTuner = Command("Drive Train Tuner", Drivetrain) {
+    Drivetrain.zeroDistance()
+    periodic {
+        Drivetrain.setDistance(Driver.throttle * 2.0)
     }
 }

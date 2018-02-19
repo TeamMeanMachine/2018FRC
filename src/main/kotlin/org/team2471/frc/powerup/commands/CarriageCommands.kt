@@ -15,51 +15,62 @@ import java.lang.Math.min
 val zero = Command("Carriage Zero", Carriage) {
     try {
         Carriage.Arm.setpoint = 45.0
+        Carriage.Lifter.isBraking = false
+        Carriage.Lifter.isLowGear = false
         periodic {
             Carriage.Lifter.heightRawSpeed = CoDriver.leftStickUpDown * 0.4
-            println("Height: ${Carriage.Lifter.height}")
         }
     } finally {
         Carriage.Lifter.zero()
+        Carriage.Lifter.isBraking = true
+        Carriage.Lifter.isLowGear = true
     }
 }
 
 private val scaleStackHeight get() = SmartDashboard.getNumber("Scale Stack Height", 0.0)
 
 val goToSwitch = Command("Switch Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.SWITCH.inches, Carriage.Pose.SWITCH.armAngle)
+    Carriage.animateToPose(Carriage.Pose.SWITCH)
 }
 
 val goToScaleLowPreset = Command("Scale Low Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.SCALE_LOW.inches + 11 * scaleStackHeight, Carriage.Pose.SCALE_LOW.armAngle)
+    Carriage.animateToPose(Carriage.Pose.SCALE_LOW)
 }
 
 val goToScaleMediumPreset = Command("Scale Medium Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.SCALE_MED.inches + 11 * scaleStackHeight, Carriage.Pose.SCALE_MED.armAngle)
+    Carriage.animateToPose(Carriage.Pose.SCALE_MED)
 }
 
 val goToScaleHighPreset = Command("Scale High Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.SCALE_HIGH.inches + 11 * scaleStackHeight, Carriage.Pose.SCALE_HIGH.armAngle)
+    Carriage.animateToPose(Carriage.Pose.SCALE_HIGH)
+}
+
+val goToIntakePreset = Command("Intake Preset", Carriage) {
+    Carriage.animateToPose(Carriage.Pose.INTAKE)
+}
+
+val goToCarryPreset = Command("Carry Preset", Carriage) {
+    Carriage.animateToPose(Carriage.Pose.CARRY)
 }
 
 val returnToIntakePosition = Command("Return to Intake Position", Carriage) {
     launch(coroutineContext) {
         try {
-            Carriage.Arm.clamp = false
+            Carriage.Arm.isClamping = false
             delay(500)
         } finally {
-            Carriage.Arm.clamp = true
+            Carriage.Arm.isClamping = true
         }
     }
-    Carriage.animateToPose(Carriage.Pose.INTAKE.inches, Carriage.Pose.INTAKE.armAngle)
+    Carriage.animateToPose(Carriage.Pose.INTAKE)
 }
 
 val driverIntake = Command("Intake", Carriage) {
     try {
-        Carriage.Arm.clamp = false
+        Carriage.Arm.isClamping = false
         Carriage.Arm.intake = 0.6
         suspendUntil { Carriage.Arm.hasCube || !Driver.intaking }
-        Carriage.Arm.clamp = true
+        Carriage.Arm.isClamping = true
 
         if (Carriage.Arm.hasCube) {
             launch {
@@ -75,19 +86,18 @@ val driverIntake = Command("Intake", Carriage) {
         }
 
         delay(800)
+        Carriage.animateToPose(Carriage.Pose.CARRY)
     } finally {
-        Carriage.Arm.clamp = true
+        Carriage.Arm.isClamping = true
         Carriage.Arm.intake = 0.0
     }
 }
 
 val driverSpit = Command("Driver Spit", Carriage) {
     try {
-        Carriage.Arm.clamp = false
-        Carriage.Arm.intake = -0.5
+        Carriage.Arm.intake = -0.8
         delay(Long.MAX_VALUE)
     } finally {
-        Carriage.Arm.clamp = true
         Carriage.Arm.intake = 0.0
     }
 }

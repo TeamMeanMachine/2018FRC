@@ -1,6 +1,7 @@
 package org.team2471.frc.powerup
 
 import edu.wpi.first.wpilibj.GenericHID
+import edu.wpi.first.wpilibj.RobotState
 import edu.wpi.first.wpilibj.XboxController
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.runWhen
@@ -17,8 +18,9 @@ object Driver {
 
     var rumble = 0.0
         set(value) {
-            controller.setRumble(GenericHID.RumbleType.kLeftRumble, value)
-            controller.setRumble(GenericHID.RumbleType.kRightRumble, value)
+            val result = if (RobotState.isEnabled()) value else 0.0
+            controller.setRumble(GenericHID.RumbleType.kLeftRumble, result)
+            controller.setRumble(GenericHID.RumbleType.kRightRumble, result)
             field = value
         }
 
@@ -32,7 +34,7 @@ object Driver {
                 .deadband(0.2)
 
     val hardTurn: Double
-        get() = -controller.getTriggerAxis(GenericHID.Hand.kLeft) + controller.getTriggerAxis(GenericHID.Hand.kRight)
+        get() = (-controller.getTriggerAxis(GenericHID.Hand.kLeft) + controller.getTriggerAxis(GenericHID.Hand.kRight))
 
     val intaking: Boolean
         get() = controller.getBumper(GenericHID.Hand.kRight)
@@ -41,6 +43,7 @@ object Driver {
         get() = controller.backButton
 
     init {
+        driveTuner.toggleWhen { controller.getStickButton(GenericHID.Hand.kLeft) }
         driverIntake.runWhen { intaking }
         driverSpit.runWhile { controller.getBumper(GenericHID.Hand.kLeft) }
         climbCommand.toggleWhen { controller.startButton }
@@ -52,8 +55,9 @@ object CoDriver {
 
     var rumble = 0.0
         set(value) {
-            controller.setRumble(GenericHID.RumbleType.kLeftRumble, max(value, passiveRumble))
-            controller.setRumble(GenericHID.RumbleType.kRightRumble, max(value, passiveRumble))
+            val result = if (RobotState.isEnabled()) max(value, passiveRumble) else 0.0
+            controller.setRumble(GenericHID.RumbleType.kLeftRumble, result)
+            controller.setRumble(GenericHID.RumbleType.kRightRumble, result)
             field = value
         }
 
@@ -72,25 +76,24 @@ object CoDriver {
                 .deadband(.2)
 
     val spitSpeed: Double
-        get() = (controller.getTriggerAxis(GenericHID.Hand.kRight) * 0.8)
-                .squareWithSign()
+        get() = Math.max(controller.getTriggerAxis(GenericHID.Hand.kRight) * 0.8,
+                controller.getTriggerAxis(GenericHID.Hand.kLeft) * 0.4)
 
     val release: Boolean
         get() = controller.getBumper(GenericHID.Hand.kRight)
 
     init {
         println("Initialized")
-        Command("DeployClimbGuide", Wings) {
-            Wings.climbingGuideDeployed = !Wings.climbingGuideDeployed
-        }.runWhen { controller.getBumper(GenericHID.Hand.kLeft) }
-
+//        Command("DeployClimbGuide", Wings) {
+//            Wings.climbingGuideDeployed = !Wings.climbingGuideDeployed
+//        }.runWhen { controller.getBumper(GenericHID.Hand.kLeft) }
 
         zero.toggleWhen { controller.backButton }
         goToSwitch.runWhen { controller.getStickButton(GenericHID.Hand.kRight) }
         goToScaleLowPreset.runWhen { controller.aButton }
         goToScaleMediumPreset.runWhen { controller.xButton }
         goToScaleHighPreset.runWhen { controller.yButton }
-        returnToIntakePosition.runWhen { controller.bButton }
+        goToIntakePreset.runWhen { controller.bButton }
         incrementScaleStackHeight.runWhen { controller.pov == 0 }
         decrementScaleStackHeight.runWhen { controller.pov == 180 }
     }
