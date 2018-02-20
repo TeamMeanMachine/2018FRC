@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.experimental.CancellationException
+import kotlinx.coroutines.experimental.cancelAndJoin
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import org.team2471.frc.lib.control.experimental.Command
@@ -65,58 +66,55 @@ val driveStraightAuto = Command("Drive Straight Auto", Drivetrain) {
 
 val rightScScSc = Command("RightScScSc", Drivetrain, Carriage) {
     val autonomous = autonomi.getAutoOrCancel("RightScScSc")
-//
-//    launch(coroutineContext) {
-//        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("RightToNearScale"))
-//    }
-//    delay(3500)
-//    Carriage.animateToPose(Carriage.Pose.SCALE_MED)
-//    Carriage.Arm.intake = -0.4
+
+    launch(coroutineContext) {
+        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("RightToNearScale"))
+    }
+    delay(3000)
+    Carriage.animateToPose(Carriage.Pose.SCALE_MED)
+    Carriage.Arm.intake = -0.4
     try {
         delay(200)
-//        Carriage.Arm.isClamping = false
-////        launch(coroutineContext) {
-////            Carriage.animateToPose(Carriage.Pose.INTAKE)
-////        }
-//        Carriage.animateToPose(Carriage.Pose.INTAKE)
-//        Carriage.Arm.intake = 0.7
-//        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("RightScaleToCube1"))
-//        Carriage.Arm.isClamping = true
-//        delay(350)
-//        Carriage.Arm.intake = 0.2
-//
-////        launch(coroutineContext) {
-////            Carriage.animateToPose(Carriage.Pose.SCALE_MED)
-////        }
-//
-//        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("Cube1ToRightScale"))
-//        Carriage.animateToPose(Carriage.Pose.SCALE_MED)
-//        Carriage.Arm.intake = -0.1
-//        delay(200)
-//        Carriage.Arm.isClamping = false
-//
-////        launch(coroutineContext) {
-////            Carriage.animateToPose(Carriage.Pose.INTAKE)
-////        }
-//
-//        Carriage.animateToPose(Carriage.Pose.INTAKE)
-//        Carriage.Arm.intake = 0.7
-//        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("RightScaleToCube2"))
-//        Carriage.Arm.isClamping = true
-//        delay(350)
-//        Carriage.Arm.intake = 0.2
-//
-////        launch(coroutineContext) {
-////            Carriage.animateToPose(Carriage.Pose.SCALE_MED)
-////        }
+        Carriage.Arm.isClamping = false
+        var animate = launch(coroutineContext) {
+            Carriage.animateToPose(Carriage.Pose.INTAKE, 1.3)
+        }
 
-        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("Cube2ToRightScale"))
-        Carriage.animateToPose(Carriage.Pose.SCALE_MED)
-        Carriage.Arm.intake = -0.1
+        Carriage.Arm.intake = 0.7
+        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("RightScaleToCube1"))
+        animate.cancelAndJoin()
+        Carriage.Arm.isClamping = true
+        delay(350)
+        Carriage.Arm.intake = 0.2
+
+        animate = launch(coroutineContext) {
+            Carriage.animateToPose(Carriage.Pose.SCALE_LOW, 1.0)
+        }
+
+        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("Cube1ToRightScale"))
+        Carriage.Arm.intake = -0.2
         delay(200)
+        animate.cancelAndJoin()
         Carriage.Arm.isClamping = false
 
-        Carriage.animateToPose(Carriage.Pose.INTAKE)
+        animate = launch(coroutineContext) {
+            Carriage.animateToPose(Carriage.Pose.INTAKE, 0.7)
+            Carriage.Arm.intake = 0.8
+        }
+
+        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("RightScaleToCube2"))
+        Carriage.Arm.isClamping = true
+        animate.cancelAndJoin()
+        delay(350)
+        Carriage.Arm.intake = 0.2
+
+        launch(coroutineContext) {
+            Carriage.animateToPose(Carriage.Pose.SWITCH, 0.6)
+        }
+        Drivetrain.turnInPlace(35.0, 0.5)
+        Drivetrain.driveDistance(0.5, 0.3, false)
+        Carriage.Arm.intake = -0.4
+        delay(1000)
     } finally {
         Carriage.Arm.isClamping = true
         Carriage.Arm.intake = 0.0

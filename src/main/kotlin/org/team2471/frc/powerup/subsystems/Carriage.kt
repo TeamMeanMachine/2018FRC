@@ -83,11 +83,12 @@ object Carriage {
         SCALE_MED(33.0, 185.0),
         SCALE_HIGH(44.0, 185.0),
         CARRY(10.0, 0.0),
-        SWITCH(32.0, 15.0),
+        SWITCH(34.0, 15.0),
         CLIMB(58.0, 0.0),
         CLIMB_ACQUIRE_RUNG(26.0, 0.0),
         FACE_THE_BOSS(3.0, 0.0),
         STARTING_POSITION(6.0, 110.0),
+        FANCY_SCHMANCY_64_INCH_PRESET(64.0, 185.0),
     }
 
     fun adjustAnimationTime(dt: Double) {
@@ -97,20 +98,20 @@ object Carriage {
         Arm.setpoint = Arm.curve.getValue(animationTime)
     }
 
-    fun setAnimation(pose: Pose) {
+    fun setAnimation(pose: Pose, time: Double = 1.5) {
         Lifter.curve = MotionCurve()
         Arm.curve = MotionCurve()
         Lifter.curve.storeValue(0.0, Lifter.height)
-        Lifter.curve.storeValue(1.5, pose.lifterHeight)
+        Lifter.curve.storeValue(time, pose.lifterHeight)
 
         Arm.curve.storeValue(0.0, Arm.angle)
-        Arm.curve.storeValue(1.5, pose.armAngle)
+        Arm.curve.storeValue(time, pose.armAngle)
 
         animationTime = 0.0
     }
 
-    suspend fun animateToPose(pose: Pose) {
-        setAnimation(pose)
+    suspend fun animateToPose(pose: Pose, time: Double = 1.5) {
+        setAnimation(pose, time)
 
         val timer = Timer()
         timer.start()
@@ -179,12 +180,15 @@ object Carriage {
         init {
             launch {
                 val heightEntry = table.getEntry("Height")
+                val outputEntry = table.getEntry("Output")
                 periodic(100) {
                     // don't run the compressor when the carriage exceeds 3V
                     if (!RobotState.isAutonomous()) {
                         RobotMap.compressor.closedLoopControl = motors.motorOutputVoltage.absoluteValue < 3.0
                     }
                     heightEntry.setDouble(height)
+                    if (RobotState.isEnabled())
+                        outputEntry.setDouble(motors.motorOutputPercent)
                 }
             }
         }
@@ -290,6 +294,7 @@ object Carriage {
         init {
             launch {
                 val angleEntry = table.getEntry("Angle")
+                val outputEntry = table.getEntry("Output")
 
                 periodic(40) {
                     if (cubeSensorTriggered) {
@@ -299,6 +304,8 @@ object Carriage {
                     }
                     CoDriver.passiveRumble = if (hasCube) .15 else 0.0
 
+                    if (RobotState.isEnabled())
+                        outputEntry.setNumber(motors.motorOutputPercent)
                     angleEntry.setDouble(angle)
                 }
             }

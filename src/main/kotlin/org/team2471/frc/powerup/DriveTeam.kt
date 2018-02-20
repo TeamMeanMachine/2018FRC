@@ -3,14 +3,12 @@ package org.team2471.frc.powerup
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.RobotState
 import edu.wpi.first.wpilibj.XboxController
-import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.runWhen
 import org.team2471.frc.lib.control.experimental.runWhile
 import org.team2471.frc.lib.control.experimental.toggleWhen
 import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.powerup.commands.*
-import org.team2471.frc.powerup.subsystems.Wings
 import java.lang.Double.max
 
 object Driver {
@@ -94,7 +92,9 @@ object CoDriver {
         goToScaleMediumPreset.runWhen { controller.xButton }
         goToScaleHighPreset.runWhen { controller.yButton }
         goToIntakePreset.runWhen { controller.bButton }
+        goTo64InchPreset.runWhen { controller.getStickButton(GenericHID.Hand.kLeft) }
         incrementScaleStackHeight.runWhen { controller.pov == 0 }
         decrementScaleStackHeight.runWhen { controller.pov == 180 }
+
     }
 }

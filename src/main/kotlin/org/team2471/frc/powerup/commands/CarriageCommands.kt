@@ -14,7 +14,7 @@ import java.lang.Math.min
 
 val zero = Command("Carriage Zero", Carriage) {
     try {
-        Carriage.Arm.setpoint = 120.0
+        Carriage.Arm.setpoint = 100.0
         Carriage.Lifter.isBraking = false
         Carriage.Lifter.isLowGear = false
         periodic {
@@ -49,10 +49,9 @@ val goToIntakePreset = Command("Intake Preset", Carriage) {
     Carriage.animateToPose(Carriage.Pose.INTAKE)
 }
 
-val goToCarryPreset = Command("Carry Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.CARRY)
+val goTo64InchPreset = Command("60 Inch Preset", Carriage) {
+    Carriage.animateToPose(Carriage.Pose.FANCY_SCHMANCY_64_INCH_PRESET)
 }
-
 val returnToIntakePosition = Command("Return to Intake Position", Carriage) {
     launch(coroutineContext) {
         try {
@@ -86,7 +85,7 @@ val driverIntake = Command("Intake", Carriage) {
         }
 
         delay(800)
-        Carriage.animateToPose(Carriage.Pose.CARRY)
+        if (Carriage.Arm.hasCube) Carriage.animateToPose(Carriage.Pose.CARRY)
     } finally {
         Carriage.Arm.isClamping = true
         Carriage.Arm.intake = 0.0

@@ -9,7 +9,7 @@ import org.team2471.frc.lib.util.measureTimeFPGA
 import org.team2471.frc.powerup.subsystems.Carriage
 import org.team2471.frc.powerup.subsystems.Drivetrain
 
-const val IS_COMP_BOT = false
+const val IS_COMP_BOT = true
 
 lateinit var autonomi: Autonomi
 

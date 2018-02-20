@@ -1,6 +1,7 @@
 package org.team2471.frc.powerup.commands
 
 import edu.wpi.first.wpilibj.Timer
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.experimental.launch
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.periodic
@@ -30,7 +31,7 @@ val climbCommand = Command("Climb", Carriage, Drivetrain, Wings) {
         println("Stage 2")
         Drivetrain.drive(0.0, 0.0, 0.0)
         Carriage.Lifter.isLowGear = true
-        Wings.wingsDeployed = true
+        Wings.wingsDeployed = SmartDashboard.getBoolean("Deploy Wings", true)
 
         Carriage.setAnimation(Carriage.Pose.FACE_THE_BOSS)
 

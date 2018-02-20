@@ -8,7 +8,6 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import kotlinx.coroutines.experimental.launch
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.periodic
@@ -114,7 +113,7 @@ object Drivetrain {
         rightMotors.set(ControlMode.PercentOutput, rightPower)
     }
 
-    suspend fun driveDistance(distance: Double, time: Double) {
+    suspend fun driveDistance(distance: Double, time: Double, suspend: Boolean = true) {
         val curve = MotionCurve()
         curve.storeValue(0.0, 0.0)
         curve.storeValue(time, distance)
@@ -131,7 +130,29 @@ object Drivetrain {
                 rightMotors.set(ControlMode.Position, feetToTicks(v))
             }
 
-            suspendUntil { Math.abs(leftPosition - distance) < 0.1 && Math.abs(rightPosition - distance) < 0.1 }
+            if (suspend)
+                suspendUntil { Math.abs(leftPosition - distance) < 0.1 && Math.abs(rightPosition - distance) < 0.1 }
+        } finally {
+            leftMotors.neutralOutput()
+            rightMotors.neutralOutput()
+        }
+    }
+
+    suspend fun turnInPlace(angle: Double, time: Double) {
+        val curve = MotionCurve()
+        val robotWidth = 25.0 / 12.0
+        val dist = ((Math.PI * robotWidth) / 360) * angle
+        curve.storeValue(0.0, 0.0)
+        curve.storeValue(time, dist)
+        zeroDistance()
+        val timer = Timer().apply { start() }
+        try {
+            periodic(condition = { timer.get() <= time }) {
+                val t = timer.get()
+                val v = curve.getValue(t)
+                leftMotors.set(ControlMode.Position, feetToTicks(-v))
+                rightMotors.set(ControlMode.Position, feetToTicks(v))
+            }
         } finally {
             leftMotors.neutralOutput()
             rightMotors.neutralOutput()
