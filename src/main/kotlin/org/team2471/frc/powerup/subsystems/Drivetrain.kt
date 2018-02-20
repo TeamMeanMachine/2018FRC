@@ -27,6 +27,7 @@ object Drivetrain {
         configContinuousCurrentLimit(20, 10)
         configPeakCurrentDuration(500, 10)
         enableCurrentLimit(true)
+        configClosedloopRamp(0.0, 10)
         config_kP(0, 2.0, 10)
         config_kD(0, 0.0, 10)
         inverted = true
@@ -54,6 +55,7 @@ object Drivetrain {
         configContinuousCurrentLimit(20, 10)
         configPeakCurrentDuration(500, 10)
         enableCurrentLimit(true)
+        configClosedloopRamp(0.0, 10)
         configOpenloopRamp(0.25, 10)
         config_kP(0, 2.0, 10)
         config_kD(0, 0.5, 10)

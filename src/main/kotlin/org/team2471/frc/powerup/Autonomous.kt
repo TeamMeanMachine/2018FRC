@@ -10,6 +10,7 @@ import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Autonomous
+import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.powerup.subsystems.Carriage
 import org.team2471.frc.powerup.subsystems.Drivetrain
 
@@ -44,9 +45,14 @@ object AutoChooser {
     }
     val auto: Command
         get() = Command("Autonomous", Drivetrain, Carriage) {
-            Carriage.Arm.stop()
-            Carriage.Lifter.stop()
-            dashboard.selected?.invoke(coroutineContext)
+            try {
+                Carriage.Arm.stop()
+                Carriage.Lifter.stop()
+                RobotMap.compressor.closedLoopControl = false
+                dashboard.selected?.invoke(coroutineContext)
+            } finally {
+                RobotMap.compressor.closedLoopControl = true
+            }
         }
 }
 
@@ -59,20 +65,61 @@ val driveStraightAuto = Command("Drive Straight Auto", Drivetrain) {
 
 val rightScScSc = Command("RightScScSc", Drivetrain, Carriage) {
     val autonomous = autonomi.getAutoOrCancel("RightScScSc")
-    launch(coroutineContext) {
-        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("RightToNearScale"))
-    }
-    delay(3500)
-    Carriage.animateToPose(Carriage.Pose.SCALE_MED)
-    Carriage.Arm.isClamping = false
+//
+//    launch(coroutineContext) {
+//        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("RightToNearScale"))
+//    }
+//    delay(3500)
+//    Carriage.animateToPose(Carriage.Pose.SCALE_MED)
+//    Carriage.Arm.intake = -0.4
     try {
         delay(200)
-        launch(coroutineContext) {
-            Carriage.animateToPose(Carriage.Pose.INTAKE)
-        }
-        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("RightScaleToCube1"))
+//        Carriage.Arm.isClamping = false
+////        launch(coroutineContext) {
+////            Carriage.animateToPose(Carriage.Pose.INTAKE)
+////        }
+//        Carriage.animateToPose(Carriage.Pose.INTAKE)
+//        Carriage.Arm.intake = 0.7
+//        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("RightScaleToCube1"))
+//        Carriage.Arm.isClamping = true
+//        delay(350)
+//        Carriage.Arm.intake = 0.2
+//
+////        launch(coroutineContext) {
+////            Carriage.animateToPose(Carriage.Pose.SCALE_MED)
+////        }
+//
+//        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("Cube1ToRightScale"))
+//        Carriage.animateToPose(Carriage.Pose.SCALE_MED)
+//        Carriage.Arm.intake = -0.1
+//        delay(200)
+//        Carriage.Arm.isClamping = false
+//
+////        launch(coroutineContext) {
+////            Carriage.animateToPose(Carriage.Pose.INTAKE)
+////        }
+//
+//        Carriage.animateToPose(Carriage.Pose.INTAKE)
+//        Carriage.Arm.intake = 0.7
+//        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("RightScaleToCube2"))
+//        Carriage.Arm.isClamping = true
+//        delay(350)
+//        Carriage.Arm.intake = 0.2
+//
+////        launch(coroutineContext) {
+////            Carriage.animateToPose(Carriage.Pose.SCALE_MED)
+////        }
+
+        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("Cube2ToRightScale"))
+        Carriage.animateToPose(Carriage.Pose.SCALE_MED)
+        Carriage.Arm.intake = -0.1
+        delay(200)
+        Carriage.Arm.isClamping = false
+
+        Carriage.animateToPose(Carriage.Pose.INTAKE)
     } finally {
         Carriage.Arm.isClamping = true
+        Carriage.Arm.intake = 0.0
     }
 }
 

@@ -6,6 +6,7 @@ import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.AnalogInput
+import edu.wpi.first.wpilibj.RobotState
 import edu.wpi.first.wpilibj.Solenoid
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -139,6 +140,7 @@ object Carriage {
             setNeutralMode(NeutralMode.Brake)
             configPeakOutputForward(1.0, 10)
             configPeakOutputReverse(-1.0, 10)
+            configClosedloopRamp(0.1, 10)
             config_kP(0, 1.0, 10)
             config_kI(0, 0.0, 10)
             config_kD(0, 0.3, 10)
@@ -179,8 +181,9 @@ object Carriage {
                 val heightEntry = table.getEntry("Height")
                 periodic(100) {
                     // don't run the compressor when the carriage exceeds 3V
-                    RobotMap.compressor.closedLoopControl = motors.motorOutputVoltage.absoluteValue < 3.0
-
+                    if (!RobotState.isAutonomous()) {
+                        RobotMap.compressor.closedLoopControl = motors.motorOutputVoltage.absoluteValue < 3.0
+                    }
                     heightEntry.setDouble(height)
                 }
             }

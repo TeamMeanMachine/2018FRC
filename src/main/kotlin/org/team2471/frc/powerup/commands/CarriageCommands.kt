@@ -14,7 +14,7 @@ import java.lang.Math.min
 
 val zero = Command("Carriage Zero", Carriage) {
     try {
-        Carriage.Arm.setpoint = 45.0
+        Carriage.Arm.setpoint = 120.0
         Carriage.Lifter.isBraking = false
         Carriage.Lifter.isLowGear = false
         periodic {
