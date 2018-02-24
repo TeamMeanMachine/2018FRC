@@ -30,6 +30,7 @@ object VisionProcessing {
     private val contourColor = Scalar(255.0,0.0,0.0)
 
     fun processImage(inputImage: Mat): Mat {
+        Log.d(TAG, "Image received")
         val displayMode = ImagePreferences.displayMode
         //Imgproc.GaussianBlur(inputImage, blur, gaussianSize, 0.0)
         Imgproc.cvtColor(inputImage, hsv, Imgproc.COLOR_RGB2HSV)
@@ -68,6 +69,9 @@ object VisionProcessing {
         }.apply {
             Imgproc.drawContours(this, filteredContours, -1, contourColor, 2)
         }
+
+
+
     }
 
     private fun updateHSVThreshhold() {

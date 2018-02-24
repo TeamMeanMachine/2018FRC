@@ -1,10 +1,11 @@
 package org.team2471.powerupvision
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Dialog
 import android.content.res.Configuration
-import android.media.Image
 import android.os.Bundle
+import android.os.PowerManager
 import android.util.Log
 import android.view.Gravity
 import android.view.SurfaceView
@@ -15,31 +16,32 @@ import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.Spinner
 import io.apptik.widget.MultiSlider
-import kotlinx.android.synthetic.main.image_preferences.*
+import org.jetbrains.anko.powerManager
 import org.opencv.android.BaseLoaderCallback
 import org.opencv.android.CameraBridgeViewBase
 import org.opencv.android.LoaderCallbackInterface
 import org.opencv.android.OpenCVLoader
 import org.opencv.core.Mat
-import org.opencv.imgproc.Imgproc
 
 class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
 
 
     private var openCvCameraView: CameraBridgeViewBase? = null
-
+    private var wakeLock: PowerManager.WakeLock? = null
+    private val TAG = "Android Vision"
+    @SuppressLint("WakelockTimeout")
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.i("OpenCV Loader", "called onCreate")
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setContentView(R.layout.camera_layout)
 
+        val powerManqer = applicationContext.powerManager
+        wakeLock = powerManqer.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG)
+
         openCvCameraView = findViewById(R.id.CameraView)
         openCvCameraView?.visibility = SurfaceView.VISIBLE
         openCvCameraView?.setCvCameraViewListener(this)
-        openCvCameraView?.setMaxFrameSize(640, 480)
-
-        RoboRIO(this)
+        openCvCameraView?.setMaxFrameSize(320, 240)
     }
 
 
@@ -59,14 +61,15 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
         openCvCameraView?.disableView()
     }
 
-    override fun onCameraViewStarted(width: Int, height: Int) {
-    }
+    override fun onCameraViewStarted(width: Int, height: Int) = Unit
 
-    override fun onCameraViewStopped() {
-    }
+    override fun onCameraViewStopped() = Unit
 
     override fun onCameraFrame(inputFrame: CameraBridgeViewBase.CvCameraViewFrame): Mat {
-        return VisionProcessing.processImage(inputFrame.rgba())
+        val image = VisionProcessing.processImage(inputFrame.rgba())
+        wakeLock?.acquire(2000)
+//        CameraStream.updateImage(image)
+        return image
     }
 
     override fun onConfigurationChanged(newConfig: Configuration?) {
