@@ -34,24 +34,21 @@ val goToSwitch = Command("Switch Preset", Carriage) {
 }
 
 val goToScaleLowPreset = Command("Scale Low Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.SCALE_LOW)
+    Carriage.animateToPose(Carriage.Pose.SCALE_LOW, heightOffset = scaleStackHeight * 11)
 }
 
 val goToScaleMediumPreset = Command("Scale Medium Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.SCALE_MED)
+    Carriage.animateToPose(Carriage.Pose.SCALE_MED, heightOffset = scaleStackHeight * 11)
 }
 
 val goToScaleHighPreset = Command("Scale High Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.SCALE_HIGH)
+    Carriage.animateToPose(Carriage.Pose.SCALE_HIGH, heightOffset = scaleStackHeight * 11)
 }
 
 val goToIntakePreset = Command("Intake Preset", Carriage) {
     Carriage.animateToPose(Carriage.Pose.INTAKE)
 }
 
-val goTo64InchPreset = Command("60 Inch Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.FANCY_SCHMANCY_64_INCH_PRESET)
-}
 val returnToIntakePosition = Command("Return to Intake Position", Carriage) {
     launch(coroutineContext) {
         try {
@@ -103,8 +100,20 @@ val driverSpit = Command("Driver Spit", Carriage) {
 
 val incrementScaleStackHeight = Command("Increment Cube Stack Count") {
     SmartDashboard.putNumber("Scale Stack Height", min(scaleStackHeight + 1, 3.0))
+    @Suppress("NON_EXHAUSTIVE_WHEN")
+    when (Carriage.targetPose) {
+        Carriage.Pose.SCALE_LOW -> goToScaleLowPreset(coroutineContext)
+        Carriage.Pose.SCALE_MED -> goToScaleMediumPreset(coroutineContext)
+        Carriage.Pose.SCALE_HIGH -> goToScaleHighPreset(coroutineContext)
+    }
 }
 
 val decrementScaleStackHeight = Command("Increment Cube Stack Count") {
     SmartDashboard.putNumber("Scale Stack Height", max(scaleStackHeight - 1, 0.0))
+    @Suppress("NON_EXHAUSTIVE_WHEN")
+    when (Carriage.targetPose) {
+        Carriage.Pose.SCALE_LOW -> goToScaleLowPreset(coroutineContext)
+        Carriage.Pose.SCALE_MED -> goToScaleMediumPreset(coroutineContext)
+        Carriage.Pose.SCALE_HIGH -> goToScaleHighPreset(coroutineContext)
+    }
 }

@@ -7,6 +7,7 @@ import org.team2471.frc.lib.control.experimental.runWhen
 import org.team2471.frc.lib.control.experimental.runWhile
 import org.team2471.frc.lib.control.experimental.toggleWhen
 import org.team2471.frc.lib.math.deadband
+import org.team2471.frc.lib.math.squareRootWithSign
 import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.powerup.commands.*
 import java.lang.Double.max
@@ -30,6 +31,7 @@ object Driver {
     val softTurn: Double
         get() = controller.getX(GenericHID.Hand.kRight)
                 .deadband(0.2)
+                .squareRootWithSign()
 
     val hardTurn: Double
         get() = (-controller.getTriggerAxis(GenericHID.Hand.kLeft) + controller.getTriggerAxis(GenericHID.Hand.kRight))
@@ -92,9 +94,7 @@ object CoDriver {
         goToScaleMediumPreset.runWhen { controller.xButton }
         goToScaleHighPreset.runWhen { controller.yButton }
         goToIntakePreset.runWhen { controller.bButton }
-        goTo64InchPreset.runWhen { controller.getStickButton(GenericHID.Hand.kLeft) }
         incrementScaleStackHeight.runWhen { controller.pov == 0 }
         decrementScaleStackHeight.runWhen { controller.pov == 180 }
-
     }
 }

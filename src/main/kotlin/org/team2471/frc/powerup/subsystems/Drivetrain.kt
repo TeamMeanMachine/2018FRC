@@ -13,6 +13,8 @@ import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.lib.control.plus
+import org.team2471.frc.lib.math.cubicMap
+import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.powerup.Driver
@@ -21,54 +23,55 @@ import org.team2471.frc.powerup.RobotMap
 object Drivetrain {
     private val leftMotors = TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_1).apply {
         configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10)
-        setNeutralMode(NeutralMode.Brake)
-        configPeakCurrentLimit(25, 10)
-        configContinuousCurrentLimit(20, 10)
-        configPeakCurrentDuration(500, 10)
+        setNeutralMode(NeutralMode.Coast)
+        configContinuousCurrentLimit(25, 10)
+        configPeakCurrentLimit(20, 10)
+        configPeakCurrentDuration(0, 10)
         enableCurrentLimit(true)
         configClosedloopRamp(0.0, 10)
+        configOpenloopRamp(0.0, 10)
         config_kP(0, 2.0, 10)
         config_kD(0, 0.0, 10)
         inverted = true
         configOpenloopRamp(0.25, 10)
     } + TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_2).apply {
-        setNeutralMode(NeutralMode.Coast)
-        configPeakCurrentLimit(25, 10)
-        configContinuousCurrentLimit(20, 10)
-        configPeakCurrentDuration(500, 10)
+        setNeutralMode(NeutralMode.Brake)
+        configContinuousCurrentLimit(25, 10)
+        configPeakCurrentLimit(20, 10)
+        configPeakCurrentDuration(0, 10)
         enableCurrentLimit(true)
         inverted = true
     } + TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_3).apply {
-        setNeutralMode(NeutralMode.Coast)
-        configPeakCurrentLimit(25, 10)
-        configContinuousCurrentLimit(20, 10)
-        configPeakCurrentDuration(500, 10)
+        setNeutralMode(NeutralMode.Brake)
+        configContinuousCurrentLimit(25, 10)
+        configPeakCurrentLimit(20, 10)
+        configPeakCurrentDuration(0, 10)
         enableCurrentLimit(true)
         inverted = true
     }
 
     private val rightMotors = TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_1).apply {
         configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10)
-        setNeutralMode(NeutralMode.Brake)
-        configPeakCurrentLimit(25, 10)
-        configContinuousCurrentLimit(20, 10)
-        configPeakCurrentDuration(500, 10)
+        setNeutralMode(NeutralMode.Coast)
+        configContinuousCurrentLimit(25, 10)
+        configPeakCurrentLimit(20, 10)
+        configPeakCurrentDuration(0, 10)
         enableCurrentLimit(true)
         configClosedloopRamp(0.0, 10)
-        configOpenloopRamp(0.25, 10)
+        configOpenloopRamp(0.0, 10)
         config_kP(0, 2.0, 10)
         config_kD(0, 0.5, 10)
     } + TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_2).apply {
-        setNeutralMode(NeutralMode.Coast)
-        configPeakCurrentLimit(25, 10)
-        configContinuousCurrentLimit(20, 10)
-        configPeakCurrentDuration(500, 10)
+        setNeutralMode(NeutralMode.Brake)
+        configContinuousCurrentLimit(25, 10)
+        configPeakCurrentLimit(20, 10)
+        configPeakCurrentDuration(0, 10)
         enableCurrentLimit(true)
     } + TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_3).apply {
-        setNeutralMode(NeutralMode.Coast)
-        configPeakCurrentLimit(25, 10)
-        configContinuousCurrentLimit(20, 10)
-        configPeakCurrentDuration(500, 10)
+        setNeutralMode(NeutralMode.Brake)
+        configContinuousCurrentLimit(5, 10)
+        configPeakCurrentLimit(0, 10)
+        configPeakCurrentDuration(0, 10)
         enableCurrentLimit(true)
     }
 
@@ -84,10 +87,9 @@ object Drivetrain {
     val gyroAngle: Double
         get() = gyro.angleZ
 
-    private val rampRateCurve = MotionCurve().apply {
-        storeValue(Carriage.Pose.INTAKE.lifterHeight, 0.1)
-        storeValue(Carriage.Pose.SCALE_HIGH.lifterHeight, 1.0)
-    }
+    private fun heightMultiplier(height: Double) = linearMap(0.0, Carriage.Lifter.MAX_HEIGHT, 1.0, 0.4, height)
+
+    private fun rampRate(height: Double) = linearMap(0.0, Carriage.Lifter.MAX_HEIGHT, 0.1, 2.0, height)
 
     private val leftPosition: Double
         get() = ticksToFeet(leftMotors.getSelectedSensorPosition(0))
@@ -96,8 +98,13 @@ object Drivetrain {
         get() = ticksToFeet(rightMotors.getSelectedSensorPosition(0))
 
     fun drive(throttle: Double, softTurn: Double, hardTurn: Double) {
-        var leftPower = throttle + (softTurn * Math.abs(throttle)) + (hardTurn * 0.8)
-        var rightPower = throttle - (softTurn * Math.abs(throttle)) - (hardTurn * 0.8)
+
+        var leftPower = throttle + (softTurn * Math.abs(throttle)) + hardTurn
+        var rightPower = throttle - (softTurn * Math.abs(throttle)) - hardTurn
+
+        val heightMultiplier = heightMultiplier(Carriage.Lifter.height)
+        leftPower *= heightMultiplier
+        rightPower *= heightMultiplier
 
         val maxPower = Math.max(Math.abs(leftPower), Math.abs(rightPower))
         if (maxPower > 1) {
@@ -105,7 +112,7 @@ object Drivetrain {
             rightPower /= maxPower
         }
 
-        val rampRate = rampRateCurve.getValue(Carriage.Lifter.height)
+        val rampRate = rampRate(Carriage.Lifter.height)
         leftMotors.configOpenloopRamp(rampRate, 0)
         rightMotors.configOpenloopRamp(rampRate, 0)
 
@@ -118,8 +125,6 @@ object Drivetrain {
         curve.storeValue(0.0, 0.0)
         curve.storeValue(time, distance)
         try {
-//            val startLeftPosition = ticksToFeet(leftMotors.getSelectedSensorPosition(0))
-//            val startRightPosition = ticksToFeet(rightMotors.getSelectedSensorPosition(0))
             zeroDistance()
 
             val timer = Timer().apply { start() }

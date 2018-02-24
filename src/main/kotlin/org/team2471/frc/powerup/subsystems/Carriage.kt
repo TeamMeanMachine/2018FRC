@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj.RobotState
 import edu.wpi.first.wpilibj.Solenoid
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import kotlinx.coroutines.experimental.defer
 import kotlinx.coroutines.experimental.launch
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
@@ -19,11 +18,13 @@ import org.team2471.frc.lib.control.plus
 import org.team2471.frc.lib.math.average
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.powerup.CoDriver
+import org.team2471.frc.powerup.Game
 import org.team2471.frc.powerup.IS_COMP_BOT
 import org.team2471.frc.powerup.RobotMap
 import org.team2471.frc.powerup.commands.returnToIntakePosition
 import kotlin.math.absoluteValue
 import kotlin.math.max
+import kotlin.math.min
 
 object Carriage {
     private const val TICKS_PER_INCH = 9437 / 64.25
@@ -39,6 +40,9 @@ object Carriage {
             value >= max(Arm.curve.length, Lifter.curve.length) -> field = max(Arm.curve.length, Lifter.curve.length)
             else -> field = value
         }
+
+    var targetPose = Pose.INTAKE
+        private set
 
     init {
         Lifter
@@ -68,6 +72,7 @@ object Carriage {
                     SmartDashboard.putNumberArray("Amperages", Lifter.amperages)
                     Lifter.isLowGear = false
                     Lifter.isBraking = false
+
                 }
             } finally {
                 Arm.isClamping = true
@@ -82,13 +87,13 @@ object Carriage {
         SCALE_LOW(24.0, 185.0),
         SCALE_MED(33.0, 185.0),
         SCALE_HIGH(44.0, 185.0),
-        CARRY(10.0, 0.0),
-        SWITCH(34.0, 15.0),
+        //CARRY(10.0, 0.0),
+        CARRY(0.0, 100.0),
+        SWITCH(34.0, 0.0),
         CLIMB(58.0, 0.0),
         CLIMB_ACQUIRE_RUNG(26.0, 0.0),
         FACE_THE_BOSS(3.0, 0.0),
         STARTING_POSITION(6.0, 110.0),
-        FANCY_SCHMANCY_64_INCH_PRESET(64.0, 185.0),
     }
 
     fun adjustAnimationTime(dt: Double) {
@@ -98,31 +103,45 @@ object Carriage {
         Arm.setpoint = Arm.curve.getValue(animationTime)
     }
 
-    fun setAnimation(pose: Pose, time: Double = 1.5) {
+    fun setAnimation(pose: Pose, lifterTime: Double = 1.5, armTime: Double = 1.5,
+                     lifterTimeOffset: Double = 0.0, armTimeOffset: Double = 0.0, heightOffset: Double = 0.0) {
+        targetPose = pose
         Lifter.curve = MotionCurve()
         Arm.curve = MotionCurve()
-        Lifter.curve.storeValue(0.0, Lifter.height)
-        Lifter.curve.storeValue(time, pose.lifterHeight)
+        Lifter.curve.storeValue(lifterTimeOffset, Lifter.height)
+        Lifter.curve.storeValue(lifterTime + lifterTimeOffset, min(pose.lifterHeight + heightOffset, Lifter.MAX_HEIGHT))
 
-        Arm.curve.storeValue(0.0, Arm.angle)
-        Arm.curve.storeValue(time, pose.armAngle)
+        Arm.curve.storeValue(armTimeOffset, Arm.angle)
+        Arm.curve.storeValue(armTime + armTimeOffset, pose.armAngle)
 
         animationTime = 0.0
     }
 
-    suspend fun animateToPose(pose: Pose, time: Double = 1.5) {
-        setAnimation(pose, time)
+    suspend fun animateToPose(pose: Pose, heightOffset: Double = 0.0) {
+        val lifterDelta = pose.lifterHeight + heightOffset - Lifter.height
+        val armDelta = pose.armAngle - Arm.angle
+        val lifterTime = (1.25 / 58.0) * (Math.abs(lifterDelta)) + 0.25
+        val armTime = (2.0 / 180.0) * Math.abs(armDelta) + 0.25
+        var lifterTimeOffset = 0.0
+        var armTimeOffset = 0.0
+        if (lifterDelta > 0.0 && armTime < lifterTime) { // going up and arm time is shorter
+            armTimeOffset = lifterTime - armTime
+        }
+        if (lifterDelta < 0.0 && armTime > lifterTime) { // going down and arm time is longer
+            lifterTimeOffset = armTime - lifterTime
+        }
+        setAnimation(pose, lifterTime, armTime, lifterTimeOffset, armTimeOffset, heightOffset)
 
         val timer = Timer()
         timer.start()
         var previousTime = 0.0
         Lifter.isBraking = false
         try {
-            periodic(condition = { previousTime < Lifter.curve.length }) {
-                val time = timer.get()
-                adjustAnimationTime(time - previousTime)
+            periodic(condition = { previousTime < max(Lifter.curve.length, Arm.curve.length) }) {
+                val t = timer.get()
+                adjustAnimationTime(t - previousTime)
 
-                previousTime = time
+                previousTime = t
             }
         } finally {
             Lifter.isBraking = true
@@ -134,9 +153,9 @@ object Carriage {
         private val motors = TalonSRX(RobotMap.Talons.ELEVATOR_MOTOR_1).apply {
             configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10)
             setSelectedSensorPosition(0, 0, 10)
-            configContinuousCurrentLimit(10, 10)
-            configPeakCurrentLimit(15, 10)
-            configPeakCurrentDuration(350, 10)
+            configContinuousCurrentLimit(25, 10)
+            configPeakCurrentLimit(0, 10)
+            configPeakCurrentDuration(0, 10)
             enableCurrentLimit(true)
             setNeutralMode(NeutralMode.Brake)
             configPeakOutputForward(1.0, 10)
@@ -149,23 +168,23 @@ object Carriage {
             inverted = true
             setSensorPhase(true)
         } + TalonSRX(RobotMap.Talons.ELEVATOR_MOTOR_2).apply {
-            configContinuousCurrentLimit(10, 10)
-            configPeakCurrentLimit(15, 10)
-            configPeakCurrentDuration(350, 10)
+            configContinuousCurrentLimit(25, 10)
+            configPeakCurrentLimit(0, 10)
+            configPeakCurrentDuration(0, 10)
             enableCurrentLimit(true)
             setNeutralMode(NeutralMode.Brake)
             inverted = true
         } + TalonSRX(RobotMap.Talons.ELEVATOR_MOTOR_3).apply {
-            configContinuousCurrentLimit(10, 10)
-            configPeakCurrentLimit(15, 10)
-            configPeakCurrentDuration(350, 10)
+            configContinuousCurrentLimit(25, 10)
+            configPeakCurrentLimit(0, 10)
+            configPeakCurrentDuration(0, 10)
             enableCurrentLimit(true)
             setNeutralMode(NeutralMode.Brake)
             inverted = true
         } + TalonSRX(RobotMap.Talons.ELEVATOR_MOTOR_4).apply {
-            configContinuousCurrentLimit(10, 10)
-            configPeakCurrentLimit(15, 10)
-            configPeakCurrentDuration(350, 10)
+            configContinuousCurrentLimit(25, 10)
+            configPeakCurrentLimit(0, 10)
+            configPeakCurrentDuration(0, 10)
             enableCurrentLimit(true)
             setNeutralMode(NeutralMode.Brake)
             inverted = true
@@ -187,6 +206,7 @@ object Carriage {
                         RobotMap.compressor.closedLoopControl = motors.motorOutputVoltage.absoluteValue < 3.0
                     }
                     heightEntry.setDouble(height)
+
                     if (RobotState.isEnabled())
                         outputEntry.setDouble(motors.motorOutputPercent)
                 }
@@ -194,6 +214,7 @@ object Carriage {
         }
 
         private const val ANIMATION_LENGTH = 1.5
+        const val MAX_HEIGHT = 64.0
 
         var curve = MotionCurve().apply {
             storeValue(0.0, Pose.INTAKE.lifterHeight)
@@ -251,16 +272,16 @@ object Carriage {
             config_kD(0, 0.0, 10)
             config_kF(0, 0.0, 10)
 
-            configContinuousCurrentLimit(10, 10)
-            configPeakCurrentLimit(15, 10)
-            configPeakCurrentDuration(300, 10)
+            configContinuousCurrentLimit(15, 10)
+            configPeakCurrentLimit(0, 10)
+            configPeakCurrentDuration(0, 10)
             enableCurrentLimit(true)
             setSensorPhase(false)
             inverted = true
         } + TalonSRX(RobotMap.Talons.ARM_MOTOR_2).apply {
-            configContinuousCurrentLimit(10, 10)
-            configPeakCurrentLimit(15, 10)
-            configPeakCurrentDuration(300, 10)
+            configContinuousCurrentLimit(15, 10)
+            configPeakCurrentLimit(0, 10)
+            configPeakCurrentDuration(0, 10)
             enableCurrentLimit(true)
             inverted = true
         }
@@ -268,18 +289,18 @@ object Carriage {
         private val table = Carriage.table.getSubTable("Arm")
 
         private val intakeMotorLeft = TalonSRX(RobotMap.Talons.INTAKE_MOTOR_LEFT).apply {
-            configContinuousCurrentLimit(10, 10)
-            configPeakCurrentLimit(15, 10)
-            configPeakCurrentDuration(200, 10)
+            configContinuousCurrentLimit(15, 10)
+            configPeakCurrentLimit(0, 10)
+            configPeakCurrentDuration(0, 10)
             enableCurrentLimit(true)
             setNeutralMode(NeutralMode.Coast)
         }
 
         private val intakeMotorRight = TalonSRX(RobotMap.Talons.INTAKE_MOTOR_RIGHT).apply {
             inverted = true
-            configContinuousCurrentLimit(10, 10)
-            configPeakCurrentLimit(15, 10)
-            configPeakCurrentDuration(200, 10)
+            configContinuousCurrentLimit(15, 10)
+            configPeakCurrentLimit(0, 10)
+            configPeakCurrentDuration(0, 10)
             enableCurrentLimit(true)
             setNeutralMode(NeutralMode.Coast)
         }
@@ -295,6 +316,7 @@ object Carriage {
             launch {
                 val angleEntry = table.getEntry("Angle")
                 val outputEntry = table.getEntry("Output")
+                val sensorVoltageEntry = table.getEntry("Sensor Voltage")
 
                 periodic(40) {
                     if (cubeSensorTriggered) {
@@ -302,11 +324,12 @@ object Carriage {
                     } else if (!isClamping || intakeMotorLeft.motorOutputPercent < -0.1) {
                         hasCube = false
                     }
-                    CoDriver.passiveRumble = if (hasCube) .15 else 0.0
-
+                    CoDriver.passiveRumble = if (hasCube && !Game.isEndGame) .15 else 0.0
                     if (RobotState.isEnabled())
                         outputEntry.setNumber(motors.motorOutputPercent)
                     angleEntry.setDouble(angle)
+
+                    sensorVoltageEntry.setDouble(cubeSensor.voltage)
                 }
             }
         }
