@@ -53,7 +53,7 @@ val returnToIntakePosition = Command("Return to Intake Position", Carriage) {
     launch(coroutineContext) {
         try {
             Carriage.Arm.isClamping = false
-            delay(500)
+            delay(1000)
         } finally {
             Carriage.Arm.isClamping = true
         }
@@ -115,5 +115,14 @@ val decrementScaleStackHeight = Command("Increment Cube Stack Count") {
         Carriage.Pose.SCALE_LOW -> goToScaleLowPreset(coroutineContext)
         Carriage.Pose.SCALE_MED -> goToScaleMediumPreset(coroutineContext)
         Carriage.Pose.SCALE_HIGH -> goToScaleHighPreset(coroutineContext)
+    }
+
+}
+
+val tuneArmPID = Command("Tune Arm Pid", Carriage) {
+
+    periodic {
+        val rightStick = CoDriver.microAdjust
+        Carriage.Arm.setpoint = rightStick * 45 + 90
     }
 }

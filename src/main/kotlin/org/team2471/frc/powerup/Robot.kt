@@ -11,7 +11,6 @@ import org.team2471.frc.powerup.subsystems.Drivetrain
 
 const val IS_COMP_BOT = false
 
-lateinit var autonomi: Autonomi
 
 class Robot : IterativeRobot() {
     private var hasRunAuto = false
@@ -28,6 +27,7 @@ class Robot : IterativeRobot() {
     }
 
     override fun autonomousInit() {
+        Game.updateGameData()
         hasRunAuto = true
 
         val loadTime = measureTimeFPGA {

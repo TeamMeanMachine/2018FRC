@@ -8,12 +8,18 @@ import kotlinx.coroutines.experimental.cancelAndJoin
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import org.team2471.frc.lib.control.experimental.Command
+import org.team2471.frc.lib.control.experimental.delaySeconds
+import org.team2471.frc.lib.control.experimental.parallel
 import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Autonomous
-import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.powerup.subsystems.Carriage
 import org.team2471.frc.powerup.subsystems.Drivetrain
+import kotlin.math.roundToInt
+import kotlin.math.roundToLong
+
+
+lateinit var autonomi: Autonomi
 
 private fun Autonomi.getAutoOrCancel(autoName: String) =
         this[autoName] ?: run {
@@ -30,99 +36,119 @@ private fun Autonomous.getPathOrCancel(pathName: String) =
         }
 
 object AutoChooser {
-    private val dashboard = SendableChooser<Command>().apply {
-        addDefault(driveStraightAuto.name, driveStraightAuto)
-        addObject(circleTest.name, circleTest)
-        addObject(rightScScSc.name, rightScScSc)
-//        addObject(middleScalePlusSwitch.name, middleScalePlusSwitch)
-//        addObject(rightScalePlusSwitch.name, rightScalePlusSwitch)
-//        addObject(leftScalePlusSwitch.name, leftScalePlusSwitch)
-//        addObject(middleSuperScale.name, middleSuperScale)
-//        addObject(rightSuperScale.name, rightSuperScale)
-//        addObject(leftSuperScale.name, leftSuperScale)
-//        addDefault(armTestAuto.name, armTestAuto)
-
-        SmartDashboard.putData("Auto Chooser", this)
+    private val sideChooser = SendableChooser<Side>().apply {
+        addDefault("Left", Side.LEFT)
+        addObject("Right", Side.RIGHT)
     }
-    val auto: Command
-        get() = Command("Autonomous", Drivetrain, Carriage) {
-            try {
-                Carriage.Arm.stop()
-                Carriage.Lifter.stop()
-                RobotMap.compressor.closedLoopControl = false
-                dashboard.selected?.invoke(coroutineContext)
-            } finally {
-                RobotMap.compressor.closedLoopControl = true
-            }
+
+    private val nearSwitchNearScaleChooser = SendableChooser<Command>().apply {
+        addDefault(nearScaleNearSwitchScale.name, nearScaleNearSwitchScale)
+    }
+
+    private val nearSwitchFarScaleChooser = SendableChooser<Command>().apply {
+
+    }
+
+    private val farSwitchNearScaleChooser = SendableChooser<Command>().apply {
+
+    }
+
+    private val farSwitchFarScaleChooser = SendableChooser<Command>().apply {
+
+    }
+
+    val auto = Command("Autonomous", Drivetrain, Carriage) {
+        Carriage.Arm.stop()
+        Carriage.Lifter.stop()
+
+        val nearSide = sideChooser.selected
+        val farSide = !nearSide
+        val chosenCommand = when {
+            Game.switchSide == nearSide && Game.scaleSide == nearSide -> nearSwitchNearScaleChooser
+            Game.switchSide == nearSide && Game.scaleSide == farSide -> nearSwitchFarScaleChooser
+            Game.switchSide == farSide && Game.scaleSide == nearSide -> farSwitchNearScaleChooser
+            Game.switchSide == farSide && Game.scaleSide == farSide -> farSwitchFarScaleChooser
+            else -> null
+        }?.selected
+        if (chosenCommand == null) {
+            DriverStation.reportError("Autonomous could not be chosen", false)
+            return@Command
         }
+        chosenCommand(coroutineContext)
+    }
+
+    init {
+        SmartDashboard.putData("Near Switch Near Scale Auto", nearSwitchNearScaleChooser)
+        SmartDashboard.putData("Near Switch Far Scale Auto", nearSwitchFarScaleChooser)
+        SmartDashboard.putData("Far Switch Near Scale Auto", farSwitchNearScaleChooser)
+        SmartDashboard.putData("Far Switch Far Scale Auto", farSwitchFarScaleChooser)
+        SmartDashboard.putData("Side Chooser", sideChooser)
+    }
 }
 
-val driveStraightAuto = Command("Drive Straight Auto", Drivetrain) {
-    launch(coroutineContext) {
-        Carriage.animateToPose(Carriage.Pose.INTAKE)
-    }
-    Drivetrain.driveDistance(10.0, 4.0)
-}
+private val nearScaleNearSwitchScale = Command("Near Scale Near Switch Scale Auto", Carriage, Drivetrain) {
+    val auto = autonomi.getAutoOrCancel("Near Scale Near Switch Scale")
 
-val rightScScSc = Command("RightScScSc", Drivetrain, Carriage) {
-    val autonomous = autonomi.getAutoOrCancel("RightScScSc")
-
-    launch(coroutineContext) {
-        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("RightToNearScale"))
-    }
-    delay(3000)
-    Carriage.animateToPose(Carriage.Pose.SCALE_MED)
-    Carriage.Arm.intake = -0.4
     try {
-        delay(200)
-        Carriage.Arm.isClamping = false
-        var animate = launch(coroutineContext) {
-            Carriage.animateToPose(Carriage.Pose.INTAKE, 1.3)
-        }
+        var path = auto.getPathOrCancel("Start To Near Scale")
+        parallel(coroutineContext, {
+            Drivetrain.driveAlongPath(path)
+        }, {
+            delaySeconds(path.durationWithSpeed - 2.0)
+            Carriage.animateToPose(Carriage.Pose.SCALE_MED)
+            Carriage.Arm.intake = -0.4
+            delay(350)
+            Carriage.Arm.intake = 0.0
+        })
 
-        Carriage.Arm.intake = 0.7
-        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("RightScaleToCube1"))
-        animate.cancelAndJoin()
+        parallel(coroutineContext, {
+            Carriage.Arm.isClamping = false
+            Carriage.Arm.intake = 0.6
+            Carriage.animateToPose(Carriage.Pose.INTAKE)
+        }, {
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Near Scale To Cube1"))
+        })
+
         Carriage.Arm.isClamping = true
-        delay(350)
+        delay(100)
         Carriage.Arm.intake = 0.2
 
-        animate = launch(coroutineContext) {
-            Carriage.animateToPose(Carriage.Pose.SCALE_LOW, 1.0)
-        }
+        parallel(coroutineContext, {
+            Carriage.animateToPose(Carriage.Pose.SWITCH)
+            Carriage.Arm.intake = -0.4
+            delay(350)
+            Carriage.Arm.intake = 0.0
+        }, {
+            delay(300)
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube1 To Near Switch"))
+        })
 
-        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("Cube1ToRightScale"))
+        Drivetrain.driveAlongPath(auto.getPathOrCancel("Back From Near Switch"))
+        Carriage.Arm.isClamping = false
+        Carriage.Arm.intake = 0.6
+
+        parallel(coroutineContext, {
+            Carriage.animateToPose(Carriage.Pose.INTAKE)
+        }, {
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Onward To Cube2"))
+        })
+
+        Carriage.Arm.isClamping = true
+        Carriage.Arm.intake = 0.2
+
+        path = auto.getPathOrCancel("Cube2 To Near Scale")
+        parallel(coroutineContext, {
+            delaySeconds(path.durationWithSpeed - 2.0)
+            Carriage.animateToPose(Carriage.Pose.SCALE_MED)
+        }, {
+            Drivetrain.driveAlongPath(path)
+        })
         Carriage.Arm.intake = -0.2
-        delay(200)
-        animate.cancelAndJoin()
-        Carriage.Arm.isClamping = false
-
-        animate = launch(coroutineContext) {
-            Carriage.animateToPose(Carriage.Pose.INTAKE, 0.7)
-            Carriage.Arm.intake = 0.8
-        }
-
-        Drivetrain.driveAlongPath(autonomous.getPathOrCancel("RightScaleToCube2"))
-        Carriage.Arm.isClamping = true
-        animate.cancelAndJoin()
-        delay(350)
-        Carriage.Arm.intake = 0.2
-
-        launch(coroutineContext) {
-            Carriage.animateToPose(Carriage.Pose.SWITCH, 0.6)
-        }
-        Drivetrain.turnInPlace(35.0, 0.5)
-        Drivetrain.driveDistance(0.5, 0.3, false)
-        Carriage.Arm.intake = -0.4
-        delay(1000)
+        delay(500)
     } finally {
         Carriage.Arm.isClamping = true
         Carriage.Arm.intake = 0.0
     }
-}
-
-val circleTest = Command("Circle Test Auto", Drivetrain) {
-    Drivetrain.driveAlongPath(circle)
 }
 
 val driveTuner = Command("Drive Train Tuner", Drivetrain) {

@@ -3,6 +3,7 @@ package org.team2471.frc.powerup
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.RobotState
 import edu.wpi.first.wpilibj.XboxController
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import org.team2471.frc.lib.control.experimental.runWhen
 import org.team2471.frc.lib.control.experimental.runWhile
 import org.team2471.frc.lib.control.experimental.toggleWhen
@@ -31,7 +32,7 @@ object Driver {
     val softTurn: Double
         get() = controller.getX(GenericHID.Hand.kRight)
                 .deadband(0.2)
-                .squareRootWithSign()
+                .squareWithSign()
 
     val hardTurn: Double
         get() = (-controller.getTriggerAxis(GenericHID.Hand.kLeft) + controller.getTriggerAxis(GenericHID.Hand.kRight))
@@ -44,7 +45,7 @@ object Driver {
 
     init {
         driveTuner.toggleWhen { controller.getStickButton(GenericHID.Hand.kLeft) }
-        driverIntake.runWhen { intaking }
+        driverIntake.toggleWhen { intaking }
         driverSpit.runWhile { controller.getBumper(GenericHID.Hand.kLeft) }
         climbCommand.toggleWhen { controller.startButton }
     }
@@ -71,7 +72,7 @@ object CoDriver {
         get() = -controller.getY(GenericHID.Hand.kLeft)
                 .deadband(.2)
 
-    val rightStickUpDown: Double
+    val microAdjust: Double
         get() = -controller.getY(GenericHID.Hand.kRight)
                 .deadband(.2)
 
@@ -84,10 +85,7 @@ object CoDriver {
 
     init {
         println("Initialized")
-//        Command("DeployClimbGuide", Wings) {
-//            Wings.climbingGuideDeployed = !Wings.climbingGuideDeployed
-//        }.runWhen { controller.getBumper(GenericHID.Hand.kLeft) }
-
+        SmartDashboard.putBoolean("Tune Arm PID", false)
         zero.toggleWhen { controller.backButton }
         goToSwitch.runWhen { controller.getStickButton(GenericHID.Hand.kRight) }
         goToScaleLowPreset.runWhen { controller.aButton }
@@ -96,5 +94,6 @@ object CoDriver {
         goToIntakePreset.runWhen { controller.bButton }
         incrementScaleStackHeight.runWhen { controller.pov == 0 }
         decrementScaleStackHeight.runWhen { controller.pov == 180 }
+        tuneArmPID.runWhen { SmartDashboard.getBoolean("Tune Arm PID", false) }
     }
 }

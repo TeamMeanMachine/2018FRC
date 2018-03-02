@@ -25,7 +25,6 @@ class MotorTest : IterativeRobot() {
                 TalonSRX(Talons.ELEVATOR_MOTOR_3),
                 TalonSRX(Talons.ELEVATOR_MOTOR_4),
                 TalonSRX(Talons.ARM_MOTOR_1),
-                TalonSRX(Talons.ARM_MOTOR_2),
                 TalonSRX(Talons.INTAKE_MOTOR_LEFT),
                 TalonSRX(Talons.INTAKE_MOTOR_RIGHT)
         )

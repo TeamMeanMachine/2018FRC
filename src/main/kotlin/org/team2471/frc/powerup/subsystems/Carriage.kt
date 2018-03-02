@@ -66,13 +66,14 @@ object Carriage {
 
                     val currentTime = Timer.getFPGATimestamp()
                     val deltaTime = currentTime - previousTime
-                    adjustAnimationTime(deltaTime * leftStick)
+                    adjustAnimationTime(deltaTime * leftStick, CoDriver.microAdjust * 4.0)
                     previousTime = currentTime
 
-                    SmartDashboard.putNumberArray("Amperages", Lifter.amperages)
+                    SmartDashboard.putNumberArray("Lifter Amperages", Lifter.amperages)
                     Lifter.isLowGear = false
                     Lifter.isBraking = false
 
+                    SmartDashboard.putNumber("Arm Amperage", RobotMap.pdp.getCurrent(RobotMap.Talons.ARM_MOTOR_1))
                 }
             } finally {
                 Arm.isClamping = true
@@ -87,19 +88,19 @@ object Carriage {
         SCALE_LOW(24.0, 185.0),
         SCALE_MED(33.0, 185.0),
         SCALE_HIGH(44.0, 185.0),
-        //CARRY(10.0, 0.0),
-        CARRY(0.0, 100.0),
-        SWITCH(34.0, 0.0),
+        CARRY(10.0, 0.0),
+        //        CARRY(0.0, 110.0),
+        SWITCH(21.0, 30.0),
         CLIMB(58.0, 0.0),
         CLIMB_ACQUIRE_RUNG(26.0, 0.0),
         FACE_THE_BOSS(3.0, 0.0),
         STARTING_POSITION(6.0, 110.0),
     }
 
-    fun adjustAnimationTime(dt: Double) {
+    fun adjustAnimationTime(dt: Double, heightOffset: Double = 0.0) {
         animationTime += dt
 
-        Lifter.heightSetpoint = Lifter.curve.getValue(animationTime)
+        Lifter.setpoint = Lifter.curve.getValue(animationTime) + heightOffset
         Arm.setpoint = Arm.curve.getValue(animationTime)
     }
 
@@ -109,10 +110,11 @@ object Carriage {
         Lifter.curve = MotionCurve()
         Arm.curve = MotionCurve()
         Lifter.curve.storeValue(lifterTimeOffset, Lifter.height)
-        Lifter.curve.storeValue(lifterTime + lifterTimeOffset, min(pose.lifterHeight + heightOffset, Lifter.MAX_HEIGHT))
+        Lifter.curve.storeValue(lifterTime + lifterTimeOffset,
+                min(pose.lifterHeight + heightOffset, Lifter.MAX_HEIGHT))
 
-        Arm.curve.storeValue(armTimeOffset, Arm.angle)
-        Arm.curve.storeValue(armTime + armTimeOffset, pose.armAngle)
+        Arm.curve.storeValueSlopeAndMagnitude(armTimeOffset, Arm.angle, 0.0, 0.125)
+        Arm.curve.storeValueSlopeAndMagnitude(armTime + armTimeOffset, pose.armAngle, 0.0, 0.5)
 
         animationTime = 0.0
     }
@@ -121,9 +123,10 @@ object Carriage {
         val lifterDelta = pose.lifterHeight + heightOffset - Lifter.height
         val armDelta = pose.armAngle - Arm.angle
         val lifterTime = (1.25 / 58.0) * (Math.abs(lifterDelta)) + 0.25
-        val armTime = (2.0 / 180.0) * Math.abs(armDelta) + 0.25
+        val armTime = (1.0 / 180.0) * Math.abs(armDelta) + 0.25
         var lifterTimeOffset = 0.0
         var armTimeOffset = 0.0
+
         if (lifterDelta > 0.0 && armTime < lifterTime) { // going up and arm time is shorter
             armTimeOffset = lifterTime - armTime
         }
@@ -224,10 +227,17 @@ object Carriage {
         val height: Double
             get() = ticksToInches(motors.getSelectedSensorPosition(0).toDouble())
 
-        var heightSetpoint: Double = height
+        var setpoint: Double = height
             set(value) {
-                motors.set(ControlMode.Position, inchesToTicks(value))
-                field = value
+                val min = when {
+                    Arm.angle > 150.0 -> min(Lifter.height, Pose.SCALE_LOW.lifterHeight)
+                    Arm.angle < 50.0 -> min(Lifter.height, Pose.INTAKE.lifterHeight)
+                    else -> 0.0
+                }
+
+                val v = value.coerceIn(min, MAX_HEIGHT)
+                motors.set(ControlMode.Position, inchesToTicks(v))
+                field = v
             }
 
         var heightRawSpeed: Double = 0.0
@@ -236,7 +246,7 @@ object Carriage {
                 field = value
             }
 
-        val heightError = height - heightSetpoint
+        val heightError = height - setpoint
 
         var isLowGear: Boolean
             get() = shifter.get()
@@ -278,12 +288,6 @@ object Carriage {
             enableCurrentLimit(true)
             setSensorPhase(false)
             inverted = true
-        } + TalonSRX(RobotMap.Talons.ARM_MOTOR_2).apply {
-            configContinuousCurrentLimit(15, 10)
-            configPeakCurrentLimit(0, 10)
-            configPeakCurrentDuration(0, 10)
-            enableCurrentLimit(true)
-            inverted = true
         }
 
         private val table = Carriage.table.getSubTable("Arm")
@@ -305,6 +309,8 @@ object Carriage {
             setNeutralMode(NeutralMode.Coast)
         }
 
+        private val minAmperage = min(intakeMotorLeft.outputCurrent, intakeMotorRight.outputCurrent)
+
         private val cubeSensor = AnalogInput(3)
 
         @Suppress("ConstantConditionIf")
@@ -318,8 +324,11 @@ object Carriage {
                 val outputEntry = table.getEntry("Output")
                 val sensorVoltageEntry = table.getEntry("Sensor Voltage")
 
+                val useCubeSensorEntry = table.getEntry("Use Cube Sensor")
+                useCubeSensorEntry.setPersistent()
                 periodic(40) {
-                    if (cubeSensorTriggered) {
+                    val useCubeSensor = useCubeSensorEntry.getBoolean(true)
+                    if ((useCubeSensor && cubeSensorTriggered) || (!useCubeSensor && minAmperage > 10)) {
                         hasCube = true
                     } else if (!isClamping || intakeMotorLeft.motorOutputPercent < -0.1) {
                         hasCube = false
@@ -372,6 +381,7 @@ object Carriage {
         fun stop() {
             motors.set(ControlMode.PercentOutput, 0.0)
         }
+
     }
 
 }

@@ -87,9 +87,16 @@ object Drivetrain {
     val gyroAngle: Double
         get() = gyro.angleZ
 
-    private fun heightMultiplier(height: Double) = linearMap(0.0, Carriage.Lifter.MAX_HEIGHT, 1.0, 0.4, height)
 
-    private fun rampRate(height: Double) = linearMap(0.0, Carriage.Lifter.MAX_HEIGHT, 0.1, 2.0, height)
+    private val heightMultiplierCurve = MotionCurve().apply {
+        storeValue(0.0, 1.0)
+        storeValue(Carriage.Lifter.MAX_HEIGHT, 0.4)
+    }
+
+    private val rampRateCurve = MotionCurve().apply {
+        storeValue(0.0, 0.1)
+        storeValue(Carriage.Lifter.MAX_HEIGHT, 2.0)
+    }
 
     private val leftPosition: Double
         get() = ticksToFeet(leftMotors.getSelectedSensorPosition(0))
@@ -102,7 +109,7 @@ object Drivetrain {
         var leftPower = throttle + (softTurn * Math.abs(throttle)) + hardTurn
         var rightPower = throttle - (softTurn * Math.abs(throttle)) - hardTurn
 
-        val heightMultiplier = heightMultiplier(Carriage.Lifter.height)
+        val heightMultiplier = heightMultiplierCurve.getValue(Carriage.Lifter.height)
         leftPower *= heightMultiplier
         rightPower *= heightMultiplier
 
@@ -112,7 +119,7 @@ object Drivetrain {
             rightPower /= maxPower
         }
 
-        val rampRate = rampRate(Carriage.Lifter.height)
+        val rampRate = rampRateCurve.getValue(Carriage.Lifter.height)
         leftMotors.configOpenloopRamp(rampRate, 0)
         rightMotors.configOpenloopRamp(rampRate, 0)
 
@@ -175,19 +182,24 @@ object Drivetrain {
     }
 
     suspend fun driveAlongPath(path2D: Path2D) {
-        println("Driving along path ${path2D.name}, duration: ${path2D.duration}")
+        println("Driving along path ${path2D.name}, duration: ${path2D.durationWithSpeed}, travel direction: ${path2D.robotDirection}")
         path2D.resetDistances()
         try {
             leftMotors.sensorCollection.setQuadraturePosition(0, 0)
             rightMotors.sensorCollection.setQuadraturePosition(0, 0)
 
             val timer = Timer().apply { start() }
-            periodic(condition = { timer.get() <= path2D.easeCurve.length }) {
+            periodic(condition = { timer.get() <= path2D.durationWithSpeed }) {
                 val t = timer.get()
                 val leftDistance = path2D.getLeftDistance(t)
                 val rightDistance = path2D.getRightDistance(t)
-                SmartDashboard.putNumber("Left Distance", leftDistance)
-                SmartDashboard.putNumber("Right Distance", rightDistance)
+                SmartDashboard.putNumberArray("Distance", arrayOf(leftDistance, rightDistance))
+                val leftError = leftDistance - leftPosition
+                val rightError = rightDistance - rightPosition
+                SmartDashboard.putNumberArray("Errors", arrayOf(leftError, rightError))
+                SmartDashboard.putNumber("Delta", leftDistance - rightDistance)
+                SmartDashboard.putNumber("Delta Error", leftError - rightError)
+                println("Left $leftDistance Right $rightDistance")
                 leftMotors.set(ControlMode.Position, feetToTicks(leftDistance))
                 rightMotors.set(ControlMode.Position, feetToTicks(rightDistance))
             }
@@ -205,6 +217,7 @@ object Drivetrain {
 //
 //        pEntry.setDouble(0.0)
 //        dEntry.setDouble(0.0)
+
 //
 //        launch {
 //            periodic {
