@@ -1,5 +1,7 @@
 package org.team2471.frc.powerup
 
+import edu.wpi.first.networktables.EntryListenerFlags
+import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -13,6 +15,7 @@ import org.team2471.frc.lib.control.experimental.parallel
 import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Autonomous
+import org.team2471.frc.lib.util.measureTimeFPGA
 import org.team2471.frc.powerup.subsystems.Carriage
 import org.team2471.frc.powerup.subsystems.Drivetrain
 import kotlin.math.roundToInt
@@ -83,6 +86,20 @@ object AutoChooser {
         SmartDashboard.putData("Far Switch Near Scale Auto", farSwitchNearScaleChooser)
         SmartDashboard.putData("Far Switch Far Scale Auto", farSwitchFarScaleChooser)
         SmartDashboard.putData("Side Chooser", sideChooser)
+
+        loadAutonomi()
+        NetworkTableInstance.getDefault()
+                .getTable("PathVisualizer")
+                .getEntry("Autonomi").addListener({ _ ->
+            loadAutonomi()
+        }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+    }
+
+    private fun loadAutonomi() {
+        val t = measureTimeFPGA {
+            autonomi = Autonomi.initFromNetworkTables()
+        }
+        println("Loaded Autonomi in $t seconds")
     }
 }
 

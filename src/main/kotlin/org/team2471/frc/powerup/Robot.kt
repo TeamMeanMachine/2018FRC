@@ -30,12 +30,6 @@ class Robot : IterativeRobot() {
         Game.updateGameData()
         hasRunAuto = true
 
-        val loadTime = measureTimeFPGA {
-            autonomi = Autonomi.initFromNetworkTables()
-        }
-
-        println("Autonomi took $loadTime seconds to load")
-
         Carriage.Lifter.zero()
         AutoChooser.auto.launch()
     }
