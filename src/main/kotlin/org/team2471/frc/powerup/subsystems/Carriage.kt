@@ -74,6 +74,8 @@ object Carriage {
                     Lifter.isBraking = false
 
                     SmartDashboard.putNumber("Arm Amperage", RobotMap.pdp.getCurrent(RobotMap.Talons.ARM_MOTOR_1))
+                    SmartDashboard.putBoolean("Low Gear", Carriage.Lifter.isLowGear)
+                    SmartDashboard.putBoolean("Braking", Carriage.Lifter.isBraking)
                 }
             } finally {
                 Arm.isClamping = true
@@ -122,8 +124,8 @@ object Carriage {
     suspend fun animateToPose(pose: Pose, heightOffset: Double = 0.0) {
         val lifterDelta = pose.lifterHeight + heightOffset - Lifter.height
         val armDelta = pose.armAngle - Arm.angle
-        val lifterTime = (1.25 / 58.0) * (Math.abs(lifterDelta)) + 0.25
-        val armTime = (1.0 / 180.0) * Math.abs(armDelta) + 0.25
+        val lifterTime = (1.5 / 58.0) * (Math.abs(lifterDelta)) + 0.5
+        val armTime = (1.5 / 180.0) * Math.abs(armDelta) + 0.5
         var lifterTimeOffset = 0.0
         var armTimeOffset = 0.0
 
