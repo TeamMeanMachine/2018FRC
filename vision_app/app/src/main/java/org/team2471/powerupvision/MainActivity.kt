@@ -68,12 +68,8 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
     override fun onCameraFrame(inputFrame: CameraBridgeViewBase.CvCameraViewFrame): Mat {
         val image = VisionProcessing.processImage(inputFrame.rgba())
         wakeLock?.acquire(2000)
-//        CameraStream.updateImage(image)
+        CameraStream.updateImage(image)
         return image
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration?) {
-        super.onConfigurationChanged(newConfig)
     }
 
     fun openBottomSheet(v: View) {
@@ -91,8 +87,6 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
         val hueSlider = view.findViewById<MultiSlider>(R.id.hueSlider)
         hueSlider.min = 0
         hueSlider.max = 255
-        hueSlider.getThumb(0).value = ImagePreferences.hueMin
-        hueSlider.getThumb(1).value = ImagePreferences.hueMax
         hueSlider.setOnThumbValueChangeListener { _, _, thumb, value ->
             if (thumb == 0) {
                 ImagePreferences.hueMin = value
@@ -102,12 +96,12 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
                 Log.i("Image Preferences", "Hue Max: $value")
             }
         }
+        hueSlider.getThumb(0).value = ImagePreferences.hueMin
+        hueSlider.getThumb(1).value = ImagePreferences.hueMax
 
         val satSlider = view.findViewById<MultiSlider>(R.id.satSlider)
         satSlider.min = 0
         satSlider.max = 255
-        satSlider.getThumb(0).value = ImagePreferences.satMin
-        satSlider.getThumb(1).value = ImagePreferences.satMax
         satSlider.setOnThumbValueChangeListener { _, _, thumb, value ->
             if (thumb == 0) {
                 ImagePreferences.satMin = value
@@ -117,12 +111,12 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
                 Log.i("Image Preferences", "Sat Max: $value")
             }
         }
+        satSlider.getThumb(0).value = ImagePreferences.satMin
+        satSlider.getThumb(1).value = ImagePreferences.satMax
 
         val valSlider = view.findViewById<MultiSlider>(R.id.valSlider)
         valSlider.min = 0
         valSlider.max = 255
-        valSlider.getThumb(0).value = ImagePreferences.valMin
-        valSlider.getThumb(1).value = ImagePreferences.valMax
         valSlider.setOnThumbValueChangeListener { _, _, thumb, value ->
             if (thumb == 0) {
                 ImagePreferences.valMin = value
@@ -132,15 +126,17 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
                 Log.i("Image Preferences", "Val Max: $value")
             }
         }
+        valSlider.getThumb(0).value = ImagePreferences.valMin
+        valSlider.getThumb(1).value = ImagePreferences.valMax
 
         val exposureSlider = view.findViewById<MultiSlider>(R.id.exposureSlider)
         exposureSlider.min = -12
         exposureSlider.max = 12
-        valSlider.getThumb(0).value = ImagePreferences.exposure
         exposureSlider.setOnThumbValueChangeListener { _, _, _, value ->
             ImagePreferences.exposure = value
             Log.i("Image Preferences", "Exposure: $value")
         }
+        exposureSlider.getThumb(0).value = ImagePreferences.exposure
 
         val viewModeSpinner = view.findViewById<Spinner>(R.id.viewModeSpinner)
         val adapter = ArrayAdapter.createFromResource(this, R.array.visionModes,
@@ -167,12 +163,11 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
             if (status == LoaderCallbackInterface.SUCCESS) {
                 Log.i("OpenCV Loader", "OpenCV loaded successfully")
                 openCvCameraView?.enableView()
+                CameraStream
             } else {
                 super.onManagerConnected(status)
             }
         }
     }
-
-
 }
 
