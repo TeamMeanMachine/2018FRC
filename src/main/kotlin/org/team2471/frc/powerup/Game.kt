@@ -22,7 +22,7 @@ enum class Side {
 
 object Game {
     val isEndGame: Boolean
-        get() = DriverStation.getInstance().matchTime <= 30
+        get() = DriverStation.getInstance().matchTime <= 28
 
     var switchSide: Side? = null
         private set

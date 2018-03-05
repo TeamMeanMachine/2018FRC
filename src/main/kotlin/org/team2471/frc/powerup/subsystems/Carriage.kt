@@ -115,8 +115,8 @@ object Carriage {
         Lifter.curve.storeValue(lifterTime + lifterTimeOffset,
                 min(pose.lifterHeight + heightOffset, Lifter.MAX_HEIGHT))
 
-        Arm.curve.storeValueSlopeAndMagnitude(armTimeOffset, Arm.angle, 0.0, 0.125)
-        Arm.curve.storeValueSlopeAndMagnitude(armTime + armTimeOffset, pose.armAngle, 0.0, 0.5)
+        Arm.curve.storeValueSlopeAndMagnitude(armTimeOffset, Arm.angle, 0.0, 0.5)
+        Arm.curve.storeValueSlopeAndMagnitude(armTime + armTimeOffset, pose.armAngle, 0.0, 1.5)
 
         animationTime = 0.0
     }
@@ -124,8 +124,8 @@ object Carriage {
     suspend fun animateToPose(pose: Pose, heightOffset: Double = 0.0) {
         val lifterDelta = pose.lifterHeight + heightOffset - Lifter.height
         val armDelta = pose.armAngle - Arm.angle
-        val lifterTime = (1.5 / 58.0) * (Math.abs(lifterDelta)) + 0.5
-        val armTime = (1.5 / 180.0) * Math.abs(armDelta) + 0.5
+        val lifterTime = (1.25 / 58.0) * (Math.abs(lifterDelta)) + 0.25
+        val armTime = (1.0 / 180.0) * Math.abs(armDelta) + 0.25
         var lifterTimeOffset = 0.0
         var armTimeOffset = 0.0
 
@@ -141,16 +141,11 @@ object Carriage {
         timer.start()
         var previousTime = 0.0
         Lifter.isBraking = false
-        try {
-            periodic(condition = { previousTime < max(Lifter.curve.length, Arm.curve.length) }) {
-                val t = timer.get()
-                adjustAnimationTime(t - previousTime)
-
-                previousTime = t
-            }
-        } finally {
-            Lifter.isBraking = true
-            Lifter.stop()
+        periodic(condition = { previousTime < max(Lifter.curve.length, Arm.curve.length) }) {
+            val t = timer.get()
+            adjustAnimationTime(t - previousTime)
+            previousTime = t
+            SmartDashboard.putNumber("Arm Amperage", RobotMap.pdp.getCurrent(RobotMap.Talons.ARM_MOTOR_1))
         }
     }
 

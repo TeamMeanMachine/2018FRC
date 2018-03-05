@@ -6,9 +6,7 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.experimental.CancellationException
-import kotlinx.coroutines.experimental.cancelAndJoin
 import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.launch
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.delaySeconds
 import org.team2471.frc.lib.control.experimental.parallel
@@ -18,11 +16,10 @@ import org.team2471.frc.lib.motion_profiling.Autonomous
 import org.team2471.frc.lib.util.measureTimeFPGA
 import org.team2471.frc.powerup.subsystems.Carriage
 import org.team2471.frc.powerup.subsystems.Drivetrain
-import kotlin.math.roundToInt
-import kotlin.math.roundToLong
+import java.io.File
+import java.io.FileNotFoundException
 
-
-lateinit var autonomi: Autonomi
+private lateinit var autonomi: Autonomi
 
 private fun Autonomi.getAutoOrCancel(autoName: String) =
         this[autoName] ?: run {
@@ -39,11 +36,14 @@ private fun Autonomous.getPathOrCancel(pathName: String) =
         }
 
 object AutoChooser {
+    private val cacheFile = File("/home/lvuser/autonomi.json")
+
     private val sideChooser = SendableChooser<Side>().apply {
-        addDefault("Left", Side.LEFT)
-        addObject("Right", Side.RIGHT)
+        addObject("Left", Side.LEFT)
+        addDefault("Right", Side.RIGHT)
     }
 
+/*
     private val nearSwitchNearScaleChooser = SendableChooser<Command>().apply {
         addDefault(nearScaleNearSwitchScale.name, nearScaleNearSwitchScale)
     }
@@ -57,8 +57,9 @@ object AutoChooser {
     }
 
     private val farSwitchFarScaleChooser = SendableChooser<Command>().apply {
-
+        addDefault(farScaleFarSwitch.name, farScaleFarSwitch)
     }
+*/
 
     val auto = Command("Autonomous", Drivetrain, Carriage) {
         Carriage.Arm.stop()
@@ -67,12 +68,12 @@ object AutoChooser {
         val nearSide = sideChooser.selected
         val farSide = !nearSide
         val chosenCommand = when {
-            Game.switchSide == nearSide && Game.scaleSide == nearSide -> nearSwitchNearScaleChooser
-            Game.switchSide == nearSide && Game.scaleSide == farSide -> nearSwitchFarScaleChooser
-            Game.switchSide == farSide && Game.scaleSide == nearSide -> farSwitchNearScaleChooser
-            Game.switchSide == farSide && Game.scaleSide == farSide -> farSwitchFarScaleChooser
+            Game.scaleSide == nearSide && Game.switchSide == nearSide -> nearScaleNearSwitchScale
+            Game.scaleSide == farSide && Game.switchSide == farSide -> farScaleFarSwitch
+            Game.scaleSide == farSide && Game.switchSide == nearSide -> farScaleNearSwitch
+            Game.scaleSide == nearSide && Game.switchSide == farSide -> nearScaleFarSwitch
             else -> null
-        }?.selected
+        }
         if (chosenCommand == null) {
             DriverStation.reportError("Autonomous could not be chosen", false)
             return@Command
@@ -81,26 +82,42 @@ object AutoChooser {
     }
 
     init {
+/*
         SmartDashboard.putData("Near Switch Near Scale Auto", nearSwitchNearScaleChooser)
         SmartDashboard.putData("Near Switch Far Scale Auto", nearSwitchFarScaleChooser)
         SmartDashboard.putData("Far Switch Near Scale Auto", farSwitchNearScaleChooser)
         SmartDashboard.putData("Far Switch Far Scale Auto", farSwitchFarScaleChooser)
+*/
         SmartDashboard.putData("Side Chooser", sideChooser)
 
-        loadAutonomi()
+        // load cached autonomi
+        try {
+            autonomi = Autonomi.fromJsonString(cacheFile.readText())
+            println("Autonomi cache loaded.")
+        } catch (_: FileNotFoundException) {
+            DriverStation.reportError("Autonomi cache could not be found", false)
+            autonomi = Autonomi()
+        }
+
         NetworkTableInstance.getDefault()
                 .getTable("PathVisualizer")
-                .getEntry("Autonomi").addListener({ _ ->
-            loadAutonomi()
-        }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+                .getEntry("Autonomi").addListener({ event ->
+            val json = event.value.string
+            if (!json.isEmpty()) {
+                val t = measureTimeFPGA {
+                    autonomi = Autonomi.fromJsonString(json)
+                }
+                println("Loaded autonomi in $t seconds")
+
+                cacheFile.writeText(json)
+                println("New autonomi written to cache")
+            } else {
+                autonomi = Autonomi()
+                DriverStation.reportWarning("Empty autonomi received from network tables", false)
+            }
+        }, EntryListenerFlags.kImmediate or EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
     }
 
-    private fun loadAutonomi() {
-        val t = measureTimeFPGA {
-            autonomi = Autonomi.initFromNetworkTables()
-        }
-        println("Loaded Autonomi in $t seconds")
-    }
 }
 
 private val nearScaleNearSwitchScale = Command("Near Scale Near Switch Scale Auto", Carriage, Drivetrain) {
@@ -111,9 +128,9 @@ private val nearScaleNearSwitchScale = Command("Near Scale Near Switch Scale Aut
         parallel(coroutineContext, {
             Drivetrain.driveAlongPath(path)
         }, {
-            delaySeconds(path.durationWithSpeed - 2.0)
+            delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Carriage.Pose.SCALE_MED)
-            Carriage.Arm.intake = -0.4
+            Carriage.Arm.intake = -0.3
             delay(350)
             Carriage.Arm.intake = 0.0
         })
@@ -128,17 +145,15 @@ private val nearScaleNearSwitchScale = Command("Near Scale Near Switch Scale Aut
 
         Carriage.Arm.isClamping = true
         delay(100)
-        Carriage.Arm.intake = 0.2
-
-        Drivetrain.driveDistance(-0.5, 0.25, true)
 
         parallel(coroutineContext, {
             Carriage.animateToPose(Carriage.Pose.SWITCH)
-            Carriage.Arm.intake = -0.4
+            Carriage.Arm.intake = -0.3
             delay(350)
             Carriage.Arm.intake = 0.0
         }, {
             delay(300)
+            Carriage.Arm.intake = 0.2
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube1 To Near Switch"))
         })
 
@@ -159,7 +174,6 @@ private val nearScaleNearSwitchScale = Command("Near Scale Near Switch Scale Aut
 
         path = auto.getPathOrCancel("Cube2 To Near Scale")
         parallel(coroutineContext, {
-            delaySeconds(path.durationWithSpeed - 2.0)
             Carriage.animateToPose(Carriage.Pose.SCALE_MED)
         }, {
             Drivetrain.driveAlongPath(path)
@@ -171,6 +185,140 @@ private val nearScaleNearSwitchScale = Command("Near Scale Near Switch Scale Aut
         Carriage.Arm.intake = 0.0
     }
 }
+
+private val farScaleFarSwitch = Command("Far Scale Far Switch Auto", Drivetrain, Carriage) {
+    val auto = autonomi.getAutoOrCancel("Far Scale Far Switch")
+
+    try {
+        var path = auto.getPathOrCancel("Start To Far Scale")
+        parallel(coroutineContext, {
+            Drivetrain.driveAlongPath(path)
+        }, {
+            delaySeconds(path.durationWithSpeed - 1.5)
+            Carriage.animateToPose(Carriage.Pose.SCALE_MED)
+            Carriage.Arm.intake = -0.4
+            delay(350)
+        })
+
+        parallel(coroutineContext, {
+            Carriage.Arm.isClamping = false
+            Carriage.Arm.intake = 0.6
+            Carriage.animateToPose(Carriage.Pose.INTAKE)
+        }, {
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Scale To Cube 1"))
+        })
+
+        Carriage.Arm.isClamping = true
+        delay(150)
+        Carriage.animateToPose(Carriage.Pose.SWITCH)
+        Drivetrain.driveDistance(0.5, 0.5, false)
+        Carriage.Arm.intake = -0.3
+        delay(400)
+    } finally {
+        Carriage.Arm.intake = 0.0
+        Carriage.Arm.isClamping = false
+    }
+}
+
+private val nearScaleFarSwitch = Command("Near Scale Far Switch Auto", Drivetrain, Carriage) {
+    val auto = autonomi.getAutoOrCancel("Near Scale Far Switch")
+
+    try {
+        val path = auto.getPathOrCancel("Start To Near Scale")
+
+        parallel(coroutineContext, {
+            Drivetrain.driveAlongPath(path)
+        }, {
+            delaySeconds(path.durationWithSpeed - 1.5)
+            Carriage.animateToPose(Carriage.Pose.SCALE_MED)
+            Carriage.Arm.intake = -0.2
+            delay(350)
+        })
+
+        parallel(coroutineContext, {
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Near Scale To Cube6"))
+        }, {
+            Carriage.Arm.isClamping = false
+            Carriage.animateToPose(Carriage.Pose.INTAKE)
+        })
+        Drivetrain.turnInPlace(85.0, 1.0)
+        Carriage.Arm.intake = 0.6
+        Drivetrain.driveDistance(1.4, 0.9, false)
+        Carriage.Arm.isClamping = true
+        delay(200)
+        Carriage.Arm.intake = 0.2
+
+        Carriage.animateToPose(Carriage.Pose.SWITCH)
+
+        Drivetrain.driveDistance(0.5, 0.5, false)
+        Carriage.Arm.intake = -0.3
+        delay(450)
+    } finally {
+        Carriage.Arm.intake = 0.0
+        Carriage.Arm.isClamping = true
+    }
+}
+
+private val farScaleNearSwitch = Command("Far Scale Near Switch Auto", Drivetrain, Carriage) {
+    val auto = autonomi.getAutoOrCancel("Far Scale Near Switch")
+    try {
+        val path = auto.getPathOrCancel("Start To Near Switch")
+        parallel(coroutineContext, {
+            Drivetrain.driveAlongPath(path)
+        }, {
+            delaySeconds(path.durationWithSpeed - 2.125)
+            Carriage.animateToPose(Carriage.Pose.SWITCH)
+            Carriage.Arm.intake = -0.3
+            delay(250)
+        })
+
+        Carriage.animateToPose(Carriage.Pose.INTAKE)
+        Carriage.Arm.intake = 0.6
+        Carriage.Arm.isClamping = false
+
+        parallel(coroutineContext, {
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Near Switch To Cube1"))
+        }, {
+            delay(2000)
+            Carriage.Arm.isClamping = true
+            delay(350)
+            Carriage.Arm.intake = 0.2
+        })
+
+        parallel(coroutineContext, {
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube1 To Far Scale"))
+        }, {
+            delay(750)
+            Carriage.animateToPose(Carriage.Pose.SCALE_MED)
+            Carriage.Arm.intake = -0.4
+            delay(200)
+        })
+
+        parallel(coroutineContext, {
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Scale To Cube6"))
+        }, {
+            Carriage.Arm.intake = 0.8
+            Carriage.Arm.isClamping = false
+            Carriage.animateToPose(Carriage.Pose.INTAKE)
+        })
+
+        Carriage.Arm.isClamping = true
+        delay(250)
+        Carriage.Arm.intake = 0.2
+
+        parallel(coroutineContext, {
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube6 To Far Scale"))
+        }, {
+            Carriage.animateToPose(Carriage.Pose.SCALE_MED)
+            Carriage.Arm.intake = -0.3
+            delay(500)
+        })
+    } finally {
+        Carriage.Arm.intake = 0.0
+        Carriage.Arm.isClamping = true
+    }
+}
+
 
 val driveTuner = Command("Drive Train Tuner", Drivetrain) {
     Drivetrain.zeroDistance()

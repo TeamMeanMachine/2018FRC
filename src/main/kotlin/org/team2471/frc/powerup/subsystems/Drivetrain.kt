@@ -8,22 +8,22 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import kotlinx.coroutines.experimental.launch
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.lib.control.plus
-import org.team2471.frc.lib.math.cubicMap
-import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.powerup.Driver
 import org.team2471.frc.powerup.RobotMap
+import java.lang.Math.copySign
 
 object Drivetrain {
     private val leftMotors = TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_1).apply {
         configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10)
-        setNeutralMode(NeutralMode.Coast)
+        setNeutralMode(NeutralMode.Brake)
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(20, 10)
         configPeakCurrentDuration(0, 10)
@@ -52,7 +52,7 @@ object Drivetrain {
 
     private val rightMotors = TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_1).apply {
         configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10)
-        setNeutralMode(NeutralMode.Coast)
+        setNeutralMode(NeutralMode.Brake)
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(20, 10)
         configPeakCurrentDuration(0, 10)
@@ -81,6 +81,8 @@ object Drivetrain {
 
     private const val TICKS_PER_REV = 783
     private const val WHEEL_DIAMETER_INCHES = 5.0
+    private const val MINIMUM_OUTPUT = 0.04
+
     fun ticksToFeet(ticks: Int) = ticks.toDouble() / TICKS_PER_REV * WHEEL_DIAMETER_INCHES * Math.PI / 12.0
     fun feetToTicks(feet: Double) = feet * 12.0 / Math.PI / WHEEL_DIAMETER_INCHES * TICKS_PER_REV
 
@@ -95,7 +97,8 @@ object Drivetrain {
 
     private val rampRateCurve = MotionCurve().apply {
         storeValue(0.0, 0.1)
-        storeValue(Carriage.Lifter.MAX_HEIGHT, 2.0)
+        storeValue(Carriage.Pose.CARRY.lifterHeight, 0.1)
+        storeValue(Carriage.Lifter.MAX_HEIGHT, 2.5)
     }
 
     private val leftPosition: Double
@@ -103,6 +106,8 @@ object Drivetrain {
 
     private val rightPosition: Double
         get() = ticksToFeet(rightMotors.getSelectedSensorPosition(0))
+
+    private val throttleEntry = table.getEntry("Applied throttles")
 
     fun drive(throttle: Double, softTurn: Double, hardTurn: Double) {
 
@@ -119,12 +124,17 @@ object Drivetrain {
             rightPower /= maxPower
         }
 
+        leftPower = leftPower * (1.0 - MINIMUM_OUTPUT) + copySign(MINIMUM_OUTPUT, leftPower)
+        rightPower = rightPower * (1.0 - MINIMUM_OUTPUT) + copySign(MINIMUM_OUTPUT, rightPower)
+
         val rampRate = rampRateCurve.getValue(Carriage.Lifter.height)
         leftMotors.configOpenloopRamp(rampRate, 0)
         rightMotors.configOpenloopRamp(rampRate, 0)
 
         leftMotors.set(ControlMode.PercentOutput, leftPower)
         rightMotors.set(ControlMode.PercentOutput, rightPower)
+
+        throttleEntry.setDoubleArray(doubleArrayOf(leftPower, rightPower))
     }
 
     suspend fun driveDistance(distance: Double, time: Double, suspend: Boolean = true) {
@@ -153,7 +163,8 @@ object Drivetrain {
     suspend fun turnInPlace(angle: Double, time: Double) {
         val curve = MotionCurve()
         val robotWidth = 25.0 / 12.0
-        val dist = ((Math.PI * robotWidth) / 360) * angle
+        val scrubFactor = 1.5
+        val dist = ((Math.PI * robotWidth) / 360) * angle * scrubFactor
         curve.storeValue(0.0, 0.0)
         curve.storeValue(time, dist)
         zeroDistance()
@@ -182,7 +193,7 @@ object Drivetrain {
     }
 
     suspend fun driveAlongPath(path2D: Path2D) {
-        println("Driving along path ${path2D.name}, duration: ${path2D.durationWithSpeed}, travel direction: ${path2D.robotDirection}")
+        println("Driving along path ${path2D.name}, duration: ${path2D.durationWithSpeed}, travel direction: ${path2D.robotDirection}, mirrored: ${path2D.isMirrored}")
         path2D.resetDistances()
         try {
             leftMotors.sensorCollection.setQuadraturePosition(0, 0)
@@ -199,7 +210,6 @@ object Drivetrain {
                 SmartDashboard.putNumberArray("Errors", arrayOf(leftError, rightError))
                 SmartDashboard.putNumber("Delta", leftDistance - rightDistance)
                 SmartDashboard.putNumber("Delta Error", leftError - rightError)
-                println("Left $leftDistance Right $rightDistance")
                 leftMotors.set(ControlMode.Position, feetToTicks(leftDistance))
                 rightMotors.set(ControlMode.Position, feetToTicks(rightDistance))
             }
@@ -219,16 +229,28 @@ object Drivetrain {
 //        dEntry.setDouble(0.0)
 
 //
-//        launch {
-//            periodic {
+        launch {
+            val velocityEntry = table.getEntry("Velocity")
+            val outputEntry = table.getEntry("Output")
+
+            periodic {
+                velocityEntry.setDoubleArray(doubleArrayOf(
+                        ticksToFeet(leftMotors.getSelectedSensorVelocity(0)) * 10.0,
+                        ticksToFeet(rightMotors.getSelectedSensorVelocity(0)) * 10.0))
+
+                outputEntry.setDoubleArray(doubleArrayOf(
+                        leftMotors.motorOutputPercent,
+                        rightMotors.motorOutputPercent
+                ))
+
 //                val p = pEntry.getDouble(0.0)
 //                val d = dEntry.getDouble(0.0)
 //                leftMotors.config_kP(0, p, 0)
 //                leftMotors.config_kD(0, d, 0)
 //                rightMotors.config_kP(0, p, 0)
 //                rightMotors.config_kD(0, d, 0)
-//            }
-//        }
+            }
+        }
 
         CommandSystem.registerDefaultCommand(this, Command("Drivetrain Default", this) {
             periodic {

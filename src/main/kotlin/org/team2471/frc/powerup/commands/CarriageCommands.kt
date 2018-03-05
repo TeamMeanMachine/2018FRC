@@ -21,9 +21,11 @@ val zero = Command("Carriage Zero", Carriage) {
             Carriage.Lifter.heightRawSpeed = CoDriver.leftStickUpDown * 0.4
         }
     } finally {
+        Carriage.setAnimation(Carriage.Pose.INTAKE)
+        Carriage.Arm.stop()
+        Carriage.Lifter.stop()
         Carriage.Lifter.zero()
         Carriage.Lifter.isBraking = true
-        Carriage.Lifter.isLowGear = true
     }
 }
 
@@ -64,7 +66,7 @@ val returnToIntakePosition = Command("Return to Intake Position", Carriage) {
 val driverIntake = Command("Intake", Carriage) {
     try {
         Carriage.Arm.isClamping = false
-        Carriage.Arm.intake = 0.6
+        Carriage.Arm.intake = 0.55
         suspendUntil { Carriage.Arm.hasCube || !Driver.intaking }
         Carriage.Arm.isClamping = true
 
