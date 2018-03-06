@@ -22,12 +22,16 @@ import org.team2471.frc.powerup.Game
 import org.team2471.frc.powerup.IS_COMP_BOT
 import org.team2471.frc.powerup.RobotMap
 import org.team2471.frc.powerup.commands.returnToIntakePosition
+import org.team2471.frc.powerup.commands.scaleOffset
 import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
 
 object Carriage {
     private const val TICKS_PER_INCH = 9437 / 64.25
+
+    private const val MICRO_ADJUST_RATE = 18.0
+
     private fun ticksToInches(ticks: Double) = ticks / TICKS_PER_INCH
     private fun inchesToTicks(inches: Double) = inches * TICKS_PER_INCH
 
@@ -56,7 +60,7 @@ object Carriage {
                     Arm.isClamping = !releaseClamp
                     val spit = CoDriver.spitSpeed
 
-                    Arm.intake = if (Arm.hasCube && spit == 0.0) 0.2 else -spit
+                    Arm.intake = if ((Arm.hasCube || !Arm.usingIntakeSensor) && spit == 0.0) 0.2 else -spit
 
                     val releasing = releaseClamp || spit != 0.0
                     if (!releasing && prevReleasing && Arm.angle > 150.0) returnToIntakePosition.launch()
@@ -66,8 +70,20 @@ object Carriage {
 
                     val currentTime = Timer.getFPGATimestamp()
                     val deltaTime = currentTime - previousTime
-                    adjustAnimationTime(deltaTime * leftStick, CoDriver.microAdjust * 4.0)
                     previousTime = currentTime
+
+
+                    if (targetPose.isScale) {
+                        val scaleOffsetDiff = (CoDriver.microAdjust * MICRO_ADJUST_RATE) * deltaTime
+                        scaleOffset += scaleOffsetDiff
+
+                        Lifter.curve.tailKey.value = targetPose.lifterHeight + scaleOffset
+
+                        SmartDashboard.putNumber("Scale Offset Diff", scaleOffsetDiff)
+                        SmartDashboard.putNumber("Scale Offset", scaleOffset)
+                    }
+
+                    adjustAnimationTime(deltaTime * leftStick)
 
                     SmartDashboard.putNumberArray("Lifter Amperages", Lifter.amperages)
                     Lifter.isLowGear = false
@@ -87,16 +103,18 @@ object Carriage {
     enum class Pose(val lifterHeight: Double, val armAngle: Double) {
         INTAKE(6.0, 0.0),
         CRITICAL_JUNCTION(24.0, 110.0),
-        SCALE_LOW(24.0, 185.0),
-        SCALE_MED(33.0, 185.0),
-        SCALE_HIGH(44.0, 185.0),
+        SCALE_LOW(22.0, 185.0),
+        SCALE_MED(29.0, 185.0),
+        SCALE_HIGH(40.0, 185.0),
         CARRY(10.0, 0.0),
         //        CARRY(0.0, 110.0),
         SWITCH(21.0, 30.0),
         CLIMB(58.0, 0.0),
         CLIMB_ACQUIRE_RUNG(26.0, 0.0),
         FACE_THE_BOSS(3.0, 0.0),
-        STARTING_POSITION(6.0, 110.0),
+        STARTING_POSITION(6.0, 110.0);
+
+        val isScale get() = this == SCALE_LOW || this == SCALE_MED || this == SCALE_HIGH
     }
 
     fun adjustAnimationTime(dt: Double, heightOffset: Double = 0.0) {
@@ -290,6 +308,7 @@ object Carriage {
         private val table = Carriage.table.getSubTable("Arm")
 
         private val intakeMotorLeft = TalonSRX(RobotMap.Talons.INTAKE_MOTOR_LEFT).apply {
+            inverted = IS_COMP_BOT
             configContinuousCurrentLimit(15, 10)
             configPeakCurrentLimit(0, 10)
             configPeakCurrentDuration(0, 10)
@@ -298,7 +317,7 @@ object Carriage {
         }
 
         private val intakeMotorRight = TalonSRX(RobotMap.Talons.INTAKE_MOTOR_RIGHT).apply {
-            inverted = true
+            inverted = !IS_COMP_BOT
             configContinuousCurrentLimit(15, 10)
             configPeakCurrentLimit(0, 10)
             configPeakCurrentDuration(0, 10)
@@ -312,7 +331,7 @@ object Carriage {
 
         @Suppress("ConstantConditionIf")
         private val cubeSensorTriggered: Boolean
-            get() = if (IS_COMP_BOT) cubeSensor.voltage > 0.15
+            get() = if (IS_COMP_BOT) cubeSensor.voltage > 0.8
             else cubeSensor.voltage < 0.15
 
         init {
@@ -324,8 +343,10 @@ object Carriage {
                 val useCubeSensorEntry = table.getEntry("Use Cube Sensor")
                 useCubeSensorEntry.setPersistent()
                 periodic(40) {
-                    val useCubeSensor = useCubeSensorEntry.getBoolean(true)
-                    if ((useCubeSensor && cubeSensorTriggered) || (!useCubeSensor && minAmperage > 10)) {
+                    usingIntakeSensor = useCubeSensorEntry.getBoolean(true)
+                    if (!usingIntakeSensor) {
+                        hasCube = false
+                    } else if (cubeSensorTriggered) {
                         hasCube = true
                     } else if (!isClamping || intakeMotorLeft.motorOutputPercent < -0.1) {
                         hasCube = false
@@ -346,6 +367,9 @@ object Carriage {
         }
 
         var hasCube = false
+            private set
+
+        var usingIntakeSensor = true
             private set
 
         var isClamping: Boolean

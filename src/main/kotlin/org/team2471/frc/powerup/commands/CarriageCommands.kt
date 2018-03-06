@@ -29,22 +29,25 @@ val zero = Command("Carriage Zero", Carriage) {
     }
 }
 
-private val scaleStackHeight get() = SmartDashboard.getNumber("Scale Stack Height", 0.0)
+var scaleOffset = 0.0
+    set(value) {
+        field = value.coerceIn(0.0, 33.0)
+    }
 
 val goToSwitch = Command("Switch Preset", Carriage) {
     Carriage.animateToPose(Carriage.Pose.SWITCH)
 }
 
 val goToScaleLowPreset = Command("Scale Low Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.SCALE_LOW, heightOffset = scaleStackHeight * 11)
+    Carriage.animateToPose(Carriage.Pose.SCALE_LOW, heightOffset = scaleOffset)
 }
 
 val goToScaleMediumPreset = Command("Scale Medium Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.SCALE_MED, heightOffset = scaleStackHeight * 11)
+    Carriage.animateToPose(Carriage.Pose.SCALE_MED, heightOffset = scaleOffset)
 }
 
 val goToScaleHighPreset = Command("Scale High Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.SCALE_HIGH, heightOffset = scaleStackHeight * 11)
+    Carriage.animateToPose(Carriage.Pose.SCALE_HIGH, heightOffset = scaleOffset)
 }
 
 val goToIntakePreset = Command("Intake Preset", Carriage) {
@@ -68,10 +71,11 @@ val driverIntake = Command("Intake", Carriage) {
         Carriage.Arm.isClamping = false
         Carriage.Arm.intake = 0.55
         suspendUntil { Carriage.Arm.hasCube || !Driver.intaking }
+        Carriage.Arm.intake = 0.8
         Carriage.Arm.isClamping = true
 
         if (Carriage.Arm.hasCube) {
-            launch {
+            launch(coroutineContext) {
                 Driver.rumble = 1.0
                 Driver.rumble = 1.0
                 try {
@@ -101,7 +105,7 @@ val driverSpit = Command("Driver Spit", Carriage) {
 }
 
 val incrementScaleStackHeight = Command("Increment Cube Stack Count") {
-    SmartDashboard.putNumber("Scale Stack Height", min(scaleStackHeight + 1, 3.0))
+    scaleOffset += 11
     @Suppress("NON_EXHAUSTIVE_WHEN")
     when (Carriage.targetPose) {
         Carriage.Pose.SCALE_LOW -> goToScaleLowPreset(coroutineContext)
@@ -111,7 +115,7 @@ val incrementScaleStackHeight = Command("Increment Cube Stack Count") {
 }
 
 val decrementScaleStackHeight = Command("Increment Cube Stack Count") {
-    SmartDashboard.putNumber("Scale Stack Height", max(scaleStackHeight - 1, 0.0))
+    scaleOffset -= 11
     @Suppress("NON_EXHAUSTIVE_WHEN")
     when (Carriage.targetPose) {
         Carriage.Pose.SCALE_LOW -> goToScaleLowPreset(coroutineContext)

@@ -127,7 +127,12 @@ object Drivetrain {
         leftPower = leftPower * (1.0 - MINIMUM_OUTPUT) + copySign(MINIMUM_OUTPUT, leftPower)
         rightPower = rightPower * (1.0 - MINIMUM_OUTPUT) + copySign(MINIMUM_OUTPUT, rightPower)
 
-        val rampRate = rampRateCurve.getValue(Carriage.Lifter.height)
+        var rampRate = rampRateCurve.getValue(Carriage.Lifter.height)
+
+        if (Carriage.targetPose == Carriage.Pose.CLIMB) {
+            rampRate *= 0.6
+        }
+
         leftMotors.configOpenloopRamp(rampRate, 0)
         rightMotors.configOpenloopRamp(rampRate, 0)
 
