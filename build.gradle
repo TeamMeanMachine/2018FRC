@@ -19,7 +19,7 @@ plugins {
 
 def TEAM = 2471
 def ROBOT_CLASS = "org.team2471.frc.powerup.Robot"
-//def ROBOT_CLASS = "SandboxRobot"
+//def ROBOT_CLASS = "MotorTest"
 
 deploy {
     targets {
@@ -43,6 +43,7 @@ sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
@@ -51,6 +52,7 @@ dependencies {
     compile wpilib()
     compile ctre()
     compile project("meanlib")
+    compile 'com.github.juchong:ADIS16448-RoboRIO-Driver:master-SNAPSHOT'
 }
 
 jar {
