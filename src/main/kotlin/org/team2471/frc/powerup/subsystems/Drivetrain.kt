@@ -5,6 +5,7 @@ import com.ctre.phoenix.motorcontrol.ControlMode
 import com.ctre.phoenix.motorcontrol.FeedbackDevice
 import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
+import edu.wpi.first.networktables.EntryListenerFlags
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -227,13 +228,20 @@ object Drivetrain {
     init {
         gyro.calibrate()
 
-//        val pEntry = table.getEntry("Position P")
-//        val dEntry = table.getEntry("Position D")
-//
-//        pEntry.setDouble(0.0)
-//        dEntry.setDouble(0.0)
+        val pEntry = table.getEntry("Position P")
+        val dEntry = table.getEntry("Position D")
+        pEntry.setDouble(Double.NaN)
+        dEntry.setDouble(Double.NaN)
 
-//
+        pEntry.addListener({ event ->
+            leftMotors.config_kP(0, event.value.double, 0)
+            rightMotors.config_kP(0, event.value.double, 0)
+        }, EntryListenerFlags.kUpdate)
+        dEntry.addListener({ event ->
+            leftMotors.config_kD(0, event.value.double, 0)
+            rightMotors.config_kD(0, event.value.double, 0)
+        }, EntryListenerFlags.kUpdate)
+
         launch {
             val velocityEntry = table.getEntry("Velocity")
             val outputEntry = table.getEntry("Output")
@@ -247,21 +255,14 @@ object Drivetrain {
                         leftMotors.motorOutputPercent,
                         rightMotors.motorOutputPercent
                 ))
-
-//                val p = pEntry.getDouble(0.0)
-//                val d = dEntry.getDouble(0.0)
-//                leftMotors.config_kP(0, p, 0)
-//                leftMotors.config_kD(0, d, 0)
-//                rightMotors.config_kP(0, p, 0)
-//                rightMotors.config_kD(0, d, 0)
+                SmartDashboard.putNumberArray("Encoder Distances",
+                        arrayOf(ticksToFeet(leftMotors.getSelectedSensorPosition(0)),
+                                ticksToFeet(rightMotors.getSelectedSensorPosition(0))))
             }
         }
 
         CommandSystem.registerDefaultCommand(this, Command("Drivetrain Default", this) {
             periodic {
-                SmartDashboard.putNumberArray("Encoder Distances",
-                        arrayOf(ticksToFeet(leftMotors.getSelectedSensorPosition(0)),
-                                ticksToFeet(rightMotors.getSelectedSensorPosition(0))))
                 SmartDashboard.putNumber("Gyro Angle", gyro.angleZ)
                 drive(Driver.throttle, Driver.softTurn, Driver.hardTurn)
             }
