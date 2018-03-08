@@ -60,7 +60,7 @@ object Carriage {
                     Arm.isClamping = !releaseClamp
                     val spit = CoDriver.spitSpeed
 
-                    Arm.intake = if ((Arm.hasCube || !Arm.usingIntakeSensor) && spit == 0.0) 0.2 else -spit
+                    Arm.intake = if (Arm.hasCube && spit == 0.0) 0.2 else -spit
 
                     val releasing = releaseClamp || spit != 0.0
                     if (!releasing && prevReleasing && Arm.angle > 150.0) returnToIntakePosition.launch()
@@ -290,7 +290,7 @@ object Carriage {
     object Arm {
         private val clawSolenoid = Solenoid(RobotMap.Solenoids.INTAKE_CLAW)
 
-        private val motors = TalonSRX(RobotMap.Talons.ARM_MOTOR_1).apply {
+        private val motor = TalonSRX(RobotMap.Talons.ARM_MOTOR_1).apply {
             configSelectedFeedbackSensor(FeedbackDevice.Analog, 0, 10)
             config_kP(0, 20.0, 10)
             config_kI(0, 0.0, 10)
@@ -309,7 +309,8 @@ object Carriage {
 
         private val intakeMotorLeft = TalonSRX(RobotMap.Talons.INTAKE_MOTOR_LEFT).apply {
             inverted = IS_COMP_BOT
-            configContinuousCurrentLimit(15, 10)
+            configOpenloopRamp(0.2, 10)
+            configContinuousCurrentLimit(25, 10)
             configPeakCurrentLimit(0, 10)
             configPeakCurrentDuration(0, 10)
             enableCurrentLimit(true)
@@ -318,7 +319,8 @@ object Carriage {
 
         private val intakeMotorRight = TalonSRX(RobotMap.Talons.INTAKE_MOTOR_RIGHT).apply {
             inverted = !IS_COMP_BOT
-            configContinuousCurrentLimit(15, 10)
+            configOpenloopRamp(0.2, 10)
+            configContinuousCurrentLimit(25, 10)
             configPeakCurrentLimit(0, 10)
             configPeakCurrentDuration(0, 10)
             enableCurrentLimit(true)
@@ -331,7 +333,7 @@ object Carriage {
 
         @Suppress("ConstantConditionIf")
         private val cubeSensorTriggered: Boolean
-            get() = if (IS_COMP_BOT) cubeSensor.voltage > 0.8
+            get() = if (IS_COMP_BOT) cubeSensor.voltage < 0.15
             else cubeSensor.voltage < 0.15
 
         init {
@@ -339,24 +341,24 @@ object Carriage {
                 val angleEntry = table.getEntry("Angle")
                 val outputEntry = table.getEntry("Output")
                 val sensorVoltageEntry = table.getEntry("Sensor Voltage")
+                val intakeAmperagesEntry = table.getEntry("Intake Amperage")
 
                 val useCubeSensorEntry = table.getEntry("Use Cube Sensor")
                 useCubeSensorEntry.setPersistent()
                 periodic(40) {
                     usingIntakeSensor = useCubeSensorEntry.getBoolean(true)
-                    if (!usingIntakeSensor) {
-                        hasCube = false
-                    } else if (cubeSensorTriggered) {
+                    if ((usingIntakeSensor && cubeSensorTriggered) || (!usingIntakeSensor && minAmperage > 15)) {
                         hasCube = true
                     } else if (!isClamping || intakeMotorLeft.motorOutputPercent < -0.1) {
                         hasCube = false
                     }
                     CoDriver.passiveRumble = if (hasCube && !Game.isEndGame) .15 else 0.0
                     if (RobotState.isEnabled())
-                        outputEntry.setNumber(motors.motorOutputPercent)
+                        outputEntry.setNumber(motor.motorOutputPercent)
                     angleEntry.setDouble(angle)
 
                     sensorVoltageEntry.setDouble(cubeSensor.voltage)
+                    intakeAmperagesEntry.setDoubleArray(doubleArrayOf(intakeMotorLeft.outputCurrent, intakeMotorRight.outputCurrent))
                 }
             }
         }
@@ -377,11 +379,11 @@ object Carriage {
             set(value) = clawSolenoid.set(!value)
 
         val angle: Double
-            get() = ticksToDegrees(motors.getSelectedSensorPosition(0).toDouble())
+            get() = ticksToDegrees(motor.getSelectedSensorPosition(0).toDouble())
 
         var setpoint: Double = angle
             set(value) {
-                motors.set(ControlMode.Position, degreesToTicks(value))
+                motor.set(ControlMode.Position, degreesToTicks(value))
                 field = value
             }
 
@@ -400,7 +402,7 @@ object Carriage {
         fun degreesToTicks(degrees: Double): Double = degrees * ARM_TICKS_PER_DEGREE + ARM_OFFSET_NATIVE
 
         fun stop() {
-            motors.set(ControlMode.PercentOutput, 0.0)
+            motor.set(ControlMode.PercentOutput, 0.0)
         }
 
     }

@@ -32,7 +32,7 @@ object Driver {
     val softTurn: Double
         get() = controller.getX(GenericHID.Hand.kRight)
                 .deadband(0.2)
-                .squareWithSign()
+                .squareWithSign() * if (IS_COMP_BOT) 0.8 else 1.0
 
     val hardTurn: Double
         get() = (-controller.getTriggerAxis(GenericHID.Hand.kLeft) + controller.getTriggerAxis(GenericHID.Hand.kRight))
