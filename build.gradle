@@ -14,7 +14,7 @@ buildscript {
 }
 
 plugins {
-    id "jaci.openrio.gradle.GradleRIO" version "2018.01.07"
+    id "jaci.openrio.gradle.GradleRIO" version "2018.03.06"
 }
 
 def TEAM = 2471
