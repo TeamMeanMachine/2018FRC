@@ -1,5 +1,6 @@
 package org.team2471.frc.powerup
 
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.IterativeRobot
 import edu.wpi.first.wpilibj.livewindow.LiveWindow
 import kotlinx.coroutines.experimental.runBlocking
@@ -25,8 +26,9 @@ class Robot : IterativeRobot() {
 
     override fun autonomousInit() {
         Game.updateGameData()
+        LEDController.alliance = Game.alliance
         hasRunAuto = true
-
+        LEDController.state = TheatreState
         Carriage.Lifter.zero()
         AutoChooser.auto.launch()
     }
@@ -35,6 +37,7 @@ class Robot : IterativeRobot() {
         if (!hasRunAuto) runBlocking {
             Carriage.animateToPose(Carriage.Pose.INTAKE)
         }
+        LEDController.state = FireState
     }
 
     override fun robotPeriodic() {

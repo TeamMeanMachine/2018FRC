@@ -1,6 +1,7 @@
 package org.team2471.frc.powerup
 
 import edu.wpi.first.wpilibj.DriverStation
+import org.team2471.frc.lib.util.Alliance
 
 enum class Side {
     LEFT,
@@ -21,8 +22,13 @@ enum class Side {
 }
 
 object Game {
+    private val ds = DriverStation.getInstance()
+
+    val matchTime: Double
+        get() = ds.matchTime
+
     val isEndGame: Boolean
-        get() = DriverStation.getInstance().matchTime <= 28
+        get() = matchTime <= 28
 
     var switchSide: Side? = null
         private set
@@ -30,8 +36,11 @@ object Game {
     var scaleSide: Side? = null
         private set
 
+    var alliance: Alliance? = null
+
     fun updateGameData() {
-        val gameData = DriverStation.getInstance().gameSpecificMessage
+        val gameData = ds.gameSpecificMessage
+
         if (gameData.length < 2) {
             DriverStation.reportError("Invalid game data received ($gameData)", false)
             switchSide = null
@@ -41,5 +50,11 @@ object Game {
 
         switchSide = Side.fromChar(gameData[0])
         scaleSide = Side.fromChar(gameData[1])
+
+        alliance = when (ds.alliance) {
+            DriverStation.Alliance.Red -> Alliance.RED
+            DriverStation.Alliance.Blue -> Alliance.BLUE
+            else -> null
+        }
     }
 }
