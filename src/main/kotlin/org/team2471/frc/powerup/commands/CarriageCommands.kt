@@ -70,7 +70,13 @@ val driverIntake = Command("Intake", Carriage) {
     try {
         Carriage.Arm.isClamping = false
         Carriage.Arm.intake = 0.55
-        suspendUntil { Carriage.Arm.hasCube || !Driver.intaking }
+        var prevIntaking = Driver.intaking
+        suspendUntil {
+            val intaking = Driver.intaking
+            val finished = Carriage.Arm.hasCube || (intaking && !prevIntaking)
+            prevIntaking = intaking
+            finished
+        }
         Carriage.Arm.intake = 0.8
         Carriage.Arm.isClamping = true
 

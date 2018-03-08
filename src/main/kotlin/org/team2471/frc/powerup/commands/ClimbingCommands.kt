@@ -36,7 +36,7 @@ val climbCommand = Command("Climb", Carriage, Drivetrain, Wings) {
             Drivetrain.drive(Driver.throttle, Driver.softTurn, Driver.hardTurn)
         }
         println("Stage 2")
-        Drivetrain.drive(0.0, 0.0, 0.0)
+        Drivetrain.drive(-0.1, 0.0, 0.0)
         Carriage.Lifter.isLowGear = true
 
         Carriage.setAnimation(Carriage.Pose.FACE_THE_BOSS)

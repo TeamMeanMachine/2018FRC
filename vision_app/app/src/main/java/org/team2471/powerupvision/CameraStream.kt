@@ -22,7 +22,7 @@ object CameraStream {
         Imgproc.cvtColor(image, this.image, Imgproc.COLOR_RGB2BGR)
     }
 
-    private val serverSocket = ServerSocket(5800)
+    private val serverSocket = ServerSocket(2471)
 
     init {
         thread {

@@ -103,7 +103,7 @@ object Carriage {
     enum class Pose(val lifterHeight: Double, val armAngle: Double) {
         INTAKE(6.0, 0.0),
         CRITICAL_JUNCTION(24.0, 110.0),
-        SCALE_LOW(22.0, 185.0),
+        SCALE_LOW(23.0, 185.0),
         SCALE_MED(29.0, 185.0),
         SCALE_HIGH(40.0, 185.0),
         CARRY(10.0, 0.0),
@@ -327,7 +327,8 @@ object Carriage {
             setNeutralMode(NeutralMode.Coast)
         }
 
-        private val minAmperage = min(intakeMotorLeft.outputCurrent, intakeMotorRight.outputCurrent)
+        private val minAmperage
+            get() = min(intakeMotorLeft.outputCurrent, intakeMotorRight.outputCurrent)
 
         private val cubeSensor = AnalogInput(3)
 
