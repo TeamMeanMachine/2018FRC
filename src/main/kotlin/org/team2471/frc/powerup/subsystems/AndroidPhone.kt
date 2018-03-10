@@ -1,4 +1,4 @@
-package org.team2471.frc.powerup.Subsystems
+package org.team2471.frc.powerup.subsystems
 
 import com.team254.frc2017.vision.AdbBridge
 

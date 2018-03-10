@@ -5,23 +5,38 @@ import edu.wpi.first.wpilibj.SerialPort
 import org.team2471.frc.lib.util.Alliance
 
 object LEDController {
-    private val port = SerialPort(9600, SerialPort.Port.kUSB2)
+    private val port: SerialPort? = try {
+        SerialPort(9600, SerialPort.Port.kUSB2)
+    } catch(_: Exception) {
+        DriverStation.reportError("Failed to connect to LEDController", false)
+        null
+    }
 
     var alliance: Alliance? = null
         @Synchronized set(value) {
-            if (value == DriverStation.Alliance.Red) {
-                port.writeString("red")
-            } else if (value == DriverStation.Alliance.Blue) {
-                port.writeString("blue")
+            if (value != field) {
+                if (value == DriverStation.Alliance.Red) {
+                    write("red")
+                } else if (value == DriverStation.Alliance.Blue) {
+                    write("blue")
+                }
             }
             field = value
         }
 
     var state: LEDState? = IdleState
         @Synchronized set(value) {
-            if (value != null) port.writeString("${value.representation}\n")
+            if (value != field && value != null) {
+                write(value.representation)
+            }
             field = value
         }
+
+    private fun write(data: String) = try {
+        port?.writeString("$data\n")
+    } catch (e: Exception) {
+        DriverStation.reportError("Error writing string to LEDController: ${e.message}", false)
+    }
 }
 
 

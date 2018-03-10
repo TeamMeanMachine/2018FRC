@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.RobotState
 import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.runWhen
 import org.team2471.frc.lib.control.experimental.runWhile
 import org.team2471.frc.lib.control.experimental.toggleWhen
@@ -11,6 +12,9 @@ import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareRootWithSign
 import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.powerup.commands.*
+import org.team2471.frc.powerup.subsystems.Carriage
+import org.team2471.frc.powerup.subsystems.Drivetrain
+import org.team2471.frc.powerup.subsystems.Wings
 import java.lang.Double.max
 
 object Driver {
@@ -44,7 +48,6 @@ object Driver {
         get() = controller.backButton
 
     init {
-        driveTuner.toggleWhen { controller.getStickButton(GenericHID.Hand.kLeft) }
         driverIntake.toggleWhen { intaking }
         driverSpit.runWhile { controller.getBumper(GenericHID.Hand.kLeft) }
         climbCommand.toggleWhen { controller.startButton }
@@ -77,8 +80,8 @@ object CoDriver {
                 .deadband(.2)
 
     val spitSpeed: Double
-        get() = Math.max(controller.getTriggerAxis(GenericHID.Hand.kRight) * 0.8,
-                controller.getTriggerAxis(GenericHID.Hand.kLeft) * 0.4)
+        get() = Math.max(controller.getTriggerAxis(GenericHID.Hand.kRight) * 0.6,
+                controller.getTriggerAxis(GenericHID.Hand.kLeft) * 0.3)
 
     val release: Boolean
         get() = controller.getBumper(GenericHID.Hand.kRight)
@@ -95,5 +98,8 @@ object CoDriver {
         incrementScaleStackHeight.runWhen { controller.pov == 0 }
         decrementScaleStackHeight.runWhen { controller.pov == 180 }
         tuneArmPID.runWhen { SmartDashboard.getBoolean("Tune Arm PID", false) }
+
+        Command( "Default Command Reset", Drivetrain, Carriage, Wings) {
+        }.runWhen { controller.startButton }
     }
 }

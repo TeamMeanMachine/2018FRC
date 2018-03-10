@@ -18,23 +18,26 @@ val climbCommand = Command("Climb", Carriage, Drivetrain, Wings, LEDController) 
         Carriage.animateToPose(Carriage.Pose.CLIMB)
         suspendUntil { Driver.acquireRung }
         launch(this@Command.coroutineContext) {
+            LEDController.state = ClimbGoState
             periodic {
+                val isAcquiringRung = // Carriage.Lifter.setpoint < Carriage.Pose.CLIMB_ACQUIRE_RUNG.lifterHeight + 2.0 &&
+                        (Game.matchTime > 5.0 || Game.matchTime == -1.0)
+
                 val deploy = SmartDashboard.getBoolean("Deploy Wings", true) &&
-                        Carriage.Lifter.height < Carriage.Pose.CLIMB.lifterHeight - 12.0 &&
+                        isAcquiringRung &&
                         Game.isEndGame
 
-                if (Game.matchTime < 5.0) {
-                    LEDController.state = ClimbStopState // TODO: fast pulsing
-                } else if (LEDController.state != ClimbStopState &&
-                        Carriage.Lifter.setpoint != Carriage.Pose.CLIMB_ACQUIRE_RUNG.lifterHeight) {
+                Wings.wingsDeployed = deploy
+
+                if (!isAcquiringRung) {
+                    Drivetrain.drive(0.0, 0.0, 0.0)
                     LEDController.state = ClimbStopState
-                } else if (deploy && LEDController.state != ClimbGoState) {
+                } else if (deploy) {
+                    Drivetrain.drive(-0.1, 0.0, 0.0)
                     LEDController.state = ClimbGoState
-                } else if (!deploy && LEDController.state == ClimbGoState) {
+                } else if (!deploy) {
                     LEDController.state = ClimbStopState
                 }
-
-                Wings.wingsDeployed = deploy
             }
         }
         Carriage.animateToPose(Carriage.Pose.CLIMB_ACQUIRE_RUNG)
@@ -51,8 +54,6 @@ val climbCommand = Command("Climb", Carriage, Drivetrain, Wings, LEDController) 
         LEDController.state = ClimbStopState
         Carriage.Lifter.isLowGear = true
 
-
-
         Carriage.setAnimation(Carriage.Pose.FACE_THE_BOSS)
 
         val timer = Timer()
@@ -61,18 +62,27 @@ val climbCommand = Command("Climb", Carriage, Drivetrain, Wings, LEDController) 
         periodic {
             val time = timer.get()
             val input = CoDriver.leftStickUpDown
-            Carriage.adjustAnimationTime((time - previousTime) * input)
-
-            Carriage.Lifter.isBraking = input == 0.0
+            if(input == 0.0) {
+                Carriage.Lifter.isBraking = true
+                Carriage.Lifter.stop()
+            } else {
+                Carriage.Lifter.isBraking = false
+                Carriage.adjustAnimationTime((time - previousTime) * input)
+            }
 
             previousTime = time
         }
     } finally {
         Wings.climbingGuideDeployed = false
         Carriage.Lifter.isLowGear = false
-        Carriage.Lifter.isBraking = true
+        Carriage.Lifter.isBraking = false
         Carriage.Lifter.heightRawSpeed = 0.0
         Wings.wingsDeployed = false
         Drivetrain.drive(0.0, 0.0, 0.0)
+        resetClimbCommand.launch()
     }
+}
+
+val resetClimbCommand = Command("Reset Climb", Drivetrain, Carriage, Wings) {
+    Carriage.animateToPose(Carriage.Pose.CLIMB)
 }

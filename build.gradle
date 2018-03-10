@@ -25,6 +25,7 @@ deploy {
     targets {
         target("roborio", RoboRIO) {
             team = TEAM
+            addresses << '10.24.71.2'
         }
     }
     artifacts {

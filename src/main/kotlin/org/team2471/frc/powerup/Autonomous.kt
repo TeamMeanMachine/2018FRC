@@ -140,12 +140,12 @@ private val nearScaleNearSwitchScale = Command("Near Scale Near Switch Scale Aut
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Near Scale To Cube1"))
         }, {
             Carriage.Arm.isClamping = false
-            Carriage.Arm.intake = 0.6
+            Carriage.Arm.intake = 0.7
             Carriage.animateToPose(Carriage.Pose.INTAKE)
         })
 
         Carriage.Arm.isClamping = true
-        delay(150)
+        delay(250)
 
         parallel(coroutineContext, {
             Carriage.animateToPose(Carriage.Pose.SWITCH)
@@ -153,7 +153,7 @@ private val nearScaleNearSwitchScale = Command("Near Scale Near Switch Scale Aut
             delay(300)
             Carriage.Arm.intake = 0.2
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube1 To Near Switch"))
-            Carriage.Arm.intake = -0.3
+            Carriage.Arm.intake = -0.4
             delay(350)
             Carriage.Arm.intake = 0.0
         })
@@ -270,9 +270,9 @@ private val farScaleNearSwitch = Command("Far Scale Near Switch Auto", Drivetrai
         parallel(coroutineContext, {
             Drivetrain.driveAlongPath(path)
         }, {
-            delaySeconds(path.durationWithSpeed - 1.9)
+            delaySeconds(path.durationWithSpeed - 1.85)
             Carriage.animateToPose(Carriage.Pose.SWITCH)
-            Carriage.Arm.intake = -0.3
+            Carriage.Arm.intake = -0.6
             delay(250)
         })
 

@@ -103,11 +103,10 @@ object Carriage {
     enum class Pose(val lifterHeight: Double, val armAngle: Double) {
         INTAKE(6.0, 0.0),
         CRITICAL_JUNCTION(24.0, 110.0),
-        SCALE_LOW(23.0, 185.0),
-        SCALE_MED(29.0, 185.0),
-        SCALE_HIGH(40.0, 185.0),
+        SCALE_LOW(23.5, 185.0),
+        SCALE_MED(30.0, 185.0),
+        SCALE_HIGH(32.0, 185.0),
         CARRY(10.0, 0.0),
-        //        CARRY(0.0, 110.0),
         SWITCH(21.0, 30.0),
         CLIMB(58.0, 0.0),
         CLIMB_ACQUIRE_RUNG(26.0, 0.0),
@@ -120,8 +119,10 @@ object Carriage {
     fun adjustAnimationTime(dt: Double, heightOffset: Double = 0.0) {
         animationTime += dt
 
-        Lifter.setpoint = Lifter.curve.getValue(animationTime) + heightOffset
-        Arm.setpoint = Arm.curve.getValue(animationTime)
+        val lifterSetpoint = Lifter.curve.getValue(animationTime) + heightOffset
+        val armSetpoint = Arm.curve.getValue(animationTime)
+        Lifter.setpoint = lifterSetpoint
+        Arm.setpoint = armSetpoint
     }
 
     fun setAnimation(pose: Pose, lifterTime: Double = 1.5, armTime: Double = 1.5,
@@ -346,9 +347,16 @@ object Carriage {
 
                 val useCubeSensorEntry = table.getEntry("Use Cube Sensor")
                 useCubeSensorEntry.setPersistent()
+
+                val cubeTimer = Timer()
+                cubeTimer.start()
                 periodic(40) {
+                    if(!cubeSensorTriggered) {
+                        cubeTimer.reset()
+                    }
+
                     usingIntakeSensor = useCubeSensorEntry.getBoolean(true)
-                    if ((usingIntakeSensor && cubeSensorTriggered) || (!usingIntakeSensor && minAmperage > 15)) {
+                    if ((usingIntakeSensor && cubeTimer.get() > 0.25) || (!usingIntakeSensor && minAmperage > 15)) {
                         hasCube = true
                     } else if (!isClamping || intakeMotorLeft.motorOutputPercent < -0.1) {
                         hasCube = false
@@ -363,7 +371,6 @@ object Carriage {
                 }
             }
         }
-
         var curve = MotionCurve().apply {
             storeValue(0.0, Pose.INTAKE.armAngle)
             storeValue(1.5, Pose.SCALE_LOW.armAngle)
