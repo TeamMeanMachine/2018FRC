@@ -132,9 +132,14 @@ val decrementScaleStackHeight = Command("Increment Cube Stack Count") {
 }
 
 val tuneArmPID = Command("Tune Arm Pid", Carriage) {
-
     periodic {
         val rightStick = CoDriver.microAdjust
         Carriage.Arm.setpoint = rightStick * 45 + 90
     }
+}
+
+val toggleCubeSensor = Command("Toggle Cube Sensor"){
+    val entry = Carriage.Arm.table.getEntry("Use Cube Sensor")
+    entry.setBoolean(!entry.getBoolean(true))
+
 }

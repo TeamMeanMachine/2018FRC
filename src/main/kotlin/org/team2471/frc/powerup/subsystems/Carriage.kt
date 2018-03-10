@@ -306,7 +306,7 @@ object Carriage {
             inverted = true
         }
 
-        private val table = Carriage.table.getSubTable("Arm")
+        val table = Carriage.table.getSubTable("Arm")
 
         private val intakeMotorLeft = TalonSRX(RobotMap.Talons.INTAKE_MOTOR_LEFT).apply {
             inverted = IS_COMP_BOT
@@ -331,7 +331,7 @@ object Carriage {
         private val minAmperage
             get() = min(intakeMotorLeft.outputCurrent, intakeMotorRight.outputCurrent)
 
-        private val cubeSensor = AnalogInput(3)
+        private val cubeSensor = AnalogInput(2)
 
         @Suppress("ConstantConditionIf")
         private val cubeSensorTriggered: Boolean

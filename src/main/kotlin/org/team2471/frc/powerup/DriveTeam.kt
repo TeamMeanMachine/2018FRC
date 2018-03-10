@@ -51,6 +51,7 @@ object Driver {
         driverIntake.toggleWhen { intaking }
         driverSpit.runWhile { controller.getBumper(GenericHID.Hand.kLeft) }
         climbCommand.toggleWhen { controller.startButton }
+        toggleCubeSensor.runWhen { controller.bButton }
     }
 }
 
