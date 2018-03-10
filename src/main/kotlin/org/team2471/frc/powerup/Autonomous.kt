@@ -69,10 +69,12 @@ object AutoChooser {
         val nearSide = sideChooser.selected
         val farSide = !nearSide
         val chosenCommand = when {
-            Game.scaleSide == nearSide && Game.switchSide == nearSide -> nearScaleNearSwitchScale
-            Game.scaleSide == farSide && Game.switchSide == farSide -> farScaleFarSwitch
-            Game.scaleSide == farSide && Game.switchSide == nearSide -> farScaleNearSwitch
-            Game.scaleSide == nearSide && Game.switchSide == farSide -> nearScaleFarSwitch
+//            Game.scaleSide == nearSide && Game.switchSide == nearSide -> nearScaleNearSwitchScale
+//            Game.scaleSide == farSide && Game.switchSide == farSide -> farScaleFarSwitch
+//            Game.scaleSide == farSide && Game.switchSide == nearSide -> farScaleNearSwitch
+//            Game.scaleSide == nearSide && Game.switchSide == farSide -> nearScaleFarSwitch
+            Game.scaleSide == nearSide -> nearScaleAuto
+            Game.scaleSide == farSide -> farScaleAuto
             else -> null
         }
         if (chosenCommand == null) {
@@ -319,6 +321,47 @@ private val farScaleNearSwitch = Command("Far Scale Near Switch Auto", Drivetrai
         })
         Carriage.Arm.isClamping = true
         Carriage.Arm.intake = 0.0
+        Carriage.animateToPose(Carriage.Pose.INTAKE)
+    } finally {
+        Carriage.Arm.intake = 0.0
+        Carriage.Arm.isClamping = true
+    }
+}
+
+val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
+    val auto = autonomi.getAutoOrCancel("Near Scale Near Switch Scale")
+
+    try {
+        var path = auto.getPathOrCancel("Start To Near Scale")
+        parallel(coroutineContext, {
+            Drivetrain.driveAlongPath(path)
+            Carriage.Arm.intake = -0.2
+            delay(350)
+            Carriage.Arm.intake = 0.0
+        }, {
+            delaySeconds(path.durationWithSpeed - 1.5)
+            Carriage.animateToPose(Carriage.Pose.SCALE_MED)
+        })
+        Carriage.animateToPose(Carriage.Pose.INTAKE)
+    } finally {
+        Carriage.Arm.intake = 0.0
+        Carriage.Arm.isClamping = true
+    }
+}
+
+val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
+    val auto = autonomi.getAutoOrCancel("Far Scale Far Switch")
+
+    try {
+        var path = auto.getPathOrCancel("Start To Far Scale")
+        parallel(coroutineContext, {
+            Drivetrain.driveAlongPath(path)
+            Carriage.Arm.intake = -0.4
+            delay(350)
+        }, {
+            delaySeconds(path.durationWithSpeed - 1.5)
+            Carriage.animateToPose(Carriage.Pose.SCALE_MED)
+        })
         Carriage.animateToPose(Carriage.Pose.INTAKE)
     } finally {
         Carriage.Arm.intake = 0.0
