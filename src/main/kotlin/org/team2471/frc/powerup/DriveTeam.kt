@@ -81,8 +81,8 @@ object CoDriver {
                 .deadband(.2)
 
     val spitSpeed: Double
-        get() = Math.max(controller.getTriggerAxis(GenericHID.Hand.kRight) * 0.6,
-                controller.getTriggerAxis(GenericHID.Hand.kLeft) * 0.3)
+        get() = Math.max(controller.getTriggerAxis(GenericHID.Hand.kRight) * 0.4,
+                controller.getTriggerAxis(GenericHID.Hand.kLeft) * 0.2)
 
     val release: Boolean
         get() = controller.getBumper(GenericHID.Hand.kRight)

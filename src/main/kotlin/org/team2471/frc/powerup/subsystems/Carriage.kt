@@ -60,7 +60,7 @@ object Carriage {
                     Arm.isClamping = !releaseClamp
                     val spit = CoDriver.spitSpeed
 
-                    Arm.intake = if (Arm.hasCube && spit == 0.0) 0.2 else -spit
+                    Arm.intake = if (spit == 0.0) 0.2 else -spit
 
                     val releasing = releaseClamp || spit != 0.0
                     if (!releasing && prevReleasing && Arm.angle > 150.0) returnToIntakePosition.launch()
@@ -103,7 +103,7 @@ object Carriage {
     enum class Pose(val lifterHeight: Double, val armAngle: Double) {
         INTAKE(6.0, 0.0),
         CRITICAL_JUNCTION(24.0, 110.0),
-        SCALE_LOW(23.5, 185.0),
+        SCALE_LOW(22.5, 190.0),
         SCALE_MED(30.0, 185.0),
         SCALE_HIGH(32.0, 185.0),
         CARRY(10.0, 0.0),
@@ -135,7 +135,8 @@ object Carriage {
                 min(pose.lifterHeight + heightOffset, Lifter.MAX_HEIGHT))
 
         Arm.curve.storeValueSlopeAndMagnitude(armTimeOffset, Arm.angle, 0.0, 0.5)
-        Arm.curve.storeValueSlopeAndMagnitude(armTime + armTimeOffset, pose.armAngle, 0.0, 1.5)
+        Arm.curve.storeValueSlopeAndMagnitude(armTime + armTimeOffset, pose.armAngle, 0.0, 2.0)
+
 
         animationTime = 0.0
     }
@@ -144,7 +145,8 @@ object Carriage {
         val lifterDelta = pose.lifterHeight + heightOffset - Lifter.height
         val armDelta = pose.armAngle - Arm.angle
         val lifterTime = (1.25 / 58.0) * (Math.abs(lifterDelta)) + 0.25
-        val armTime = (1.0 / 180.0) * Math.abs(armDelta) + 0.25
+        val armSpeed = if (Arm.hasCube) 1.4 else 1.0
+        val armTime = (armSpeed / 180.0) * Math.abs(armDelta) + 0.25
         var lifterTimeOffset = 0.0
         var armTimeOffset = 0.0
 
@@ -356,7 +358,7 @@ object Carriage {
                     }
 
                     usingIntakeSensor = useCubeSensorEntry.getBoolean(true)
-                    if ((usingIntakeSensor && cubeTimer.get() > 0.25) || (!usingIntakeSensor && minAmperage > 15)) {
+                    if ((usingIntakeSensor && cubeTimer.get() > 0.2) || (!usingIntakeSensor && minAmperage > 15)) {
                         hasCube = true
                     } else if (!isClamping || intakeMotorLeft.motorOutputPercent < -0.1) {
                         hasCube = false
