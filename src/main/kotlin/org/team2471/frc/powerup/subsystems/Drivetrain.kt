@@ -2,6 +2,7 @@ package org.team2471.frc.powerup.subsystems
 
 import com.analog.adis16448.frc.ADIS16448_IMU
 import com.ctre.phoenix.motorcontrol.ControlMode
+import com.ctre.phoenix.motorcontrol.DemandType
 import com.ctre.phoenix.motorcontrol.FeedbackDevice
 import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
@@ -20,10 +21,12 @@ import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.powerup.Driver
 import org.team2471.frc.powerup.RobotMap
 import java.lang.Math.copySign
+import java.lang.Math.signum
 
 object Drivetrain {
     private val leftMotors = TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_1).apply {
         configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10)
+        configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 1, 10)
         setNeutralMode(NeutralMode.Brake)
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(20, 10)
@@ -35,6 +38,15 @@ object Drivetrain {
         config_kD(0, 0.0, 10)
         inverted = true
         configOpenloopRamp(0.25, 10)
+
+        // distance
+        config_kP(0, 2.0, 10)
+        config_kD(0, 0.5, 10)
+
+        // velocity
+        config_kF(1, FEED_FORWARD_COEFFICIENT, 10)
+
+        selectProfileSlot(0, 0)
     } + TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_2).apply {
         setNeutralMode(NeutralMode.Brake)
         configContinuousCurrentLimit(25, 10)
@@ -53,6 +65,7 @@ object Drivetrain {
 
     private val rightMotors = TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_1).apply {
         configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10)
+        configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 1, 10)
         setNeutralMode(NeutralMode.Brake)
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(20, 10)
@@ -60,8 +73,15 @@ object Drivetrain {
         enableCurrentLimit(true)
         configClosedloopRamp(0.0, 10)
         configOpenloopRamp(0.0, 10)
+
+        // distance
         config_kP(0, 2.0, 10)
         config_kD(0, 0.5, 10)
+
+        // velocity
+        config_kF(1, FEED_FORWARD_COEFFICIENT, 10)
+
+        selectProfileSlot(0, 0)
     } + TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_2).apply {
         setNeutralMode(NeutralMode.Brake)
         configContinuousCurrentLimit(25, 10)
@@ -143,7 +163,30 @@ object Drivetrain {
         throttleEntry.setDoubleArray(doubleArrayOf(leftPower, rightPower))
     }
 
+    private const val FEED_FORWARD_COEFFICIENT = 0.0831 * 1023
+    private const val FEED_FORWARD_OFFSET = -0.0136 * 1023
+
+    fun driveVelocity(leftVelocity: Double, rightVelocity: Double) {
+        leftMotors.selectProfileSlot(0, 1)
+        rightMotors.selectProfileSlot(0, 1)
+        leftMotors.set(ControlMode.Velocity, feetToTicks(leftVelocity / 10),
+                DemandType.ArbitraryFeedForward, FEED_FORWARD_OFFSET * signum(leftVelocity))
+        rightMotors.set(ControlMode.Velocity, feetToTicks(rightVelocity / 10),
+                DemandType.ArbitraryFeedForward, FEED_FORWARD_OFFSET * signum(rightVelocity))
+//        leftMotors.set(ControlMode.PercentOutput, leftVelocity * FEED_FORWARD_COEFFICIENT +
+//                FEED_FORWARD_OFFSET * signum(leftVelocity))
+//        rightMotors.set(ControlMode.PercentOutput, rightVelocity * FEED_FORWARD_COEFFICIENT +
+//                FEED_FORWARD_OFFSET * signum(rightVelocity))
+
+        val leftError = ticksToFeet(leftMotors.getSelectedSensorVelocity(1) * 10) - leftVelocity
+        val rightError = ticksToFeet(rightMotors.getSelectedSensorVelocity(1) * 10) - rightVelocity
+        table.getEntry("Target Velocity").setDoubleArray(doubleArrayOf(leftVelocity, rightVelocity))
+        table.getEntry("Velocity Errors").setDoubleArray(doubleArrayOf(leftError, rightError))
+    }
+
     suspend fun driveDistance(distance: Double, time: Double, suspend: Boolean = true) {
+        leftMotors.selectProfileSlot(0, 0)
+        rightMotors.selectProfileSlot(0, 0)
         val curve = MotionCurve()
         curve.storeValue(0.0, 0.0)
         curve.storeValue(time, distance)
@@ -263,9 +306,15 @@ object Drivetrain {
 
         CommandSystem.registerDefaultCommand(this, Command("Drivetrain Default", this) {
             periodic {
-                SmartDashboard.putNumber("Gyro Angle", gyro.angleZ)
                 drive(Driver.throttle, Driver.softTurn, Driver.hardTurn)
             }
         })
+    }
+}
+
+val driveVelocity = Command("Drive Velocity", Drivetrain) {
+    periodic {
+        val velocity = Driver.throttle * 12.0
+        Drivetrain.driveVelocity(velocity, velocity)
     }
 }

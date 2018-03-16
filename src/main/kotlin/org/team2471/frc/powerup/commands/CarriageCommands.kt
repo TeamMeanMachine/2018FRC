@@ -1,5 +1,6 @@
 package org.team2471.frc.powerup.commands
 
+import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
@@ -9,8 +10,6 @@ import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.powerup.CoDriver
 import org.team2471.frc.powerup.Driver
 import org.team2471.frc.powerup.subsystems.Carriage
-import java.lang.Math.max
-import java.lang.Math.min
 
 val zero = Command("Carriage Zero", Carriage) {
     try {
@@ -70,6 +69,16 @@ val driverIntake = Command("Intake", Carriage) {
     try {
         Carriage.Arm.isClamping = false
         Carriage.Arm.intake = 0.55
+
+        val timer = Timer()
+        timer.start()
+        var previousTime = 0.0
+        periodic(condition = { !Carriage.isAnimationCompleted }) {
+            val t = timer.get()
+            Carriage.adjustAnimationTime(t - previousTime)
+            previousTime = t
+        }
+
         var prevIntaking = Driver.intaking
         suspendUntil {
             val intaking = Driver.intaking

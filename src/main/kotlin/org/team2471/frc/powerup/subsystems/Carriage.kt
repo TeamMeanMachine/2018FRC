@@ -60,7 +60,7 @@ object Carriage {
                     Arm.isClamping = !releaseClamp
                     val spit = CoDriver.spitSpeed
 
-                    Arm.intake = if (spit == 0.0) 0.2 else -spit
+                    Arm.intake = if (spit == 0.0 && Arm.hasCube) 0.2 else -spit
 
                     val releasing = releaseClamp || spit != 0.0
                     if (!releasing && prevReleasing && Arm.angle > 150.0) returnToIntakePosition.launch()
@@ -125,6 +125,9 @@ object Carriage {
         Arm.setpoint = armSetpoint
     }
 
+    val isAnimationCompleted: Boolean
+        get() = animationTime >= max(Lifter.curve.length, Arm.curve.length)
+
     fun setAnimation(pose: Pose, lifterTime: Double = 1.5, armTime: Double = 1.5,
                      lifterTimeOffset: Double = 0.0, armTimeOffset: Double = 0.0, heightOffset: Double = 0.0) {
         targetPose = pose
@@ -162,11 +165,16 @@ object Carriage {
         timer.start()
         var previousTime = 0.0
         Lifter.isBraking = false
-        periodic(condition = { previousTime < max(Lifter.curve.length, Arm.curve.length) }) {
-            val t = timer.get()
-            adjustAnimationTime(t - previousTime)
-            previousTime = t
-            SmartDashboard.putNumber("Arm Amperage", RobotMap.pdp.getCurrent(RobotMap.Talons.ARM_MOTOR_1))
+        try {
+            periodic(condition = { !isAnimationCompleted }) {
+                Arm.intake = if(Arm.hasCube) 0.2 else 0.0
+                val t = timer.get()
+                adjustAnimationTime(t - previousTime)
+                previousTime = t
+                SmartDashboard.putNumber("Arm Amperage", RobotMap.pdp.getCurrent(RobotMap.Talons.ARM_MOTOR_1))
+            }
+        } finally {
+            Arm.intake = 0.0
         }
     }
 
