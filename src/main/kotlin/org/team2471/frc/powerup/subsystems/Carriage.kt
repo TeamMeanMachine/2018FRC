@@ -137,8 +137,8 @@ object Carriage {
         Lifter.curve.storeValue(lifterTime + lifterTimeOffset,
                 min(pose.lifterHeight + heightOffset, Lifter.MAX_HEIGHT))
 
-        Arm.curve.storeValueSlopeAndMagnitude(armTimeOffset, Arm.angle, 0.0, 0.5)
-        Arm.curve.storeValueSlopeAndMagnitude(armTime + armTimeOffset, pose.armAngle, 0.0, 2.0)
+        Arm.curve.storeValueSlopeAndMagnitude(armTimeOffset, Arm.angle, 0.0, 0.75) //0.5
+        Arm.curve.storeValueSlopeAndMagnitude(armTime + armTimeOffset, pose.armAngle, 0.0, 3.0) //2.0
 
 
         animationTime = 0.0
@@ -303,12 +303,13 @@ object Carriage {
 
         private val motor = TalonSRX(RobotMap.Talons.ARM_MOTOR_1).apply {
             configSelectedFeedbackSensor(FeedbackDevice.Analog, 0, 10)
-            config_kP(0, 20.0, 10)
+            config_kP(0, 15.0, 10)
             config_kI(0, 0.0, 10)
             config_kD(0, 0.0, 10)
             config_kF(0, 0.0, 10)
 
-            configContinuousCurrentLimit(15, 10)
+            setNeutralMode(NeutralMode.Coast)
+            configContinuousCurrentLimit(25, 10)
             configPeakCurrentLimit(0, 10)
             configPeakCurrentDuration(0, 10)
             enableCurrentLimit(true)
@@ -352,6 +353,7 @@ object Carriage {
             launch {
                 val angleEntry = table.getEntry("Angle")
                 val outputEntry = table.getEntry("Output")
+                val velocityEntry = table.getEntry("Velocity")
                 val sensorVoltageEntry = table.getEntry("Sensor Voltage")
                 val intakeAmperagesEntry = table.getEntry("Intake Amperage")
 
@@ -377,10 +379,12 @@ object Carriage {
                     angleEntry.setDouble(angle)
 
                     sensorVoltageEntry.setDouble(cubeSensor.voltage)
+                    velocityEntry.setDouble(velocity)
                     intakeAmperagesEntry.setDoubleArray(doubleArrayOf(intakeMotorLeft.outputCurrent, intakeMotorRight.outputCurrent))
                 }
             }
         }
+
         var curve = MotionCurve().apply {
             storeValue(0.0, Pose.INTAKE.armAngle)
             storeValue(1.5, Pose.SCALE_LOW.armAngle)
@@ -397,12 +401,16 @@ object Carriage {
             set(value) = clawSolenoid.set(!value)
 
         val angle: Double
-            get() = ticksToDegrees(motor.getSelectedSensorPosition(0).toDouble())
+            get() = ticksToDegrees(motor.getSelectedSensorPosition(0))
+
+        val velocity: Double
+            get() = (motor.getSelectedSensorVelocity(0) * 10) / ARM_TICKS_PER_DEGREE
 
         var setpoint: Double = angle
             set(value) {
                 motor.set(ControlMode.Position, degreesToTicks(value))
                 field = value
+                SmartDashboard.putNumber("Angle Setpoint", value)
             }
 
         val error get() = angle - setpoint
@@ -416,7 +424,7 @@ object Carriage {
 
         private const val ARM_TICKS_PER_DEGREE = 20.0 / 9.0
         private const val ARM_OFFSET_NATIVE = -720.0
-        private fun ticksToDegrees(nativeUnits: Double): Double = (nativeUnits - ARM_OFFSET_NATIVE) / ARM_TICKS_PER_DEGREE
+        private fun ticksToDegrees(nativeUnits: Int): Double = (nativeUnits - ARM_OFFSET_NATIVE) / ARM_TICKS_PER_DEGREE
         fun degreesToTicks(degrees: Double): Double = degrees * ARM_TICKS_PER_DEGREE + ARM_OFFSET_NATIVE
 
         fun stop() {

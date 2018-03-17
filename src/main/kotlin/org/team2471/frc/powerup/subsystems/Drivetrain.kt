@@ -2,7 +2,6 @@ package org.team2471.frc.powerup.subsystems
 
 import com.analog.adis16448.frc.ADIS16448_IMU
 import com.ctre.phoenix.motorcontrol.ControlMode
-import com.ctre.phoenix.motorcontrol.DemandType
 import com.ctre.phoenix.motorcontrol.FeedbackDevice
 import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
@@ -40,11 +39,13 @@ object Drivetrain {
         configOpenloopRamp(0.25, 10)
 
         // distance
-        config_kP(0, 2.0, 10)
-        config_kD(0, 0.5, 10)
+//        config_kP(0, 2.0, 10)
+//        config_kD(0, 0.5, 10)
 
         // velocity
-        config_kF(1, FEED_FORWARD_COEFFICIENT, 10)
+        config_kP(0, 0.0, 10)
+        config_kD(0, 0.0, 10)
+        config_kF(0, FEED_FORWARD_COEFFICIENT, 10)
 
         selectProfileSlot(0, 0)
     } + TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_2).apply {
@@ -65,7 +66,6 @@ object Drivetrain {
 
     private val rightMotors = TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_1).apply {
         configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10)
-        configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 1, 10)
         setNeutralMode(NeutralMode.Brake)
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(20, 10)
@@ -75,11 +75,13 @@ object Drivetrain {
         configOpenloopRamp(0.0, 10)
 
         // distance
-        config_kP(0, 2.0, 10)
-        config_kD(0, 0.5, 10)
+//        config_kP(0, 2.0, 10)
+//        config_kD(0, 0.5, 10)
 
         // velocity
-        config_kF(1, FEED_FORWARD_COEFFICIENT, 10)
+        config_kP(0, 0.0, 10)
+        config_kD(0, 0.0, 10)
+        config_kF(0, FEED_FORWARD_COEFFICIENT * 0.9, 10)
 
         selectProfileSlot(0, 0)
     } + TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_2).apply {
@@ -110,6 +112,17 @@ object Drivetrain {
     val gyroAngle: Double
         get() = gyro.angleZ
 
+    private var leftVelocity: Double
+        get() = ticksToFeet(leftMotors.getSelectedSensorVelocity(1) * 10)
+        set(value) {
+            leftMotors.set(ControlMode.Velocity, feetToTicks(leftVelocity / 10.0))
+        }
+
+    private var rightVelocity: Double
+        get() = ticksToFeet(rightMotors.getSelectedSensorVelocity(1) * 10)
+        set(value) {
+            rightMotors.set(ControlMode.Velocity, feetToTicks(rightVelocity / 10.0))
+        }
 
     private val heightMultiplierCurve = MotionCurve().apply {
         storeValue(0.0, 1.0)
@@ -131,7 +144,6 @@ object Drivetrain {
     private val throttleEntry = table.getEntry("Applied throttles")
 
     fun drive(throttle: Double, softTurn: Double, hardTurn: Double) {
-
         var leftPower = throttle + (softTurn * Math.abs(throttle)) + hardTurn
         var rightPower = throttle - (softTurn * Math.abs(throttle)) - hardTurn
 
@@ -163,23 +175,20 @@ object Drivetrain {
         throttleEntry.setDoubleArray(doubleArrayOf(leftPower, rightPower))
     }
 
-    private const val FEED_FORWARD_COEFFICIENT = 0.0831 * 1023
-    private const val FEED_FORWARD_OFFSET = -0.0136 * 1023
+    private const val FEED_FORWARD_COEFFICIENT = 0.0831 * 1024 / 10
+    private const val FEED_FORWARD_OFFSET = -0.0136
 
     fun driveVelocity(leftVelocity: Double, rightVelocity: Double) {
-        leftMotors.selectProfileSlot(0, 1)
-        rightMotors.selectProfileSlot(0, 1)
-        leftMotors.set(ControlMode.Velocity, feetToTicks(leftVelocity / 10),
-                DemandType.ArbitraryFeedForward, FEED_FORWARD_OFFSET * signum(leftVelocity))
-        rightMotors.set(ControlMode.Velocity, feetToTicks(rightVelocity / 10),
-                DemandType.ArbitraryFeedForward, FEED_FORWARD_OFFSET * signum(rightVelocity))
+        this.leftVelocity = leftVelocity
+        this.rightVelocity = rightVelocity
 //        leftMotors.set(ControlMode.PercentOutput, leftVelocity * FEED_FORWARD_COEFFICIENT +
 //                FEED_FORWARD_OFFSET * signum(leftVelocity))
+
 //        rightMotors.set(ControlMode.PercentOutput, rightVelocity * FEED_FORWARD_COEFFICIENT +
 //                FEED_FORWARD_OFFSET * signum(rightVelocity))
 
-        val leftError = ticksToFeet(leftMotors.getSelectedSensorVelocity(1) * 10) - leftVelocity
-        val rightError = ticksToFeet(rightMotors.getSelectedSensorVelocity(1) * 10) - rightVelocity
+        val leftError = this.leftVelocity - leftVelocity
+        val rightError = this.rightVelocity - rightVelocity
         table.getEntry("Target Velocity").setDoubleArray(doubleArrayOf(leftVelocity, rightVelocity))
         table.getEntry("Velocity Errors").setDoubleArray(doubleArrayOf(leftError, rightError))
     }
@@ -241,26 +250,38 @@ object Drivetrain {
         rightMotors.sensorCollection.setQuadraturePosition(0, 0)
     }
 
-    suspend fun driveAlongPath(path2D: Path2D) {
-        println("Driving along path ${path2D.name}, duration: ${path2D.durationWithSpeed}, travel direction: ${path2D.robotDirection}, mirrored: ${path2D.isMirrored}")
-        path2D.resetDistances()
+    suspend fun driveAlongPath(path: Path2D) {
+        println("Driving along path ${path.name}, duration: ${path.durationWithSpeed}, travel direction: ${path.robotDirection}, mirrored: ${path.isMirrored}")
+        path.resetDistances()
         try {
             leftMotors.sensorCollection.setQuadraturePosition(0, 0)
             rightMotors.sensorCollection.setQuadraturePosition(0, 0)
+            var prevLeftDistance = 0.0
+            var prevRightDistance = 0.0
+            var prevTime = 0.0
 
             val timer = Timer().apply { start() }
-            periodic(condition = { timer.get() <= path2D.durationWithSpeed }) {
+            periodic(condition = { timer.get() <= path.durationWithSpeed }) {
                 val t = timer.get()
-                val leftDistance = path2D.getLeftDistance(t)
-                val rightDistance = path2D.getRightDistance(t)
+                val leftDistance = path.getLeftDistance(t)
+                val rightDistance = path.getRightDistance(t)
                 SmartDashboard.putNumberArray("Distance", arrayOf(leftDistance, rightDistance))
-                val leftError = leftDistance - leftPosition
-                val rightError = rightDistance - rightPosition
-                SmartDashboard.putNumberArray("Errors", arrayOf(leftError, rightError))
-                SmartDashboard.putNumber("Delta", leftDistance - rightDistance)
-                SmartDashboard.putNumber("Delta Error", leftError - rightError)
-                leftMotors.set(ControlMode.Position, feetToTicks(leftDistance))
-                rightMotors.set(ControlMode.Position, feetToTicks(rightDistance))
+                /*              val leftError = leftDistance - leftPosition
+                              val rightError = rightDistance - rightPosition
+                              SmartDashboard.putNumberArray("Errors", arrayOf(leftError, rightError))
+                              SmartDashboard.putNumber("Delta", leftDistance - rightDistance)
+                              SmartDashboard.putNumber("Delta Error", leftError - rightError)
+                              leftMotors.set(ControlMode.Position, feetToTicks(leftDistance))
+                              rightMotors.set(ControlMode.Position, feetToTicks(rightDistance))*/
+                val dt = t - prevTime
+                val leftVelocity = (leftDistance - prevLeftDistance) / dt
+                val rightVelocity = (rightDistance - prevRightDistance) / dt
+
+                Drivetrain.driveVelocity(leftVelocity, rightVelocity)
+
+                prevTime = t
+                prevLeftDistance = leftDistance
+                prevRightDistance = rightDistance
             }
         } finally {
             leftMotors.neutralOutput()
@@ -314,7 +335,11 @@ object Drivetrain {
 
 val driveVelocity = Command("Drive Velocity", Drivetrain) {
     periodic {
-        val velocity = Driver.throttle * 12.0
-        Drivetrain.driveVelocity(velocity, velocity)
+        val throttle = Driver.throttle
+        val turn = Driver.softTurn
+
+        val leftVelocity = (throttle + turn) * 12.0
+        val rightVelocity = (throttle - turn) * 12.0
+        Drivetrain.driveVelocity(leftVelocity, rightVelocity)
     }
 }

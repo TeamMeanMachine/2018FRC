@@ -50,7 +50,7 @@ object Driver {
         get() = controller.backButton
 
     init {
-        driverIntake.toggleWhen { intaking }
+        driverIntake.runWhen { intaking }
         driverSpit.runWhile { controller.getBumper(GenericHID.Hand.kLeft) }
         climbCommand.toggleWhen { controller.startButton }
         toggleCubeSensor.runWhen { controller.bButton }
