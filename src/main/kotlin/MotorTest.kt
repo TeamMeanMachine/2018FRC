@@ -49,7 +49,6 @@ class MotorTest : IterativeRobot() {
 
         val output = -controller.getY(GenericHID.Hand.kRight).deadband(0.2)
         println("Selected motor: ${motors[selectedMotorIndex].deviceID}, output: $output, Arm Encoder: ${motors[10].getSelectedSensorPosition(0)}")
-        println("")
 
         motors.forEachIndexed { index, motor ->
             motor.set(ControlMode.PercentOutput, if (index == selectedMotorIndex) output else 0.0)

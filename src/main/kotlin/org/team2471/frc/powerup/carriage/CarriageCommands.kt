@@ -1,7 +1,6 @@
-package org.team2471.frc.powerup.commands
+package org.team2471.frc.powerup.carriage
 
 import edu.wpi.first.wpilibj.Timer
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import org.team2471.frc.lib.control.experimental.Command
@@ -9,7 +8,6 @@ import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.powerup.CoDriver
 import org.team2471.frc.powerup.Driver
-import org.team2471.frc.powerup.subsystems.Carriage
 
 val zero = Command("Carriage Zero", Carriage) {
     try {
@@ -92,12 +90,12 @@ val driverIntake = Command("Intake", Carriage) {
         if (Carriage.Arm.hasCube) {
             launch(coroutineContext) {
                 Driver.rumble = 1.0
-                Driver.rumble = 1.0
+                CoDriver.rumble = 1.0
                 try {
                     delay(700)
                 } finally {
                     Driver.rumble = 0.0
-                    Driver.rumble = 0.0
+                    CoDriver.rumble = 0.0
                 }
             }
         }

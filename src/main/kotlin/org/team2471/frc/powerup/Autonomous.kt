@@ -14,8 +14,8 @@ import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.motion_profiling.Autonomous
 import org.team2471.frc.lib.util.measureTimeFPGA
-import org.team2471.frc.powerup.subsystems.Carriage
-import org.team2471.frc.powerup.subsystems.Drivetrain
+import org.team2471.frc.powerup.carriage.Carriage
+import org.team2471.frc.powerup.drivetrain.Drivetrain
 import java.io.File
 import java.io.FileNotFoundException
 
@@ -40,6 +40,7 @@ object AutoChooser {
 
     private val sideChooser = SendableChooser<Side>().apply {
         addObject("Left", Side.LEFT)
+        addObject("Center", Side.CENTER)
         addDefault("Right", Side.RIGHT)
     }
 
@@ -65,10 +66,10 @@ object AutoChooser {
         Carriage.Arm.stop()
         Carriage.Lifter.stop()
         Carriage.Arm.isClamping = true
-
         val nearSide = sideChooser.selected
         val farSide = !nearSide
         val chosenCommand = when {
+            nearSide == Side.CENTER -> circleTestAuto
 //            Game.scaleSide == nearSide && Game.switchSide == nearSide -> nearScaleNearSwitchScale
 //            Game.scaleSide == farSide && Game.switchSide == farSide -> farScaleFarSwitch
 //            Game.scaleSide == farSide && Game.switchSide == nearSide -> farScaleNearSwitch
@@ -409,6 +410,24 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
     }
 }
 
+val centerLineAuto = Command("Center Line", Drivetrain, Carriage){
+    val auto = autonomi.getAutoOrCancel("Tests")
+    Drivetrain.driveAlongPath(auto.getPathOrCancel("Straight"))
+//    Drivetrain.driveAlongPath(Path2D().apply {
+//        robotDirection = Path2D.RobotDirection.BACKWARD
+//        addPoint(0.0,0.0)
+//        addPoint(0.0,8.0)
+//        addEasePoint(0.0,0.0)
+//        addEasePoint(5.0, 1.0)
+//    })
+}
+
+val circleTestAuto = Command("Circle Auto", Drivetrain, Carriage) {
+    val auto = autonomi.getAutoOrCancel("Tests")
+    Drivetrain.driveAlongPath(auto.getPathOrCancel("Switch Loop"))
+    delay(Long.MAX_VALUE)
+}
+
 
 val driveTuner = Command("Drive Train Tuner", Drivetrain) {
     Drivetrain.zeroDistance()
@@ -416,3 +435,4 @@ val driveTuner = Command("Drive Train Tuner", Drivetrain) {
         Drivetrain.setDistance(Driver.throttle * 2.0)
     }
 }
+

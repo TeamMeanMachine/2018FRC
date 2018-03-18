@@ -5,17 +5,20 @@ import org.team2471.frc.lib.util.Alliance
 
 enum class Side {
     LEFT,
-    RIGHT;
+    RIGHT,
+    CENTER;
 
     operator fun not(): Side = when (this) {
         LEFT -> RIGHT
         RIGHT -> LEFT
+        CENTER -> CENTER
     }
 
     companion object {
         fun fromChar(char: Char): Side? = when (char) {
             'L' -> LEFT
             'R' -> RIGHT
+            'C' -> CENTER
             else -> null
         }
     }

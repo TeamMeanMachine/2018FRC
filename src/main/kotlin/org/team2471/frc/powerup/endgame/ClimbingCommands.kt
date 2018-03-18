@@ -1,4 +1,4 @@
-package org.team2471.frc.powerup.commands
+package org.team2471.frc.powerup.endgame
 
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -7,9 +7,8 @@ import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.powerup.*
-import org.team2471.frc.powerup.subsystems.Carriage
-import org.team2471.frc.powerup.subsystems.Drivetrain
-import org.team2471.frc.powerup.subsystems.Wings
+import org.team2471.frc.powerup.carriage.Carriage
+import org.team2471.frc.powerup.drivetrain.Drivetrain
 
 
 val climbCommand = Command("Climb", Carriage, Drivetrain, Wings, LEDController) {

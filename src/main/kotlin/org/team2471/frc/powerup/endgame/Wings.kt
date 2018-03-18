@@ -1,7 +1,6 @@
-package org.team2471.frc.powerup.subsystems
+package org.team2471.frc.powerup.endgame
 
 import edu.wpi.first.wpilibj.AnalogInput
-import edu.wpi.first.wpilibj.DigitalInput
 import edu.wpi.first.wpilibj.Solenoid
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import org.team2471.frc.powerup.Game

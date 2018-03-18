@@ -4,19 +4,18 @@ import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.RobotState
 import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import kotlinx.coroutines.experimental.delay
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.runWhen
 import org.team2471.frc.lib.control.experimental.runWhile
 import org.team2471.frc.lib.control.experimental.toggleWhen
 import org.team2471.frc.lib.math.deadband
-import org.team2471.frc.lib.math.squareRootWithSign
 import org.team2471.frc.lib.math.squareWithSign
-import org.team2471.frc.powerup.commands.*
-import org.team2471.frc.powerup.subsystems.Carriage
-import org.team2471.frc.powerup.subsystems.Drivetrain
-import org.team2471.frc.powerup.subsystems.Wings
-import org.team2471.frc.powerup.subsystems.driveVelocity
+import org.team2471.frc.powerup.carriage.*
+import org.team2471.frc.powerup.drivetrain.Drivetrain
+import org.team2471.frc.powerup.drivetrain.driveTest
+import org.team2471.frc.powerup.drivetrain.driveVelocity
+import org.team2471.frc.powerup.endgame.Wings
+import org.team2471.frc.powerup.endgame.climbCommand
 import java.lang.Double.max
 
 object Driver {
@@ -56,6 +55,7 @@ object Driver {
         toggleCubeSensor.runWhen { controller.bButton }
 
         driveVelocity.toggleWhen { controller.getStickButton(GenericHID.Hand.kLeft) }
+        driveTest.runWhen { controller.getStickButton(GenericHID.Hand.kRight) }
     }
 }
 

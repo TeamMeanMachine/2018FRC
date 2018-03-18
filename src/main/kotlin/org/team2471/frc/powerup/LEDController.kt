@@ -6,9 +6,11 @@ import org.team2471.frc.lib.util.Alliance
 
 object LEDController {
     private val port: SerialPort? = try {
-        SerialPort(9600, SerialPort.Port.kUSB2)
-    } catch(_: Exception) {
-        DriverStation.reportError("Failed to connect to LEDController", false)
+        SerialPort(9600, SerialPort.Port.kUSB1).also {
+            println("LEDController found")
+        }
+    } catch(e: Exception) {
+        DriverStation.reportError("Failed to connect to LEDController\n${e.message}", false)
         null
     }
 

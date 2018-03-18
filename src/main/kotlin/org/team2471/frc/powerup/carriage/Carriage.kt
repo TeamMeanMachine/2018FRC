@@ -1,4 +1,4 @@
-package org.team2471.frc.powerup.subsystems
+package org.team2471.frc.powerup.carriage
 
 import com.ctre.phoenix.motorcontrol.ControlMode
 import com.ctre.phoenix.motorcontrol.FeedbackDevice
@@ -18,11 +18,8 @@ import org.team2471.frc.lib.control.plus
 import org.team2471.frc.lib.math.average
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.powerup.CoDriver
-import org.team2471.frc.powerup.Game
 import org.team2471.frc.powerup.IS_COMP_BOT
 import org.team2471.frc.powerup.RobotMap
-import org.team2471.frc.powerup.commands.returnToIntakePosition
-import org.team2471.frc.powerup.commands.scaleOffset
 import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
@@ -90,8 +87,8 @@ object Carriage {
                     Lifter.isBraking = false
 
                     SmartDashboard.putNumber("Arm Amperage", RobotMap.pdp.getCurrent(RobotMap.Talons.ARM_MOTOR_1))
-                    SmartDashboard.putBoolean("Low Gear", Carriage.Lifter.isLowGear)
-                    SmartDashboard.putBoolean("Braking", Carriage.Lifter.isBraking)
+                    SmartDashboard.putBoolean("Low Gear", Lifter.isLowGear)
+                    SmartDashboard.putBoolean("Braking", Lifter.isBraking)
                 }
             } finally {
                 Arm.isClamping = true
@@ -107,7 +104,7 @@ object Carriage {
         SCALE_MED(30.0, 185.0),
         SCALE_HIGH(32.0, 185.0),
         CARRY(10.0, 0.0),
-        SWITCH(21.0, 30.0),
+        SWITCH(23.0, 30.0),
         CLIMB(58.0, 0.0),
         CLIMB_ACQUIRE_RUNG(26.0, 0.0),
         FACE_THE_BOSS(3.0, 0.0),
@@ -256,8 +253,8 @@ object Carriage {
         var setpoint: Double = height
             set(value) {
                 val min = when {
-                    Arm.angle > 150.0 -> min(Lifter.height, Pose.SCALE_LOW.lifterHeight)
-                    Arm.angle < 50.0 -> min(Lifter.height, Pose.INTAKE.lifterHeight)
+                    Arm.angle > 150.0 -> min(height, Pose.SCALE_LOW.lifterHeight)
+                    Arm.angle < 50.0 -> min(height, Pose.INTAKE.lifterHeight)
                     else -> 0.0
                 }
 
@@ -373,7 +370,7 @@ object Carriage {
                     } else if (!isClamping || intakeMotorLeft.motorOutputPercent < -0.1) {
                         hasCube = false
                     }
-                    CoDriver.passiveRumble = if (hasCube && !Game.isEndGame) .15 else 0.0
+                    CoDriver.passiveRumble = if (hasCube) .12 else 0.0
                     if (RobotState.isEnabled())
                         outputEntry.setNumber(motor.motorOutputPercent)
                     angleEntry.setDouble(angle)
