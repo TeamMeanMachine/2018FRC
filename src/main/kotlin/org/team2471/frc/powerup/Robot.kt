@@ -29,11 +29,11 @@ class Robot : IterativeRobot() {
     }
 
     override fun autonomousInit() {
+        hasRunAuto = true
         Game.updateGameData()
         LEDController.alliance = Game.alliance
-        hasRunAuto = true
         LEDController.state = TheatreState
-        Carriage.Lifter.zero()
+        Drivetrain.zeroGyro()
         AutoChooser.auto.launch()
     }
 
@@ -42,7 +42,7 @@ class Robot : IterativeRobot() {
             Carriage.animateToPose(Carriage.Pose.INTAKE)
         }
         LEDController.state = FireState
-        Drivetrain.zero()
+        Drivetrain.zeroEncoders()
         CommandSystem.initDefaultCommands()
     }
 
@@ -53,5 +53,9 @@ class Robot : IterativeRobot() {
 
     override fun disabledInit() {
         LEDController.state = IdleState
+    }
+
+    override fun testInit() {
+        Drivetrain.calibrateGyro()
     }
 }

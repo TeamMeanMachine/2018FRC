@@ -19,7 +19,7 @@ val zero = Command("Carriage Zero", Carriage) {
         }
     } finally {
         Carriage.setAnimation(Carriage.Pose.INTAKE)
-        Carriage.Arm.stop()
+        Carriage.Arm.hold()
         Carriage.Lifter.stop()
         Carriage.Lifter.zero()
         Carriage.Lifter.isBraking = true
@@ -31,8 +31,13 @@ var scaleOffset = 0.0
         field = value.coerceIn(0.0, 33.0)
     }
 
+var switchOffset = 0.0
+    set(value) {
+        field = value.coerceIn(-12.0, 12.0)
+    }
+
 val goToSwitch = Command("Switch Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.SWITCH)
+    Carriage.animateToPose(Carriage.Pose.SWITCH, heightOffset = switchOffset)
 }
 
 val goToScaleLowPreset = Command("Scale Low Preset", Carriage) {
@@ -44,6 +49,10 @@ val goToScaleMediumPreset = Command("Scale Medium Preset", Carriage) {
 }
 
 val goToScaleHighPreset = Command("Scale High Preset", Carriage) {
+    Carriage.animateToPose(Carriage.Pose.SCALE_HIGH, heightOffset = scaleOffset)
+}
+
+val goToFrontScalePreset = Command("Scale Front Preset", Carriage) {
     Carriage.animateToPose(Carriage.Pose.SCALE_HIGH, heightOffset = scaleOffset)
 }
 

@@ -60,7 +60,7 @@ object Carriage {
                     Arm.intake = if (spit == 0.0 && Arm.hasCube) 0.2 else -spit
 
                     val releasing = releaseClamp || spit != 0.0
-                    if (!releasing && prevReleasing && Arm.angle > 150.0) returnToIntakePosition.launch()
+                    if (!releasing && prevReleasing && Arm.angle > 150.0 && targetPose != Pose.SCALE_FRONT) returnToIntakePosition.launch()
                     prevReleasing = releasing
 
                     val leftStick = CoDriver.leftStickUpDown
@@ -69,6 +69,12 @@ object Carriage {
                     val deltaTime = currentTime - previousTime
                     previousTime = currentTime
 
+
+                    if (targetPose == Pose.SWITCH) {
+                        val switchOffsetDiff = (CoDriver.microAdjust * MICRO_ADJUST_RATE) * deltaTime
+                        switchOffset += switchOffsetDiff
+                        Lifter.curve.tailKey.value = targetPose.lifterHeight + switchOffset
+                    }
 
                     if (targetPose.isScale) {
                         val scaleOffsetDiff = (CoDriver.microAdjust * MICRO_ADJUST_RATE) * deltaTime
@@ -92,7 +98,6 @@ object Carriage {
                 }
             } finally {
                 Arm.isClamping = true
-                Arm.intake = 0.0
             }
         })
     }
@@ -100,17 +105,22 @@ object Carriage {
     enum class Pose(val lifterHeight: Double, val armAngle: Double) {
         INTAKE(6.0, 0.0),
         CRITICAL_JUNCTION(24.0, 110.0),
-        SCALE_LOW(22.5, 190.0),
-        SCALE_MED(30.0, 185.0),
-        SCALE_HIGH(32.0, 185.0),
+        /*      Calibrated at Wilsonville 2018
+                SCALE_LOW(22.5, 190.0),
+                SCALE_MED(30.0, 185.0),
+                SCALE_HIGH(32.0, 185.0),*/
+        SCALE_LOW(25.5, 190.0),
+        SCALE_MED(36.0, 185.0),
+        SCALE_HIGH(38.0, 185.0),
+        SCALE_FRONT(190.0,00090.0),
         CARRY(10.0, 0.0),
-        SWITCH(23.0, 30.0),
+        SWITCH(26.0, 20.0),
         CLIMB(58.0, 0.0),
         CLIMB_ACQUIRE_RUNG(26.0, 0.0),
         FACE_THE_BOSS(3.0, 0.0),
         STARTING_POSITION(6.0, 110.0);
 
-        val isScale get() = this == SCALE_LOW || this == SCALE_MED || this == SCALE_HIGH
+        val isScale get() = this == SCALE_LOW || this == SCALE_MED || this == SCALE_HIGH || this == SCALE_FRONT
     }
 
     fun adjustAnimationTime(dt: Double, heightOffset: Double = 0.0) {
@@ -162,16 +172,11 @@ object Carriage {
         timer.start()
         var previousTime = 0.0
         Lifter.isBraking = false
-        try {
-            periodic(condition = { !isAnimationCompleted }) {
-                Arm.intake = if(Arm.hasCube) 0.2 else 0.0
-                val t = timer.get()
-                adjustAnimationTime(t - previousTime)
-                previousTime = t
-                SmartDashboard.putNumber("Arm Amperage", RobotMap.pdp.getCurrent(RobotMap.Talons.ARM_MOTOR_1))
-            }
-        } finally {
-            Arm.intake = 0.0
+        periodic(condition = { !isAnimationCompleted }) {
+            val t = timer.get()
+            adjustAnimationTime(t - previousTime)
+            previousTime = t
+            SmartDashboard.putNumber("Arm Amperage", RobotMap.pdp.getCurrent(RobotMap.Talons.ARM_MOTOR_1))
         }
     }
 
@@ -181,7 +186,7 @@ object Carriage {
             setSelectedSensorPosition(0, 0, 10)
             configContinuousCurrentLimit(25, 10)
             configPeakCurrentLimit(0, 10)
-            configPeakCurrentDuration(0, 10)
+            configPeakCurrentDuration(100, 10)
             enableCurrentLimit(true)
             setNeutralMode(NeutralMode.Brake)
             configPeakOutputForward(1.0, 10)
@@ -300,15 +305,16 @@ object Carriage {
 
         private val motor = TalonSRX(RobotMap.Talons.ARM_MOTOR_1).apply {
             configSelectedFeedbackSensor(FeedbackDevice.Analog, 0, 10)
-            config_kP(0, 15.0, 10)
+            config_kP(0, 13.3, 10)
             config_kI(0, 0.0, 10)
             config_kD(0, 0.0, 10)
             config_kF(0, 0.0, 10)
 
-            setNeutralMode(NeutralMode.Coast)
+            configClosedloopRamp(0.0, 10)
+            setNeutralMode(NeutralMode.Brake)
             configContinuousCurrentLimit(25, 10)
             configPeakCurrentLimit(0, 10)
-            configPeakCurrentDuration(0, 10)
+            configPeakCurrentDuration(100, 10)
             enableCurrentLimit(true)
             setSensorPhase(false)
             inverted = true
@@ -360,7 +366,7 @@ object Carriage {
                 val cubeTimer = Timer()
                 cubeTimer.start()
                 periodic(40) {
-                    if(!cubeSensorTriggered) {
+                    if (!cubeSensorTriggered) {
                         cubeTimer.reset()
                     }
 
@@ -419,13 +425,13 @@ object Carriage {
                 intakeMotorRight.set(ControlMode.PercentOutput, speed)
             }
 
-        private const val ARM_TICKS_PER_DEGREE = 20.0 / 9.0
+        private const val ARM_TICKS_PER_DEGREE = 160.0 / 81.0
         private const val ARM_OFFSET_NATIVE = -720.0
         private fun ticksToDegrees(nativeUnits: Int): Double = (nativeUnits - ARM_OFFSET_NATIVE) / ARM_TICKS_PER_DEGREE
         fun degreesToTicks(degrees: Double): Double = degrees * ARM_TICKS_PER_DEGREE + ARM_OFFSET_NATIVE
 
-        fun stop() {
-            motor.set(ControlMode.PercentOutput, 0.0)
+        fun hold() {
+            setpoint = angle
         }
 
     }

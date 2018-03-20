@@ -83,6 +83,7 @@ object CoDriver {
     val microAdjust: Double
         get() = -controller.getY(GenericHID.Hand.kRight)
                 .deadband(.2)
+                .squareWithSign()
 
     val spitSpeed: Double
         get() = controller.getTriggerAxis(GenericHID.Hand.kRight) * 0.4 +
@@ -99,9 +100,11 @@ object CoDriver {
         goToScaleLowPreset.runWhen { controller.aButton }
         goToScaleMediumPreset.runWhen { controller.xButton }
         goToScaleHighPreset.runWhen { controller.yButton }
+        goToFrontScalePreset.runWhen { controller.getBumper(GenericHID.Hand.kLeft) }
         goToIntakePreset.runWhen { controller.bButton }
         incrementScaleStackHeight.runWhen { controller.pov == 0 }
         decrementScaleStackHeight.runWhen { controller.pov == 180 }
+
         tuneArmPID.runWhen { SmartDashboard.getBoolean("Tune Arm PID", false) }
 
         Command("Default Command Reset", Drivetrain, Carriage, Wings) {

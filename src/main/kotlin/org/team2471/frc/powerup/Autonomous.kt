@@ -63,13 +63,13 @@ object AutoChooser {
 */
 
     val auto = Command("Autonomous", Drivetrain, Carriage) {
-        Carriage.Arm.stop()
+        Carriage.Arm.hold()
         Carriage.Lifter.stop()
         Carriage.Arm.isClamping = true
         val nearSide = sideChooser.selected
         val farSide = !nearSide
         val chosenCommand = when {
-            nearSide == Side.CENTER -> circleTestAuto
+            nearSide == Side.CENTER -> centerLineAuto
 //            Game.scaleSide == nearSide && Game.switchSide == nearSide -> nearScaleNearSwitchScale
 //            Game.scaleSide == farSide && Game.switchSide == farSide -> farScaleFarSwitch
 //            Game.scaleSide == farSide && Game.switchSide == nearSide -> farScaleNearSwitch
@@ -130,7 +130,7 @@ private val nearScaleNearSwitchScale = Command("Near Scale Near Switch Scale Aut
     try {
         Carriage.Arm.intake = 0.2
         var path = auto.getPathOrCancel("Start To Near Scale")
-        parallel(coroutineContext, {
+        parallel({
             Drivetrain.driveAlongPath(path)
             Carriage.Arm.intake = -0.2
             delay(350)
@@ -140,7 +140,7 @@ private val nearScaleNearSwitchScale = Command("Near Scale Near Switch Scale Aut
             Carriage.animateToPose(Carriage.Pose.SCALE_MED)
         })
 
-        parallel(coroutineContext, {
+        parallel({
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Near Scale To Cube1"))
         }, {
             Carriage.Arm.isClamping = false
@@ -151,7 +151,7 @@ private val nearScaleNearSwitchScale = Command("Near Scale Near Switch Scale Aut
         Carriage.Arm.isClamping = true
         delay(250)
 
-        parallel(coroutineContext, {
+        parallel({
             Carriage.animateToPose(Carriage.Pose.SWITCH)
         }, {
             delay(300)
@@ -166,7 +166,7 @@ private val nearScaleNearSwitchScale = Command("Near Scale Near Switch Scale Aut
         Carriage.Arm.isClamping = false
         Carriage.Arm.intake = 0.6
 
-        parallel(coroutineContext, {
+        parallel({
             Carriage.animateToPose(Carriage.Pose.INTAKE)
         }, {
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Onward To Cube2"))
@@ -178,7 +178,7 @@ private val nearScaleNearSwitchScale = Command("Near Scale Near Switch Scale Aut
         Carriage.Arm.intake = 0.2
 
         path = auto.getPathOrCancel("Cube2 To Near Scale")
-        parallel(coroutineContext, {
+        parallel({
             Carriage.animateToPose(Carriage.Pose.SCALE_MED)
         }, {
             Drivetrain.driveAlongPath(path)
@@ -199,7 +199,7 @@ private val farScaleFarSwitch = Command("Far Scale Far Switch Auto", Drivetrain,
 
     try {
         val path = auto.getPathOrCancel("Start To Far Scale")
-        parallel(coroutineContext, {
+        parallel({
             Drivetrain.driveAlongPath(path)
             Carriage.Arm.intake = -0.4
             delay(350)
@@ -208,7 +208,7 @@ private val farScaleFarSwitch = Command("Far Scale Far Switch Auto", Drivetrain,
             Carriage.animateToPose(Carriage.Pose.SCALE_MED)
         })
 
-        parallel(coroutineContext, {
+        parallel({
             Carriage.Arm.isClamping = false
             Carriage.Arm.intake = 0.6
             Carriage.animateToPose(Carriage.Pose.INTAKE)
@@ -234,7 +234,7 @@ private val nearScaleFarSwitch = Command("Near Scale Far Switch Auto", Drivetrai
     try {
         val path = auto.getPathOrCancel("Start To Near Scale")
 
-        parallel(coroutineContext, {
+        parallel({
             Drivetrain.driveAlongPath(path)
             Carriage.Arm.intake = -0.2
             delay(350)
@@ -243,7 +243,7 @@ private val nearScaleFarSwitch = Command("Near Scale Far Switch Auto", Drivetrai
             Carriage.animateToPose(Carriage.Pose.SCALE_MED)
         })
 
-        parallel(coroutineContext, {
+        parallel({
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Near Scale To Cube6"))
         }, {
             Carriage.Arm.isClamping = false
@@ -271,7 +271,7 @@ private val farScaleNearSwitch = Command("Far Scale Near Switch Auto", Drivetrai
     val auto = autonomi.getAutoOrCancel("Far Scale Near Switch")
     try {
         val path = auto.getPathOrCancel("Start To Near Switch")
-        parallel(coroutineContext, {
+        parallel({
             Drivetrain.driveAlongPath(path)
         }, {
             delaySeconds(path.durationWithSpeed - 1.85)
@@ -284,7 +284,7 @@ private val farScaleNearSwitch = Command("Far Scale Near Switch Auto", Drivetrai
         Carriage.Arm.intake = 0.6
         Carriage.Arm.isClamping = false
 
-        parallel(coroutineContext, {
+        parallel({
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Near Switch To Cube1"))
         }, {
             delay(2000)
@@ -293,7 +293,7 @@ private val farScaleNearSwitch = Command("Far Scale Near Switch Auto", Drivetrai
             Carriage.Arm.intake = 0.2
         })
 
-        parallel(coroutineContext, {
+        parallel({
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube1 To Far Scale"))
             Carriage.Arm.intake = -0.4
             delay(200)
@@ -302,7 +302,7 @@ private val farScaleNearSwitch = Command("Far Scale Near Switch Auto", Drivetrai
             Carriage.animateToPose(Carriage.Pose.SCALE_MED)
         })
 
-        parallel(coroutineContext, {
+        parallel({
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Scale To Cube6"))
         }, {
             Carriage.Arm.intake = 0.8
@@ -314,7 +314,7 @@ private val farScaleNearSwitch = Command("Far Scale Near Switch Auto", Drivetrai
         delay(250)
         Carriage.Arm.intake = 0.2
 
-        parallel(coroutineContext, {
+        parallel({
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube6 To Far Scale"))
             Carriage.Arm.intake = -0.3
             delay(500)
@@ -335,35 +335,39 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
 
     try {
         Carriage.Arm.intake = 0.2
-        val path = auto.getPathOrCancel("Start To Near Scale")
-        parallel(coroutineContext, {
+        var path = auto.getPathOrCancel("Start To Near Scale")
+        parallel({
             Drivetrain.driveAlongPath(path)
-            Carriage.Arm.intake = -0.3
+        }, {
+            delaySeconds(path.durationWithSpeed - 1.5)
+            Carriage.animateToPose(Carriage.Pose.SCALE_MED)
+            Carriage.Arm.intake = -0.35
             delay(350)
-            Carriage.Arm.intake = 0.0
+        })
+        Carriage.Arm.isClamping = false
+
+        parallel({
+            Carriage.Arm.intake = 0.6
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Near Scale To Cube1"))
+            Carriage.Arm.isClamping = true
+        }, {
+            Carriage.animateToPose(Carriage.Pose.INTAKE)
+        })
+
+        delay(450)
+        Carriage.Arm.intake = 0.2
+
+        path = auto.getPathOrCancel("Cube1 To Near Scale")
+        parallel({
+            Drivetrain.driveAlongPath(path)
+            Carriage.Arm.intake = -0.15
+            delay(400)
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Carriage.Pose.SCALE_MED)
         })
         Carriage.animateToPose(Carriage.Pose.INTAKE)
-/*        parallel(coroutineContext, {
-            Carriage.Arm.isClamping = false
-            Carriage.Arm.intake = 0.6
-            Drivetrain.driveAlongPath(auto.getPathOrCancel("Near Scale To Cube1"))
-            Carriage.Arm.isClamping = true
-            delay(250)
-            Carriage.Arm.intake = 0.2
-        }, {
-            Carriage.animateToPose(Carriage.Pose.INTAKE)
-        })
-        parallel(coroutineContext, {
-            Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube1 To Near Scale"))
-            Carriage.Arm.intake = -0.2
-            delay(400)
-        }, {
-            Carriage.animateToPose(Carriage.Pose.SCALE_MED)
-        })
-        Carriage.animateToPose(Carriage.Pose.INTAKE)*/
+        delay(1000)
     } finally {
         Carriage.Arm.intake = 0.0
         Carriage.Arm.isClamping = true
@@ -376,7 +380,7 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
     try {
         val path = auto.getPathOrCancel("Start To Far Scale")
         Carriage.Arm.intake = 0.2
-        parallel(coroutineContext, {
+        parallel({
             Drivetrain.driveAlongPath(path)
             Carriage.Arm.intake = -0.4
             delay(350)
@@ -384,8 +388,7 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
             delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Carriage.Pose.SCALE_MED)
         })
-/*
-        parallel(coroutineContext, {
+        parallel({
             Carriage.Arm.isClamping = false
             Carriage.Arm.intake = 0.6
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Scale To Cube1"))
@@ -396,14 +399,14 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
             Carriage.animateToPose(Carriage.Pose.INTAKE)
         })
 
-        parallel(coroutineContext, {
+        parallel({
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube1 To Far Scale"))
             Carriage.Arm.intake = -0.2
             delay(400)
         }, {
             Carriage.animateToPose(Carriage.Pose.SCALE_MED)
-        })*/
-        Carriage.animateToPose(Carriage.Pose.INTAKE)
+        })
+//        Carriage.animateToPose(Carriage.Pose.INTAKE)
     } finally {
         Carriage.Arm.intake = 0.0
         Carriage.Arm.isClamping = true
@@ -424,8 +427,9 @@ val centerLineAuto = Command("Center Line", Drivetrain, Carriage){
 
 val circleTestAuto = Command("Circle Auto", Drivetrain, Carriage) {
     val auto = autonomi.getAutoOrCancel("Tests")
-    Drivetrain.driveAlongPath(auto.getPathOrCancel("Switch Loop"))
-    delay(Long.MAX_VALUE)
+    Drivetrain.driveAlongPath(auto.getPathOrCancel("Circle"))
+//    Drivetrain.loadTrajectory("RightToNearScale")
+//    Drivetrain.runLoadedTrajectory()
 }
 
 
