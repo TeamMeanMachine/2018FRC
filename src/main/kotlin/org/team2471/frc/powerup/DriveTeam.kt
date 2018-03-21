@@ -12,8 +12,6 @@ import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.powerup.carriage.*
 import org.team2471.frc.powerup.drivetrain.Drivetrain
-import org.team2471.frc.powerup.drivetrain.driveTest
-import org.team2471.frc.powerup.drivetrain.driveVelocity
 import org.team2471.frc.powerup.endgame.Wings
 import org.team2471.frc.powerup.endgame.climbCommand
 import java.lang.Double.max
@@ -53,9 +51,6 @@ object Driver {
         driverSpit.runWhile { controller.getBumper(GenericHID.Hand.kLeft) }
         climbCommand.toggleWhen { controller.startButton }
         toggleCubeSensor.runWhen { controller.bButton }
-
-        driveVelocity.toggleWhen { controller.getStickButton(GenericHID.Hand.kLeft) }
-        driveTest.runWhen { controller.getStickButton(GenericHID.Hand.kRight) }
     }
 }
 

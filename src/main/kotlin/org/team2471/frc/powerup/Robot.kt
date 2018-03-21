@@ -7,6 +7,7 @@ import kotlinx.coroutines.experimental.runBlocking
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.EventMapper
 import org.team2471.frc.powerup.carriage.Carriage
+import org.team2471.frc.powerup.carriage.Pose
 import org.team2471.frc.powerup.drivetrain.Drivetrain
 
 const val IS_COMP_BOT = false
@@ -39,7 +40,7 @@ class Robot : IterativeRobot() {
 
     override fun teleopInit() {
         if (!hasRunAuto) runBlocking {
-            Carriage.animateToPose(Carriage.Pose.INTAKE)
+            Carriage.animateToPose(Pose.INTAKE)
         }
         LEDController.state = FireState
         Drivetrain.zeroEncoders()

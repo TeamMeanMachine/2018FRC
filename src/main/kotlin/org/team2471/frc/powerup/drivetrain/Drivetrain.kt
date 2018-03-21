@@ -11,6 +11,7 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import edu.wpi.first.networktables.EntryListenerFlags
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.experimental.cancelChildren
@@ -30,7 +31,8 @@ import org.team2471.frc.lib.vector.Vector2
 import org.team2471.frc.powerup.Driver
 import org.team2471.frc.powerup.RobotMap
 import org.team2471.frc.powerup.carriage.Carriage
-import java.io.File
+import org.team2471.frc.powerup.carriage.Lifter
+import org.team2471.frc.powerup.carriage.Pose
 import java.lang.Math.*
 
 object Drivetrain {
@@ -56,16 +58,6 @@ object Drivetrain {
         config_kP(0, 2.0, 10)
         config_kD(0, 0.5, 10)
         config_kF(0, 0.0, 10)
-
-        // velocity
-//        config_kP(0, 3.0, 10)
-//        config_kD(0, 0.0, 10)
-//        config_kF(0, LEFT_FEED_FORWARD_COEFFICIENT * 1023.0 / 10.0 / 6.25, 10)
-
-        // motion profiling
-//        config_kP(0, 1.0, 10)
-//        config_kD(0, 0.25, 10)
-//        config_kF(0, LEFT_FEED_FORWARD_COEFFICIENT * 1023.0 / 10.0 / 6.25, 10)
 
         selectProfileSlot(0, 0)
     } + TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_2).apply {
@@ -100,16 +92,6 @@ object Drivetrain {
         config_kD(0, 0.5, 10)
         config_kF(0, 0.0, 10)
 
-        // velocity
-//        config_kP(0, 3.0, 10)
-//        config_kD(0, 0.0, 10)
-//        config_kF(0, RIGHT_FEED_FORWARD_COEFFICIENT * 1023.0 / 10.0 / 6.25, 10)
-
-        // motion profiling
-//        config_kP(0, 1.0, 10)
-//        config_kD(0, 0.25, 10)
-//        config_kF(0, LEFT_FEED_FORWARD_COEFFICIENT * 1023.0 / 10.0 / 6.25, 10)
-
         selectProfileSlot(0, 0)
     } + TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_2).apply {
         setNeutralMode(NeutralMode.Brake)
@@ -123,100 +105,6 @@ object Drivetrain {
         configContinuousCurrentLimit(CONTINUOUS_CURRENT_LIMIT, 10)
         configPeakCurrentDuration(PEAK_CURRENT_DURATION, 10)
         enableCurrentLimit(true)
-    }
-
-    fun loadTrajectory(trajectoryName: String) = launch {
-        leftMotors.clearMotionProfileTrajectories()
-        leftMotors.clearMotionProfileHasUnderrun(0)
-        rightMotors.clearMotionProfileTrajectories()
-        rightMotors.clearMotionProfileHasUnderrun(0)
-
-        val leftJob = launch(coroutineContext) {
-            val javaClass = javaClass
-            val classLoader = javaClass.classLoader
-            val resource = classLoader.getResource("/trajectories/${trajectoryName}_left.csv")
-            val fileName = resource.file
-
-            File(fileName).useLines { sequence ->
-                val iterator = sequence.iterator()
-
-                var firstPoint = true
-                while (iterator.hasNext()) {
-                    val line = iterator.next()
-                    val splitLine = line.split(", ")
-                    leftMotors.pushMotionProfileTrajectory(TrajectoryPoint().apply {
-                        position = splitLine[0].toDouble()
-                        velocity = splitLine[1].toDouble()
-                        timeDur = TrajectoryPoint.TrajectoryDuration.Trajectory_Duration_0ms.valueOf(splitLine[3].toInt())
-                        zeroPos = firstPoint
-                        isLastPoint = !iterator.hasNext()
-                    })
-                    firstPoint = false
-                    yield()
-                }
-            }
-        }
-
-//        val rightJob = launch(coroutineContext) {
-//            val fileName = javaClass.classLoader.getResource("/trajectories/${trajectoryName}_right.csv").file
-//            File(fileName).useLines { sequence ->
-//                val iterator = sequence.iterator()
-//
-//                var firstPoint = true
-//                while (iterator.hasNext()) {
-//                    val line = iterator.next()
-//                    val splitLine = line.split(", ")
-//                    rightMotors.pushMotionProfileTrajectory(TrajectoryPoint().apply {
-//                        position = splitLine[0].toDouble()
-//                        velocity = splitLine[1].toDouble()
-//                        timeDur = TrajectoryPoint.TrajectoryDuration.Trajectory_Duration_0ms.valueOf(splitLine[3].toInt())
-//                        zeroPos = firstPoint
-//                        isLastPoint = !iterator.hasNext()
-//                    })
-//                    firstPoint = false
-//                    yield()
-//                }
-//            }
-//        }
-
-        try {
-            leftJob.join()
-//            rightJob.join()
-        } finally {
-            coroutineContext.cancelChildren()
-        }
-    }
-
-    suspend fun runLoadedTrajectory() {
-        // hold
-        leftMotors.set(ControlMode.MotionProfile, 0.0)
-        rightMotors.set(ControlMode.MotionProfile, 0.0)
-
-        val leftStatus = MotionProfileStatus()
-        val rightStatus = MotionProfileStatus()
-        periodic(condition = { !leftStatus.isLast && !rightStatus.isLast }) {
-            leftMotors.processMotionProfileBuffer()
-            rightMotors.processMotionProfileBuffer()
-
-            leftMotors.getMotionProfileStatus(leftStatus)
-            rightMotors.getMotionProfileStatus(rightStatus)
-
-            if (leftStatus.activePointValid && rightStatus.activePointValid) {
-                // run profile
-                leftMotors.set(ControlMode.MotionProfile, 1.0)
-                rightMotors.set(ControlMode.MotionProfile, 1.0)
-
-                if (leftStatus.isUnderrun || rightStatus.isUnderrun) {
-                    DriverStation.reportWarning("Motion Profile Buffer is overrun", false)
-                }
-            } else {
-                // hold
-                leftMotors.set(ControlMode.MotionProfile, 0.0)
-                rightMotors.set(ControlMode.MotionProfile, 0.0)
-            }
-
-
-        }
     }
 
     private val gyro = ADIS16448_IMU(ADIS16448_IMU.Axis.kZ)
@@ -233,31 +121,21 @@ object Drivetrain {
     val gyroAngle: Double
         get() = gyro.angleZ
 
-//    val absoluteGyroAngle: Double
-//        get() = Math.floorMod()
-
-    private var leftVelocity: Double
+    private val leftVelocity: Double
         get() = ticksToFeet(leftMotors.getSelectedSensorVelocity(1) * 10)
-        set(value) = leftMotors.set(ControlMode.Velocity, feetToTicks(value / 10.0).also {
-            table.getEntry("Left Velocity Setpoint").setDouble(it)
-        })
 
-
-    private var rightVelocity: Double
+    private val rightVelocity: Double
         get() = ticksToFeet(rightMotors.getSelectedSensorVelocity(1) * 10)
-        set(value) = rightMotors.set(ControlMode.Velocity, feetToTicks(value / 10.0).also {
-            table.getEntry("Right Velocity Setpoint").setDouble(it)
-        })
 
     private val heightMultiplierCurve = MotionCurve().apply {
         storeValue(0.0, 1.0)
-        storeValue(Carriage.Lifter.MAX_HEIGHT, 0.4)
+        storeValue(Lifter.MAX_HEIGHT, 0.4)
     }
 
     private val rampRateCurve = MotionCurve().apply {
         storeValue(0.0, 0.1)
-        storeValue(Carriage.Pose.CARRY.lifterHeight, 0.1)
-        storeValue(Carriage.Lifter.MAX_HEIGHT, 2.5)
+        storeValue(Pose.CARRY.lifterHeight, 0.1)
+        storeValue(Lifter.MAX_HEIGHT, 2.5)
     }
 
     private val leftDistance: Double
@@ -274,12 +152,10 @@ object Drivetrain {
         var leftPower = throttle + (softTurn * Math.abs(throttle)) + hardTurn
         var rightPower = throttle - (softTurn * Math.abs(throttle)) - hardTurn
 
-        val heightMultiplier = heightMultiplierCurve.getValue(Carriage.Lifter.height)
+        val heightMultiplier = heightMultiplierCurve.getValue(Lifter.height)
         leftPower *= heightMultiplier
         rightPower *= heightMultiplier
 
-//        leftPower = (leftPower * MAX_SPEED * LEFT_FEED_FORWARD_COEFFICIENT) + (LEFT_FEED_FORWARD_OFFSET * signum(leftPower))
-//        rightPower = (rightPower * MAX_SPEED * RIGHT_FEED_FORWARD_COEFFICIENT) + (RIGHT_FEED_FORWARD_OFFSET * signum(rightPower))
         leftPower = leftPower * (1.0 - MINIMUM_OUTPUT) + copySign(MINIMUM_OUTPUT, leftPower)
         rightPower = rightPower * (1.0 - MINIMUM_OUTPUT) + copySign(MINIMUM_OUTPUT, rightPower)
 
@@ -293,9 +169,9 @@ object Drivetrain {
         leftMotors.set(ControlMode.PercentOutput, leftPower)
         rightMotors.set(ControlMode.PercentOutput, rightPower)
 
-        var rampRate = rampRateCurve.getValue(Carriage.Lifter.height)
+        var rampRate = rampRateCurve.getValue(Lifter.height)
 
-        if (Carriage.targetPose == Carriage.Pose.CLIMB) {
+        if (Carriage.targetPose == Pose.CLIMB) {
             rampRate *= 0.6
         }
 
@@ -311,19 +187,6 @@ object Drivetrain {
         rightMotors.set(ControlMode.PercentOutput, rightSpeed)
     }
 
-    fun driveVelocity(leftVelocity: Double, rightVelocity: Double) {
-        if (abs(leftVelocity) > MAX_SPEED) DriverStation.reportWarning("Left Velocity target $leftVelocity exceeds max speed $MAX_SPEED", false)
-        if (abs(rightVelocity) > MAX_SPEED) DriverStation.reportWarning("Right Velocity target $rightVelocity exceeds max speed $MAX_SPEED", false)
-
-        Drivetrain.leftVelocity = leftVelocity
-        Drivetrain.rightVelocity = rightVelocity
-//        leftMotors.set(ControlMode.PercentOutput, leftVelocity * LEFT_FEED_FORWARD_COEFFICIENT +
-//                LEFT_FEED_FORWARD_OFFSET * signum(leftVelocity))
-//
-//        rightMotors.set(ControlMode.PercentOutput, rightVelocity * RIGHT_FEED_FORWARD_COEFFICIENT +
-//                RIGHT_FEED_FORWARD_OFFSET * signum(rightVelocity))
-
-    }
 
     suspend fun driveDistance(distance: Double, time: Double, suspend: Boolean = true) {
         leftMotors.selectProfileSlot(0, 0)
@@ -509,36 +372,15 @@ object Drivetrain {
                 SmartDashboard.putNumberArray("Encoder Distances",
                         arrayOf(ticksToFeet(leftMotors.getSelectedSensorPosition(0)),
                                 ticksToFeet(rightMotors.getSelectedSensorPosition(0))))
+
+                if (RobotController.isBrownedOut()) DriverStation.reportWarning("PDP Browned Out", false)
             }
         }
 
         CommandSystem.registerDefaultCommand(this, Command("Drivetrain Default", this) {
             periodic {
-                //                println(absoluteGyroAngle)
                 drive(Driver.throttle, Driver.softTurn, Driver.hardTurn)
             }
         })
     }
-}
-
-val driveVelocity = Command("Drive Velocity", Drivetrain) {
-    periodic {
-        val throttle = Driver.throttle
-        val turn = Driver.softTurn
-
-        val leftVelocity = (throttle + turn) * 12.0
-        val rightVelocity = (throttle - turn) * 12.0
-        Drivetrain.driveVelocity(leftVelocity, rightVelocity)
-    }
-}
-
-val driveTest = Command("Drive Test", Drivetrain) {
-    val throttle = SmartDashboard.getNumber("Test Throttle", 0.0)
-    Drivetrain.driveRaw(throttle, throttle)
-    try {
-        delay(3000)
-    } finally {
-        Drivetrain.driveRaw(0.0, 0.0)
-    }
-
 }

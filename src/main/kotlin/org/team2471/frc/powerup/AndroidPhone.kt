@@ -11,6 +11,6 @@ object AndroidPhone {
     }
 
     private fun setupAdb() {
-        adb.portForward(2471,2471)
+        adb.portForward(2471, 2471)
     }
 }

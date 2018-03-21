@@ -11,18 +11,18 @@ import org.team2471.frc.powerup.Driver
 
 val zero = Command("Carriage Zero", Carriage) {
     try {
-        Carriage.Arm.setpoint = 100.0
-        Carriage.Lifter.isBraking = false
-        Carriage.Lifter.isLowGear = false
+        Arm.setpoint = 100.0
+        Lifter.isBraking = false
+        Lifter.isLowGear = false
         periodic {
-            Carriage.Lifter.heightRawSpeed = CoDriver.leftStickUpDown * 0.4
+            Lifter.heightRawSpeed = CoDriver.leftStickUpDown * 0.4
         }
     } finally {
-        Carriage.setAnimation(Carriage.Pose.INTAKE)
-        Carriage.Arm.hold()
-        Carriage.Lifter.stop()
-        Carriage.Lifter.zero()
-        Carriage.Lifter.isBraking = true
+        Carriage.setAnimation(Pose.INTAKE)
+        Arm.hold()
+        Lifter.stop()
+        Lifter.zero()
+        Lifter.isBraking = true
     }
 }
 
@@ -37,45 +37,45 @@ var switchOffset = 0.0
     }
 
 val goToSwitch = Command("Switch Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.SWITCH, heightOffset = switchOffset)
+    Carriage.animateToPose(Pose.SWITCH, heightOffset = switchOffset)
 }
 
 val goToScaleLowPreset = Command("Scale Low Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.SCALE_LOW, heightOffset = scaleOffset)
+    Carriage.animateToPose(Pose.SCALE_LOW, heightOffset = scaleOffset)
 }
 
 val goToScaleMediumPreset = Command("Scale Medium Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.SCALE_MED, heightOffset = scaleOffset)
+    Carriage.animateToPose(Pose.SCALE_MED, heightOffset = scaleOffset)
 }
 
 val goToScaleHighPreset = Command("Scale High Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.SCALE_HIGH, heightOffset = scaleOffset)
+    Carriage.animateToPose(Pose.SCALE_HIGH, heightOffset = scaleOffset)
 }
 
 val goToFrontScalePreset = Command("Scale Front Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.SCALE_HIGH, heightOffset = scaleOffset)
+    Carriage.animateToPose(Pose.SCALE_FRONT, heightOffset = scaleOffset)
 }
 
 val goToIntakePreset = Command("Intake Preset", Carriage) {
-    Carriage.animateToPose(Carriage.Pose.INTAKE)
+    Carriage.animateToPose(Pose.INTAKE)
 }
 
 val returnToIntakePosition = Command("Return to Intake Position", Carriage) {
     launch(coroutineContext) {
         try {
-            Carriage.Arm.isClamping = false
+            Arm.isClamping = false
             delay(1000)
         } finally {
-            Carriage.Arm.isClamping = true
+            Arm.isClamping = true
         }
     }
-    Carriage.animateToPose(Carriage.Pose.INTAKE)
+    Carriage.animateToPose(Pose.INTAKE)
 }
 
 val driverIntake = Command("Intake", Carriage) {
     try {
-        Carriage.Arm.isClamping = false
-        Carriage.Arm.intake = 0.55
+        Arm.isClamping = false
+        Arm.intake = 0.55
 
         val timer = Timer()
         timer.start()
@@ -89,14 +89,14 @@ val driverIntake = Command("Intake", Carriage) {
         var prevIntaking = Driver.intaking
         suspendUntil {
             val intaking = Driver.intaking
-            val finished = Carriage.Arm.hasCube || (intaking && !prevIntaking)
+            val finished = Arm.hasCube || (intaking && !prevIntaking)
             prevIntaking = intaking
             finished
         }
-        Carriage.Arm.intake = 0.8
-        Carriage.Arm.isClamping = true
+        Arm.intake = 0.8
+        Arm.isClamping = true
 
-        if (Carriage.Arm.hasCube) {
+        if (Arm.hasCube) {
             launch(coroutineContext) {
                 Driver.rumble = 1.0
                 CoDriver.rumble = 1.0
@@ -110,19 +110,19 @@ val driverIntake = Command("Intake", Carriage) {
         }
 
         delay(800)
-        if (Carriage.Arm.hasCube) Carriage.animateToPose(Carriage.Pose.CARRY)
+        if (Arm.hasCube) Carriage.animateToPose(Pose.CARRY)
     } finally {
-        Carriage.Arm.isClamping = true
-        Carriage.Arm.intake = 0.0
+        Arm.isClamping = true
+        Arm.intake = 0.0
     }
 }
 
 val driverSpit = Command("Driver Spit", Carriage) {
     try {
-        Carriage.Arm.intake = -0.8
+        Arm.intake = -0.8
         delay(Long.MAX_VALUE)
     } finally {
-        Carriage.Arm.intake = 0.0
+        Arm.intake = 0.0
     }
 }
 
@@ -130,9 +130,9 @@ val incrementScaleStackHeight = Command("Increment Cube Stack Count") {
     scaleOffset += 11
     @Suppress("NON_EXHAUSTIVE_WHEN")
     when (Carriage.targetPose) {
-        Carriage.Pose.SCALE_LOW -> goToScaleLowPreset(coroutineContext)
-        Carriage.Pose.SCALE_MED -> goToScaleMediumPreset(coroutineContext)
-        Carriage.Pose.SCALE_HIGH -> goToScaleHighPreset(coroutineContext)
+        Pose.SCALE_LOW -> goToScaleLowPreset(coroutineContext)
+        Pose.SCALE_MED -> goToScaleMediumPreset(coroutineContext)
+        Pose.SCALE_HIGH -> goToScaleHighPreset(coroutineContext)
     }
 }
 
@@ -140,9 +140,9 @@ val decrementScaleStackHeight = Command("Increment Cube Stack Count") {
     scaleOffset -= 11
     @Suppress("NON_EXHAUSTIVE_WHEN")
     when (Carriage.targetPose) {
-        Carriage.Pose.SCALE_LOW -> goToScaleLowPreset(coroutineContext)
-        Carriage.Pose.SCALE_MED -> goToScaleMediumPreset(coroutineContext)
-        Carriage.Pose.SCALE_HIGH -> goToScaleHighPreset(coroutineContext)
+        Pose.SCALE_LOW -> goToScaleLowPreset(coroutineContext)
+        Pose.SCALE_MED -> goToScaleMediumPreset(coroutineContext)
+        Pose.SCALE_HIGH -> goToScaleHighPreset(coroutineContext)
     }
 
 }
@@ -150,12 +150,12 @@ val decrementScaleStackHeight = Command("Increment Cube Stack Count") {
 val tuneArmPID = Command("Tune Arm Pid", Carriage) {
     periodic {
         val rightStick = CoDriver.microAdjust
-        Carriage.Arm.setpoint = rightStick * 45 + 90
+        Arm.setpoint = rightStick * 45 + 90
     }
 }
 
-val toggleCubeSensor = Command("Toggle Cube Sensor"){
-    val entry = Carriage.Arm.table.getEntry("Use Cube Sensor")
+val toggleCubeSensor = Command("Toggle Cube Sensor") {
+    val entry = Arm.table.getEntry("Use Cube Sensor")
     entry.setBoolean(!entry.getBoolean(true))
 
 }

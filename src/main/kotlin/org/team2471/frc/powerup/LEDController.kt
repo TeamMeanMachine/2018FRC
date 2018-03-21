@@ -9,7 +9,7 @@ object LEDController {
         SerialPort(9600, SerialPort.Port.kUSB1).also {
             println("LEDController found")
         }
-    } catch(e: Exception) {
+    } catch (e: Exception) {
         DriverStation.reportError("Failed to connect to LEDController\n${e.message}", false)
         null
     }
