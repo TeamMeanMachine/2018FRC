@@ -19,6 +19,7 @@ import org.team2471.frc.powerup.carriage.Carriage
 import org.team2471.frc.powerup.carriage.Lifter
 import org.team2471.frc.powerup.carriage.Pose
 import org.team2471.frc.powerup.drivetrain.Drivetrain
+import sun.plugin.dom.exception.InvalidStateException
 import java.io.File
 import java.io.FileNotFoundException
 
@@ -37,6 +38,8 @@ private fun Autonomous.getPathOrCancel(pathName: String) =
             DriverStation.reportError(message, false)
             throw CancellationException(message)
         }
+
+private var startingSide = Side.RIGHT
 
 object AutoChooser {
     private val cacheFile = File("/home/lvuser/autonomi.json")
@@ -70,9 +73,10 @@ object AutoChooser {
         Lifter.stop()
         Arm.isClamping = true
         val nearSide = sideChooser.selected
+        startingSide = nearSide
         val farSide = !nearSide
         val chosenCommand = when {
-            nearSide == Side.CENTER -> centerLineAuto
+            nearSide == Side.CENTER -> bearMetalAuto
 //            Game.scaleSide == nearSide && Game.switchSide == nearSide -> nearScaleNearSwitchScale
 //            Game.scaleSide == farSide && Game.switchSide == farSide -> farScaleFarSwitch
 //            Game.scaleSide == farSide && Game.switchSide == nearSide -> farScaleNearSwitch
@@ -335,6 +339,7 @@ private val farScaleNearSwitch = Command("Far Scale Near Switch Auto", Drivetrai
 
 val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
     val auto = autonomi.getAutoOrCancel("All Near Scale")
+    auto.isMirrored = startingSide == Side.LEFT
 
     try {
         Arm.intake = 0.2
@@ -344,7 +349,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Pose.SCALE_MED)
-            Arm.intake = -0.35
+            Arm.intake = -0.4
             delay(350)
         })
         Arm.isClamping = false
@@ -357,17 +362,17 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             Carriage.animateToPose(Pose.INTAKE)
         })
 
-        delay(450)
+        delay(500)
         Arm.intake = 0.2
 
         path = auto.getPathOrCancel("Cube1 To Near Scale")
         parallel({
             Drivetrain.driveAlongPath(path)
-            Arm.intake = -0.15
-            delay(400)
         }, {
-            delaySeconds(path.durationWithSpeed - 1.5)
+            delaySeconds(path.durationWithSpeed - 1.25)
             Carriage.animateToPose(Pose.SCALE_MED)
+            Arm.intake = -0.25
+            delay(600)
         })
         Carriage.animateToPose(Pose.INTAKE)
         delay(1000)
@@ -379,9 +384,10 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
 
 val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
     val auto = autonomi.getAutoOrCancel("All Far Scale")
+    auto.isMirrored = startingSide == Side.LEFT
 
     try {
-        val path = auto.getPathOrCancel("Start To Far Scale")
+        var path = auto.getPathOrCancel("Start To Far Scale")
         Arm.intake = 0.2
         parallel({
             Drivetrain.driveAlongPath(path)
@@ -402,30 +408,44 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
             Carriage.animateToPose(Pose.INTAKE)
         })
 
+        path = auto.getPathOrCancel("Cube1 To Far Scale")
+
         parallel({
-            Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube1 To Far Scale"))
-            Arm.intake = -0.2
-            delay(400)
+            Drivetrain.driveAlongPath(path)
         }, {
+            delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Pose.SCALE_MED)
+            Arm.intake = -0.3
+            delay(500)
         })
-//        Carriage.animateToPose(Pose.INTAKE)
+        Carriage.animateToPose(Pose.INTAKE)
     } finally {
         Arm.intake = 0.0
         Arm.isClamping = true
     }
 }
 
-val centerLineAuto = Command("Center Line", Drivetrain, Carriage) {
-    val auto = autonomi.getAutoOrCancel("Tests")
-    Drivetrain.driveAlongPath(auto.getPathOrCancel("Straight"))
-//    Drivetrain.driveAlongPath(Path2D().apply {
-//        robotDirection = Path2D.RobotDirection.BACKWARD
-//        addPoint(0.0,0.0)
-//        addPoint(0.0,8.0)
-//        addEasePoint(0.0,0.0)
-//        addEasePoint(5.0, 1.0)
-//    })
+val bearMetalAuto = Command("Bear Metal Auto", Drivetrain, Carriage) {
+    val auto = autonomi.getAutoOrCancel("Center Switch")
+    val path = auto.getPathOrCancel(when (Game.switchSide) {
+        Side.LEFT -> "Left Switch"
+        Side.RIGHT -> "Right Switch"
+        else -> throw InvalidStateException("Invalid Switch Side")
+    })
+
+    try {
+        parallel({
+            Drivetrain.driveAlongPath(path)
+        }, {
+            Carriage.animateToPose(Pose.SWITCH)
+            delaySeconds(path.durationWithSpeed - 1.5)
+            Arm.intake = -0.3
+            delay(500)
+        })
+    } finally {
+        Arm.intake = 0.0
+    }
+
 }
 
 val circleTestAuto = Command("Circle Auto", Drivetrain, Carriage) {

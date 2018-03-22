@@ -13,6 +13,7 @@ import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.powerup.RobotMap
 import kotlin.math.absoluteValue
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 object Lifter {
     private val motors = TalonSRX(RobotMap.Talons.ELEVATOR_MOTOR_1).apply {
@@ -26,6 +27,7 @@ object Lifter {
         configPeakOutputForward(1.0, 10)
         configPeakOutputReverse(-1.0, 10)
         configClosedloopRamp(0.1, 10)
+        configAllowableClosedloopError(0, inchesToTicks(0.5).roundToInt(), 10)
         config_kP(0, 1.0, 10)
         config_kI(0, 0.0, 10)
         config_kD(0, 0.3, 10)

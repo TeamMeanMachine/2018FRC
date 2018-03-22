@@ -2,6 +2,7 @@ package org.team2471.frc.powerup
 
 import edu.wpi.first.wpilibj.DriverStation
 import org.team2471.frc.lib.util.Alliance
+import org.team2471.frc.lib.util.measureTimeFPGA
 
 enum class Side {
     LEFT,
@@ -42,6 +43,13 @@ object Game {
     var alliance: Alliance? = null
 
     fun updateGameData() {
+        val findDsTime = measureTimeFPGA {
+            while (!ds.isDSAttached) {
+                Thread.sleep(100)
+            }
+        }
+        println("Found driverstation in $findDsTime seconds")
+
         val gameData = ds.gameSpecificMessage
 
         if (gameData.length < 2) {
@@ -54,10 +62,13 @@ object Game {
         switchSide = Side.fromChar(gameData[0])
         scaleSide = Side.fromChar(gameData[1])
 
-        alliance = when (ds.alliance) {
+        val dsAlliance = ds.alliance
+        println("Game data alliance: $dsAlliance")
+        alliance = when (dsAlliance) {
             DriverStation.Alliance.Red -> Alliance.RED
             DriverStation.Alliance.Blue -> Alliance.BLUE
             else -> null
         }
+        println("Set alliance: $alliance")
     }
 }

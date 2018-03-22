@@ -16,6 +16,7 @@ object LEDController {
 
     var alliance: Alliance? = null
         @Synchronized set(value) {
+            println("Alliance $alliance received")
             if (value != field) {
                 if (value == DriverStation.Alliance.Red) {
                     write("red")
@@ -35,6 +36,7 @@ object LEDController {
         }
 
     private fun write(data: String) = try {
+        println("sending $data to LedController")
         port?.writeString("$data\n")
     } catch (e: Exception) {
         DriverStation.reportError("Error writing string to LEDController: ${e.message}", false)

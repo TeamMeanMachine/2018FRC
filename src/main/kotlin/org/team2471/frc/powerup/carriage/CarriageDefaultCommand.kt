@@ -6,6 +6,7 @@ import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.powerup.CoDriver
 import org.team2471.frc.powerup.RobotMap
+import java.lang.Double.max
 
 const val MICRO_ADJUST_RATE = 18.0
 
@@ -16,7 +17,7 @@ val carriageDefaultCommand = Command("Carriage Default", Carriage) {
         periodic {
             val releaseClamp = CoDriver.release
             Arm.isClamping = !releaseClamp
-            val spit = CoDriver.spitSpeed
+            val spit = max(if (releaseClamp) 0.2 else 0.0, CoDriver.spitSpeed)
 
             Arm.intake = if (spit == 0.0 && Arm.hasCube) 0.2 else -spit
 

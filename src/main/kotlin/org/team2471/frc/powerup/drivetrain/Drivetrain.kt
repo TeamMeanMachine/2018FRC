@@ -248,7 +248,7 @@ object Drivetrain {
     private const val MAX_SPEED = 12.82
     private const val ACCELERATION_COEFFICIENT = 0.1454439814814 / 2
 
-    private const val GYRO_COEFFICIENT = 0.0002
+    private const val GYRO_COEFFICIENT = 0.002
 
     private const val LEFT_FEED_FORWARD_COEFFICIENT = 0.078479461930836 * 1.1
     private const val LEFT_FEED_FORWARD_OFFSET = 0.010218260839712
@@ -299,7 +299,6 @@ object Drivetrain {
                 rightPositionError.setDouble(ticksToFeet(rightMotors.getClosedLoopError(0)))
 
                 val gyroAccumTimesCoefficient = angleErrorAccum * GYRO_COEFFICIENT
-                println(gyroAccumTimesCoefficient)
 
                 leftMotors.set(ControlMode.Position, feetToTicks(leftDistance + gyroAccumTimesCoefficient),
                         DemandType.ArbitraryFeedForward,
@@ -373,7 +372,6 @@ object Drivetrain {
                         arrayOf(ticksToFeet(leftMotors.getSelectedSensorPosition(0)),
                                 ticksToFeet(rightMotors.getSelectedSensorPosition(0))))
 
-                if (RobotController.isBrownedOut()) DriverStation.reportWarning("PDP Browned Out", false)
             }
         }
 

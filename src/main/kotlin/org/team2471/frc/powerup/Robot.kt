@@ -1,6 +1,8 @@
 package org.team2471.frc.powerup
 
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.IterativeRobot
+import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.livewindow.LiveWindow
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.experimental.runBlocking
@@ -27,6 +29,12 @@ class Robot : IterativeRobot() {
 
         println("${if (IS_COMP_BOT) "Competition" else "Practice"} mode")
         SmartDashboard.putNumber("Test Throttle", 1.0)
+
+
+        Game.updateGameData()
+        val gameAlliance = Game.alliance
+        println("RobotInit alliance: $gameAlliance")
+        LEDController.alliance = gameAlliance
     }
 
     override fun autonomousInit() {
@@ -40,7 +48,7 @@ class Robot : IterativeRobot() {
 
     override fun teleopInit() {
         if (!hasRunAuto) runBlocking {
-            Carriage.animateToPose(Pose.INTAKE)
+            Carriage.animateToPose( Pose.INTAKE)
         }
         LEDController.state = FireState
         Drivetrain.zeroEncoders()
@@ -50,6 +58,11 @@ class Robot : IterativeRobot() {
     override fun robotPeriodic() {
         EventMapper.tick()
         SmartDashboard.putNumber("Match Time", (Game.matchTime - 3.0).coerceAtLeast(-1.0))
+
+        if (RobotController.isBrownedOut()) DriverStation.reportWarning("PDP Browned Out", false)
+        if (!RobotController.getEnabled3V3()) DriverStation.reportWarning("3V3 Disabled", false)
+        if (!RobotController.getEnabled5V()) DriverStation.reportWarning("5V Disabled", false)
+        if (!RobotController.getEnabled6V()) DriverStation.reportWarning("6V Disabled", false)
     }
 
     override fun disabledInit() {
