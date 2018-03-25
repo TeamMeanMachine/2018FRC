@@ -45,11 +45,10 @@ object Carriage {
         Arm.curve = MotionCurve()
         Lifter.curve.storeValue(lifterTimeOffset, Lifter.height)
         Lifter.curve.storeValue(lifterTime + lifterTimeOffset,
-                min(pose.lifterHeight + heightOffset, Lifter.MAX_HEIGHT))
+                min(pose.lifterHeight + heightOffset, CarriageConstants.LIFTER_MAX_HEIGHT))
 
         Arm.curve.storeValueSlopeAndMagnitude(armTimeOffset, Arm.angle, 0.0, 0.75) //0.5
         Arm.curve.storeValueSlopeAndMagnitude(armTime + armTimeOffset, pose.armAngle, 0.0, 3.0) //2.0
-
 
         animationTime = 0.0
     }

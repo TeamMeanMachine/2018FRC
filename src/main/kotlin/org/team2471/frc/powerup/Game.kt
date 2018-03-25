@@ -41,6 +41,10 @@ object Game {
         private set
 
     var alliance: Alliance? = null
+        private set
+
+    var isFMSAttached: Boolean = false
+        private set
 
     fun updateGameData() {
         val findDsTime = measureTimeFPGA {
@@ -70,5 +74,7 @@ object Game {
             else -> null
         }
         println("Set alliance: $alliance")
+
+        isFMSAttached = ds.isFMSAttached
     }
 }

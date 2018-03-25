@@ -9,7 +9,7 @@ enum class Pose(val lifterHeight: Double, val armAngle: Double) {
             SCALE_HIGH(32.0, 185.0),*/
     SCALE_LOW(25.5, 190.0),
     SCALE_MED(36.0, 185.0),
-    SCALE_HIGH(38.0, 185.0),
+    SCALE_HIGH(45.0, 185.0),
     SCALE_FRONT(56.0, 18.0),
     CARRY(10.0, 0.0),
     SWITCH(26.0, 20.0),

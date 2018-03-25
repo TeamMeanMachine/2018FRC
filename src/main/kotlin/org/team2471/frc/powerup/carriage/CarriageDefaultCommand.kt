@@ -19,10 +19,16 @@ val carriageDefaultCommand = Command("Carriage Default", Carriage) {
             Arm.isClamping = !releaseClamp
             val spit = max(if (releaseClamp) 0.2 else 0.0, CoDriver.spitSpeed)
 
-            Arm.intake = if (spit == 0.0 && Arm.hasCube) 0.2 else -spit
+            Arm.intakeSpeed = if (spit == 0.0 && Arm.hasCube) 0.2 else -spit
 
             val releasing = releaseClamp || spit != 0.0
-            if (!releasing && prevReleasing && Arm.angle > 150.0 && Carriage.targetPose != Pose.SCALE_FRONT) returnToIntakePosition.launch()
+            if (!releasing && prevReleasing && Arm.angle > 150.0 && Carriage.targetPose != Pose.SCALE_FRONT) {
+                if (releaseClamp) {
+                    returnToIntakePosition.launch() // intakeSpeed is open while going down
+                } else {
+                    goToIntakePreset.launch()
+                }
+            }
             prevReleasing = releasing
 
             val leftStick = CoDriver.leftStickUpDown

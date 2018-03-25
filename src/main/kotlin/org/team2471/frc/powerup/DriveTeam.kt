@@ -81,8 +81,8 @@ object CoDriver {
                 .squareWithSign()
 
     val spitSpeed: Double
-        get() = controller.getTriggerAxis(GenericHID.Hand.kRight) * 0.4 +
-                controller.getTriggerAxis(GenericHID.Hand.kLeft) * 0.3
+        get() = (controller.getTriggerAxis(GenericHID.Hand.kRight) * 0.4 +
+                controller.getTriggerAxis(GenericHID.Hand.kLeft) * 0.3).deadband(0.15)
 
     val release: Boolean
         get() = controller.getBumper(GenericHID.Hand.kRight)

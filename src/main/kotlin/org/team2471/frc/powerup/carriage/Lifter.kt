@@ -69,9 +69,7 @@ object Lifter {
             val outputEntry = table.getEntry("Output")
             periodic(100) {
                 // don't run the compressor when the carriage exceeds 3V
-                if (!RobotState.isAutonomous()) {
-                    RobotMap.compressor.closedLoopControl = motors.motorOutputVoltage.absoluteValue < 3.0
-                }
+                RobotMap.compressor.closedLoopControl = !RobotState.isAutonomous() && motors.motorOutputVoltage.absoluteValue < 3.0
                 heightEntry.setDouble(height)
 
                 if (RobotState.isEnabled())
@@ -80,12 +78,8 @@ object Lifter {
         }
     }
 
-    private const val ANIMATION_LENGTH = 1.5
-    const val MAX_HEIGHT = 64.0
-
     var curve = MotionCurve().apply {
         storeValue(0.0, Pose.INTAKE.lifterHeight)
-        storeValue(ANIMATION_LENGTH, Pose.SCALE_LOW.lifterHeight)
     }
 
     val height: Double
@@ -99,7 +93,7 @@ object Lifter {
                 else -> 0.0
             }
 
-            val v = value.coerceIn(min, MAX_HEIGHT)
+            val v = value.coerceIn(min, CarriageConstants.LIFTER_MAX_HEIGHT)
             motors.set(ControlMode.Position, inchesToTicks(v))
             field = v
         }
@@ -135,9 +129,8 @@ object Lifter {
         motors.setSelectedSensorPosition(0, 0, 10)
     }
 
-    private const val TICKS_PER_INCH = 9437 / 64.25
 
-    private fun ticksToInches(ticks: Double) = ticks / TICKS_PER_INCH
+    private fun ticksToInches(ticks: Double) = ticks / CarriageConstants.LIFTER_TICKS_PER_INCH
 
-    private fun inchesToTicks(inches: Double) = inches * TICKS_PER_INCH
+    private fun inchesToTicks(inches: Double) = inches * CarriageConstants.LIFTER_TICKS_PER_INCH
 }

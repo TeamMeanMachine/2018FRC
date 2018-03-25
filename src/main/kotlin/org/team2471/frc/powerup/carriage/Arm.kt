@@ -66,9 +66,10 @@ object Arm {
     private val cubeSensor = AnalogInput(2)
 
     @Suppress("ConstantConditionIf")
-    private val cubeSensorTriggered: Boolean
-        get() = if (IS_COMP_BOT) cubeSensor.voltage < 0.15
-        else cubeSensor.voltage < 0.15
+    val detectingCube: Boolean
+        get() = Carriage.targetPose == Pose.INTAKE && Carriage.isAnimationCompleted &&
+                if (usingIntakeSensor) cubeSensor.voltage < 0.15
+                else minAmperage > 15
 
     init {
         launch {
@@ -84,12 +85,13 @@ object Arm {
             val cubeTimer = Timer()
             cubeTimer.start()
             periodic(40) {
-                if (!cubeSensorTriggered) {
+                usingIntakeSensor = useCubeSensorEntry.getBoolean(true)
+
+                if (!detectingCube) {
                     cubeTimer.reset()
                 }
 
-                usingIntakeSensor = useCubeSensorEntry.getBoolean(true)
-                if ((usingIntakeSensor && cubeTimer.get() > 0.2) || (!usingIntakeSensor && minAmperage > 15)) {
+                if (cubeTimer.get() > 0.3) {
                     hasCube = true
                 } else if (!isClamping || intakeMotorLeft.motorOutputPercent < -0.1) {
                     hasCube = false
@@ -125,7 +127,7 @@ object Arm {
         get() = ticksToDegrees(motor.getSelectedSensorPosition(0))
 
     val velocity: Double
-        get() = (motor.getSelectedSensorVelocity(0) * 10) / ARM_TICKS_PER_DEGREE
+        get() = (motor.getSelectedSensorVelocity(0) * 10) / CarriageConstants.ARM_TICKS_PER_DEGREE
 
     var setpoint: Double = angle
         set(value) {
@@ -136,17 +138,16 @@ object Arm {
 
     val error get() = angle - setpoint
 
-    var intake: Double
+    var intakeSpeed: Double
         get() = average(intakeMotorLeft.motorOutputVoltage, intakeMotorRight.motorOutputVoltage) / 12
         set(speed) {
             intakeMotorLeft.set(ControlMode.PercentOutput, speed)
             intakeMotorRight.set(ControlMode.PercentOutput, speed)
         }
 
-    private const val ARM_TICKS_PER_DEGREE = 160.0 / 81.0
-    private const val ARM_OFFSET_NATIVE = -720.0
-    private fun ticksToDegrees(nativeUnits: Int): Double = (nativeUnits - ARM_OFFSET_NATIVE) / ARM_TICKS_PER_DEGREE
-    fun degreesToTicks(degrees: Double): Double = degrees * ARM_TICKS_PER_DEGREE + ARM_OFFSET_NATIVE
+    private fun ticksToDegrees(nativeUnits: Int): Double = (nativeUnits - CarriageConstants.ARM_OFFSET_NATIVE) / CarriageConstants.ARM_TICKS_PER_DEGREE
+
+    private fun degreesToTicks(degrees: Double): Double = degrees * CarriageConstants.ARM_TICKS_PER_DEGREE + CarriageConstants.ARM_OFFSET_NATIVE
 
     fun hold() {
         setpoint = angle

@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.Timer
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import org.team2471.frc.lib.control.experimental.Command
+import org.team2471.frc.lib.control.experimental.parallel
 import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.powerup.CoDriver
@@ -11,7 +12,7 @@ import org.team2471.frc.powerup.Driver
 
 val zero = Command("Carriage Zero", Carriage) {
     try {
-        Arm.setpoint = 100.0
+        Arm.setpoint = 115.0
         Lifter.isBraking = false
         Lifter.isLowGear = false
         periodic {
@@ -61,21 +62,22 @@ val goToIntakePreset = Command("Intake Preset", Carriage) {
 }
 
 val returnToIntakePosition = Command("Return to Intake Position", Carriage) {
-    launch(coroutineContext) {
+    parallel({
         try {
             Arm.isClamping = false
             delay(1000)
         } finally {
             Arm.isClamping = true
         }
-    }
-    Carriage.animateToPose(Pose.INTAKE)
+    }, {
+        Carriage.animateToPose(Pose.INTAKE)
+    })
 }
 
 val driverIntake = Command("Intake", Carriage) {
     try {
         Arm.isClamping = false
-        Arm.intake = 0.55
+        Arm.intakeSpeed = CarriageConstants.STANDARD_INTAKE_SPEED
 
         val timer = Timer()
         timer.start()
@@ -93,10 +95,9 @@ val driverIntake = Command("Intake", Carriage) {
             prevIntaking = intaking
             finished
         }
-        Arm.intake = 0.8
         Arm.isClamping = true
 
-        if (Arm.hasCube) {
+        if (Arm.detectingCube) {
             launch(coroutineContext) {
                 Driver.rumble = 1.0
                 CoDriver.rumble = 1.0
@@ -113,16 +114,16 @@ val driverIntake = Command("Intake", Carriage) {
         if (Arm.hasCube) Carriage.animateToPose(Pose.CARRY)
     } finally {
         Arm.isClamping = true
-        Arm.intake = 0.0
+        Arm.intakeSpeed = 0.0
     }
 }
 
 val driverSpit = Command("Driver Spit", Carriage) {
     try {
-        Arm.intake = -0.8
+        Arm.intakeSpeed = -0.8
         delay(Long.MAX_VALUE)
     } finally {
-        Arm.intake = 0.0
+        Arm.intakeSpeed = 0.0
     }
 }
 
