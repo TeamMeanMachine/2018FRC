@@ -57,7 +57,6 @@ class Robot : IterativeRobot() {
         LEDController.state = FireState
         Drivetrain.zeroEncoders()
         CommandSystem.initDefaultCommands()
-        commandReset.launch()
     }
 
     override fun robotPeriodic() {

@@ -378,8 +378,6 @@ object Drivetrain {
     }} seconds")
 
     init {
-        calibrateGyro()
-
         val compassEntry = table.getEntry("Compass Angle")
 
         val pEntry = table.getEntry("Position P")

@@ -97,7 +97,7 @@ object AutoChooser {
 
         val chosenCommand = when {
 
-            nearSide == Side.CENTER -> robonautsAuto
+            nearSide == Side.CENTER -> centerAuto
 //            Game.scaleSide == nearSide && Game.switchSide == nearSide -> nearScaleNearSwitchScale
 //            Game.scaleSide == farSide && Game.switchSide == farSide -> farScaleFarSwitch
 //            Game.scaleSide == farSide && Game.switchSide == nearSide -> farScaleNearSwitch
@@ -123,7 +123,10 @@ object AutoChooser {
 
         SmartDashboard.putData("Side Chooser", sideChooser)
         SmartDashboard.putData("Test Path Chooser", testAutoChooser)
-        SmartDashboard.putBoolean("Stop Center Auto Early", false)
+        if (!SmartDashboard.containsKey("Safe Center Auto")) {
+            SmartDashboard.putBoolean("Safe Center Auto", false)
+        }
+        SmartDashboard.setPersistent("Safe Center Auto")
 
         // load cached autonomi
         try {
@@ -270,7 +273,7 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
     }
 }
 
-val robonautsAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
+val centerAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
     val auto = autonomi.getAutoOrCancel("Center Switch")
     auto.isMirrored = false
     val switchSide = when (Game.switchSide) {
@@ -308,7 +311,7 @@ val robonautsAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
 
         auto.isMirrored = Game.scaleSide == Side.LEFT
 
-        if (!SmartDashboard.getBoolean("Stop Center Auto Early", false)) {
+        if (!SmartDashboard.getBoolean("Safe Center Auto", false)) {
             path = auto.getPathOrCancel("Cube To Scale")
             parallel({
                 Drivetrain.driveAlongPath(path)
@@ -319,6 +322,28 @@ val robonautsAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
             })
             delay(300)
             Carriage.animateToPose(Pose.INTAKE)
+        } else {
+            parallel({
+                Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube1 Backup"))
+            }, {
+                Carriage.animateToPose(Pose.SWITCH)
+            })
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube1 To Switch"))
+            Arm.intakeSpeed = -0.4
+
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Switch To Cube2"))
+
+
+            parallel({
+                Drivetrain.driveAlongPath(auto.getPathOrCancel("To Cube2"))
+            }, {
+                Arm.isClamping = false
+                Carriage.animateToPose(Pose.INTAKE_RAISED)
+                Arm.intakeSpeed = 0.5
+            })
+            Arm.isClamping = true
+            delay(300)
+
         }
     } finally {
         Arm.intakeSpeed = 0.0
