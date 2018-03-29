@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.periodic
+import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.powerup.CoDriver
 import org.team2471.frc.powerup.RobotMap

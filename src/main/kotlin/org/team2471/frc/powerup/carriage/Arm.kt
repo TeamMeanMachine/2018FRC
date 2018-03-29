@@ -16,6 +16,7 @@ import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.powerup.CoDriver
 import org.team2471.frc.powerup.IS_COMP_BOT
 import org.team2471.frc.powerup.RobotMap
+import org.team2471.frc.powerup.Telemetry
 import kotlin.math.min
 
 object Arm {
@@ -36,6 +37,7 @@ object Arm {
         enableCurrentLimit(true)
         setSensorPhase(false)
         inverted = true
+        Telemetry.registerMotor("Arm", this)
     }
 
     val table = Carriage.table.getSubTable("Arm")
@@ -48,6 +50,7 @@ object Arm {
         configPeakCurrentDuration(0, 10)
         enableCurrentLimit(true)
         setNeutralMode(NeutralMode.Coast)
+        Telemetry.registerMotor("Left Intake", this)
     }
 
     private val intakeMotorRight = TalonSRX(RobotMap.Talons.INTAKE_MOTOR_RIGHT).apply {
@@ -58,12 +61,13 @@ object Arm {
         configPeakCurrentDuration(0, 10)
         enableCurrentLimit(true)
         setNeutralMode(NeutralMode.Coast)
+        Telemetry.registerMotor("Right Intake", this)
     }
 
     private val minAmperage
         get() = min(intakeMotorLeft.outputCurrent, intakeMotorRight.outputCurrent)
 
-    private val cubeSensor = AnalogInput(2)
+    private val cubeSensor = AnalogInput(1)
 
     @Suppress("ConstantConditionIf")
     val detectingCube: Boolean

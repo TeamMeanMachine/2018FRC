@@ -1,8 +1,9 @@
 package org.team2471.frc.powerup
 
-import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.IterativeRobot
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.RobotController
+import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.livewindow.LiveWindow
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.experimental.launch
@@ -10,6 +11,7 @@ import kotlinx.coroutines.experimental.runBlocking
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.EventMapper
 import org.team2471.frc.lib.control.experimental.periodic
+import org.team2471.frc.lib.util.measureTimeFPGA
 import org.team2471.frc.powerup.carriage.Carriage
 import org.team2471.frc.powerup.carriage.Pose
 import org.team2471.frc.powerup.drivetrain.Drivetrain
@@ -35,17 +37,8 @@ class Robot : IterativeRobot() {
         Carriage
         Driver
         AutoChooser
+        Telemetry.start()
 
-        launch {
-
-            var brownOutCount = 0
-            periodic(5) {
-                if (RobotController.isBrownedOut()) {
-                    brownOutCount++
-                    DriverStation.reportWarning("PDP Browned Out, Count: $brownOutCount", false)
-                }
-            }
-        }
     }
 
     override fun autonomousInit() {
@@ -64,10 +57,16 @@ class Robot : IterativeRobot() {
         LEDController.state = FireState
         Drivetrain.zeroEncoders()
         CommandSystem.initDefaultCommands()
+        commandReset.launch()
     }
 
     override fun robotPeriodic() {
-        EventMapper.tick()
+        val eventMapperTime = measureTimeFPGA {
+            EventMapper.tick()
+        }
+
+        SmartDashboard.putNumber("Event Mapper Time", eventMapperTime)
+        Telemetry.tick()
         SmartDashboard.putNumber("Match Time", (Game.matchTime - 3.0).coerceAtLeast(-1.0))
     }
 

@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.experimental.CancellationException
+import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
@@ -25,6 +26,7 @@ import org.team2471.frc.lib.util.measureTimeFPGA
 import org.team2471.frc.lib.vector.Vector2
 import org.team2471.frc.powerup.Driver
 import org.team2471.frc.powerup.RobotMap
+import org.team2471.frc.powerup.Telemetry
 import org.team2471.frc.powerup.carriage.Carriage
 import org.team2471.frc.powerup.carriage.CarriageConstants
 import org.team2471.frc.powerup.carriage.Lifter
@@ -59,6 +61,7 @@ object Drivetrain {
         config_kF(0, 0.0, 10)
 
         selectProfileSlot(0, 0)
+        Telemetry.registerMotor("Drive Left Master",this)
     } + TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_2).apply {
         setNeutralMode(NeutralMode.Brake)
         configPeakCurrentLimit(DrivetrainConstants.PEAK_CURRENT_LIMIT, 10)
@@ -66,6 +69,7 @@ object Drivetrain {
         configPeakCurrentDuration(DrivetrainConstants.PEAK_CURRENT_DURATION, 10)
         enableCurrentLimit(true)
         inverted = true
+        Telemetry.registerMotor("Drive Left Slave 1", this)
     } + TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_3).apply {
         setNeutralMode(NeutralMode.Brake)
         configPeakCurrentLimit(DrivetrainConstants.PEAK_CURRENT_LIMIT, 10)
@@ -73,6 +77,7 @@ object Drivetrain {
         configPeakCurrentDuration(DrivetrainConstants.PEAK_CURRENT_DURATION, 10)
         enableCurrentLimit(true)
         inverted = true
+        Telemetry.registerMotor("Drive Left Slave 2", this)
     }
 
     private val rightMotors = TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_1).apply {
@@ -99,18 +104,21 @@ object Drivetrain {
         config_kF(0, 0.0, 10)
 
         selectProfileSlot(0, 0)
+        Telemetry.registerMotor("Drive Right Master", this)
     } + TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_2).apply {
         setNeutralMode(NeutralMode.Brake)
         configPeakCurrentLimit(DrivetrainConstants.PEAK_CURRENT_LIMIT, 10)
         configContinuousCurrentLimit(DrivetrainConstants.CONTINUOUS_CURRENT_LIMIT, 10)
         configPeakCurrentDuration(DrivetrainConstants.PEAK_CURRENT_DURATION, 10)
         enableCurrentLimit(true)
+        Telemetry.registerMotor("Drive Right Slave 1", this)
     } + TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_3).apply {
         setNeutralMode(NeutralMode.Brake)
         configPeakCurrentLimit(DrivetrainConstants.PEAK_CURRENT_LIMIT, 10)
         configContinuousCurrentLimit(DrivetrainConstants.CONTINUOUS_CURRENT_LIMIT, 10)
         configPeakCurrentDuration(DrivetrainConstants.PEAK_CURRENT_DURATION, 10)
         enableCurrentLimit(true)
+        Telemetry.registerMotor("Drive Right Slave 2", this)
     }
 
     private val gyro = ADIS16448_IMU(ADIS16448_IMU.Axis.kZ)
@@ -133,13 +141,13 @@ object Drivetrain {
 
     private val heightMultiplierCurve = MotionCurve().apply {
         storeValue(0.0, 1.0)
-        storeValue(CarriageConstants.LIFTER_MAX_HEIGHT, 0.3)
+        storeValue(CarriageConstants.LIFTER_MAX_HEIGHT, 0.2)
     }
 
     private val rampRateCurve = MotionCurve().apply {
         storeValue(0.0, 0.1)
         storeValue(Pose.CARRY.lifterHeight, 0.1)
-        storeValue(CarriageConstants.LIFTER_MAX_HEIGHT, 1.5)
+        storeValue(CarriageConstants.LIFTER_MAX_HEIGHT, 1.0)
     }
 
     private val leftDistance: Double
@@ -287,7 +295,12 @@ object Drivetrain {
                 val angleError = pathAngle - windRelativeAngles(pathAngle, gyroAngle)
 
                 angleErrorAccum = angleErrorAccum * DrivetrainConstants.GYRO_CORRECTION_I_DECAY + angleError
-                val gyroCorrection = angleError * DrivetrainConstants.GYRO_CORRECTION_P + angleErrorAccum * DrivetrainConstants.GYRO_CORRECTION_I
+
+                val gyroCorrection = if (SmartDashboard.getBoolean("Use Gyro", true)) {
+                    angleError * DrivetrainConstants.GYRO_CORRECTION_P + angleErrorAccum * DrivetrainConstants.GYRO_CORRECTION_I
+                } else {
+                    0.0
+                }
 
                 val leftDistance = path.getLeftDistance(t) + gyroCorrection
                 val rightDistance = path.getRightDistance(t) - gyroCorrection
@@ -311,11 +324,11 @@ object Drivetrain {
                 gyroCorrectionEntry.setDouble(gyroCorrection)
 
                 val leftFeedForward = leftVelocity * DrivetrainConstants.LEFT_FEED_FORWARD_COEFFICIENT +
-                        DrivetrainConstants.LEFT_FEED_FORWARD_OFFSET +
+                        (DrivetrainConstants.LEFT_FEED_FORWARD_OFFSET * signum(leftVelocity)) +
                         velocityDeltaTimesCoefficient
 
                 val rightFeedForward = rightVelocity * DrivetrainConstants.RIGHT_FEED_FORWARD_COEFFICIENT +
-                        DrivetrainConstants.RIGHT_FEED_FORWARD_OFFSET -
+                        (DrivetrainConstants.RIGHT_FEED_FORWARD_OFFSET * signum(rightVelocity)) -
                         velocityDeltaTimesCoefficient
                 leftMotors.set(ControlMode.Position, feetToTicks(leftDistance),
                         DemandType.ArbitraryFeedForward, leftFeedForward)
@@ -327,10 +340,10 @@ object Drivetrain {
                 val leftDistanceError = ticksToFeet(leftMotors.getClosedLoopError(0))
                 val rightDistanceError = ticksToFeet(rightMotors.getClosedLoopError(0))
                 // give up if the error is too large
-                if (abs(leftDistanceError) > DrivetrainConstants.MAX_PATH_ERROR ||
-                        abs(rightDistanceError) > DrivetrainConstants.MAX_PATH_ERROR) {
-                    throw CancellationException("Path following error too high")
-                }
+//                if (abs(leftDistanceError) > DrivetrainConstants.MAX_PATH_ERROR ||
+//                        abs(rightDistanceError) > DrivetrainConstants.MAX_PATH_ERROR) {
+//                    throw CancellationException("Path following error too high")
+//                }
 
 
                 if (leftMotors.motorOutputPercent > 0.95) {
@@ -383,8 +396,9 @@ object Drivetrain {
             rightMotors.config_kD(0, event.value.double, 0)
         }, EntryListenerFlags.kUpdate)
 
+        SmartDashboard.putBoolean("Use Gyro", true)
+
         launch {
-            val outputEntry = table.getEntry("Output")
             val leftVelocityEntry = table.getEntry("Left Velocity")
             val rightVelocityEntry = table.getEntry("Right Velocity")
             SmartDashboard.putData("Gyro", gyro)
@@ -397,10 +411,6 @@ object Drivetrain {
                 leftVelocityEntry.setDouble(leftVelocity)
                 rightVelocityEntry.setDouble(rightVelocity)
 
-                outputEntry.setDoubleArray(doubleArrayOf(
-                        leftMotors.motorOutputPercent,
-                        rightMotors.motorOutputPercent
-                ))
                 SmartDashboard.putNumberArray("Encoder Distances",
                         arrayOf(ticksToFeet(leftMotors.getSelectedSensorPosition(0)),
                                 ticksToFeet(rightMotors.getSelectedSensorPosition(0))))
@@ -413,4 +423,16 @@ object Drivetrain {
             }
         })
     }
+}
+
+
+val driveTest = Command("Drive Test", Drivetrain) {
+    val throttle = SmartDashboard.getNumber("Test Throttle", 0.0)
+    Drivetrain.driveRaw(throttle, throttle)
+    try {
+        delay(3000)
+    } finally {
+        Drivetrain.driveRaw(0.0, 0.0)
+    }
+
 }

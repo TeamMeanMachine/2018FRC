@@ -12,6 +12,7 @@ import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.powerup.carriage.*
 import org.team2471.frc.powerup.drivetrain.Drivetrain
+import org.team2471.frc.powerup.drivetrain.driveTest
 import org.team2471.frc.powerup.endgame.Wings
 import org.team2471.frc.powerup.endgame.climbCommand
 import java.lang.Double.max
@@ -51,6 +52,7 @@ object Driver {
         driverSpit.runWhile { controller.getBumper(GenericHID.Hand.kLeft) }
         climbCommand.toggleWhen { controller.startButton }
         toggleCubeSensor.runWhen { controller.bButton }
+        driveTest.runWhen { controller.getStickButton(GenericHID.Hand.kLeft) }
     }
 }
 
@@ -81,11 +83,11 @@ object CoDriver {
                 .squareWithSign()
 
     val spitSpeed: Double
-        get() = (controller.getTriggerAxis(GenericHID.Hand.kRight) * 0.4 +
-                controller.getTriggerAxis(GenericHID.Hand.kLeft) * 0.3).deadband(0.15)
+        get() = (controller.getTriggerAxis(GenericHID.Hand.kRight) * 0.55 +
+                controller.getTriggerAxis(GenericHID.Hand.kLeft) * 0.4).deadband(0.15)
 
     val release: Boolean
-        get() = controller.getBumper(GenericHID.Hand.kRight)
+        get() = controller.getBumper(GenericHID.Hand.kLeft)
 
     init {
         println("Initialized")
@@ -95,14 +97,14 @@ object CoDriver {
         goToScaleLowPreset.runWhen { controller.aButton }
         goToScaleMediumPreset.runWhen { controller.xButton }
         goToScaleHighPreset.runWhen { controller.yButton }
-        goToFrontScalePreset.runWhen { controller.getBumper(GenericHID.Hand.kLeft) }
+        goToFrontScalePreset.runWhen { controller.getBumper(GenericHID.Hand.kRight) }
         goToIntakePreset.runWhen { controller.bButton }
         incrementScaleStackHeight.runWhen { controller.pov == 0 }
         decrementScaleStackHeight.runWhen { controller.pov == 180 }
 
         tuneArmPID.runWhen { SmartDashboard.getBoolean("Tune Arm PID", false) }
-
-        Command("Default Command Reset", Drivetrain, Carriage, Wings) {
-        }.runWhen { controller.startButton }
+        commandReset.runWhen { controller.startButton }
     }
 }
+
+val commandReset = Command("Command Reset", Drivetrain, Carriage, Wings) {}

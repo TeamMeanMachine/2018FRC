@@ -11,6 +11,7 @@ import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.control.plus
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.powerup.RobotMap
+import org.team2471.frc.powerup.Telemetry
 import kotlin.math.absoluteValue
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -27,13 +28,14 @@ object Lifter {
         configPeakOutputForward(1.0, 10)
         configPeakOutputReverse(-1.0, 10)
         configClosedloopRamp(0.1, 10)
-        configAllowableClosedloopError(0, inchesToTicks(0.5).roundToInt(), 10)
+        configAllowableClosedloopError(0, 0, 10)
         config_kP(0, 1.0, 10)
         config_kI(0, 0.0, 10)
         config_kD(0, 0.3, 10)
         config_kF(0, 0.0, 10)
         inverted = true
         setSensorPhase(true)
+        Telemetry.registerMotor("Lifter Master", this)
     } + TalonSRX(RobotMap.Talons.ELEVATOR_MOTOR_2).apply {
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(0, 10)
@@ -41,6 +43,7 @@ object Lifter {
         enableCurrentLimit(true)
         setNeutralMode(NeutralMode.Brake)
         inverted = true
+        Telemetry.registerMotor("Lifter Slave 1", this)
     } + TalonSRX(RobotMap.Talons.ELEVATOR_MOTOR_3).apply {
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(0, 10)
@@ -48,6 +51,7 @@ object Lifter {
         enableCurrentLimit(true)
         setNeutralMode(NeutralMode.Brake)
         inverted = true
+        Telemetry.registerMotor("Lifter Slave 2", this)
     } + TalonSRX(RobotMap.Talons.ELEVATOR_MOTOR_4).apply {
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(0, 10)
@@ -55,6 +59,7 @@ object Lifter {
         enableCurrentLimit(true)
         setNeutralMode(NeutralMode.Brake)
         inverted = true
+        Telemetry.registerMotor("Lifter Slave 3", this)
     }
 
     private val discBrake = Solenoid(RobotMap.Solenoids.BRAKE)

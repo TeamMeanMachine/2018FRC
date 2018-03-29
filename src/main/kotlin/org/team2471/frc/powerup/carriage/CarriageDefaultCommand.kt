@@ -13,9 +13,14 @@ const val MICRO_ADJUST_RATE = 18.0
 val carriageDefaultCommand = Command("Carriage Default", Carriage) {
     var previousTime = Timer.getFPGATimestamp()
     var prevReleasing = false
+    var hasReleasedClamp = false
     try {
         periodic {
             val releaseClamp = CoDriver.release
+            if (releaseClamp) {
+                hasReleasedClamp = true
+            }
+
             Arm.isClamping = !releaseClamp
             val spit = max(if (releaseClamp) 0.2 else 0.0, CoDriver.spitSpeed)
 
@@ -23,7 +28,7 @@ val carriageDefaultCommand = Command("Carriage Default", Carriage) {
 
             val releasing = releaseClamp || spit != 0.0
             if (!releasing && prevReleasing && Arm.angle > 150.0 && Carriage.targetPose != Pose.SCALE_FRONT) {
-                if (releaseClamp) {
+                if (hasReleasedClamp) {
                     returnToIntakePosition.launch() // intakeSpeed is open while going down
                 } else {
                     goToIntakePreset.launch()

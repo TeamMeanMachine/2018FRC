@@ -120,8 +120,10 @@ object AutoChooser {
         SmartDashboard.putData("Far Switch Near Scale Auto", farSwitchNearScaleChooser)
         SmartDashboard.putData("Far Switch Far Scale Auto", farSwitchFarScaleChooser)
 */
+
         SmartDashboard.putData("Side Chooser", sideChooser)
         SmartDashboard.putData("Test Path Chooser", testAutoChooser)
+        SmartDashboard.putBoolean("Stop Center Auto Early", false)
 
         // load cached autonomi
         try {
@@ -165,8 +167,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
         }, {
             delaySeconds(path.durationWithSpeed - 2.0)
             Carriage.animateToPose(Pose.SCALE_HIGH)
-            Arm.intakeSpeed = 0.0
-            Arm.intakeSpeed = -0.65
+            Arm.intakeSpeed = -0.5
             delay(250)
         })
         Arm.isClamping = false
@@ -187,8 +188,8 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             delay(300)
             Arm.intakeSpeed = 0.2
             delaySeconds(path.durationWithSpeed - 2.0)
-            Carriage.animateToPose(Pose.SCALE_HIGH)
-            Arm.intakeSpeed = -0.5
+            Carriage.animateToPose(Pose.SCALE_MED)
+            Arm.intakeSpeed = -0.4
             delay(350)
         })
         Arm.intakeSpeed = 0.0
@@ -210,7 +211,8 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             delay(300)
             Arm.intakeSpeed = 0.2
             delaySeconds(path.durationWithSpeed - 2.0)
-            Carriage.animateToPose(Pose.SCALE_HIGH)
+            Carriage.animateToPose(Pose.SCALE_LOW)
+            delay(100)
             Arm.isClamping = false
             delay(300)
         })
@@ -239,13 +241,13 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
         })
         parallel({
             Arm.isClamping = false
-            Arm.intakeSpeed = 0.6
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Scale To Cube1"))
             Arm.isClamping = true
             delay(250)
             Arm.intakeSpeed = 0.2
         }, {
             Carriage.animateToPose(Pose.INTAKE)
+            Arm.intakeSpeed = 0.6
         })
 
         path = auto.getPathOrCancel("Cube1 To Far Scale")
@@ -255,7 +257,7 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
         }, {
             Carriage.animateToPose(Pose.CARRY)
         }, {
-            delaySeconds(path.durationWithSpeed - 1.5)
+            delaySeconds(path.durationWithSpeed - 1.3)
             Carriage.animateToPose(Pose.SCALE_HIGH)
             Arm.intakeSpeed = 0.0
             Arm.isClamping = false
@@ -306,16 +308,18 @@ val robonautsAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
 
         auto.isMirrored = Game.scaleSide == Side.LEFT
 
-        path = auto.getPathOrCancel("Cube To Scale")
-        parallel({
-            Drivetrain.driveAlongPath(path)
-        }, {
-            delaySeconds(path.durationWithSpeed - 1.5)
-            Carriage.animateToPose(Pose.SCALE_HIGH)
-            Arm.intakeSpeed = -0.5
-        })
-        delay(300)
-        Carriage.animateToPose(Pose.INTAKE)
+        if (!SmartDashboard.getBoolean("Stop Center Auto Early", false)) {
+            path = auto.getPathOrCancel("Cube To Scale")
+            parallel({
+                Drivetrain.driveAlongPath(path)
+            }, {
+                delaySeconds(path.durationWithSpeed - 1.5)
+                Carriage.animateToPose(Pose.SCALE_HIGH)
+                Arm.intakeSpeed = -0.5
+            })
+            delay(300)
+            Carriage.animateToPose(Pose.INTAKE)
+        }
     } finally {
         Arm.intakeSpeed = 0.0
     }

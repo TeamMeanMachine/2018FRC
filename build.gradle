@@ -48,6 +48,10 @@ repositories {
 }
 
 wpi {
+    wpilibVersion = '2018.4.1'
+    ntcoreVersion = '4.1.0'
+    wpiutilVersion = '3.2.0'
+
     ctreVersion = '5.3.1.0'
 }
 
