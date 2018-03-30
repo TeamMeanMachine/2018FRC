@@ -74,7 +74,7 @@ object Lifter {
             val outputEntry = table.getEntry("Output")
             periodic(100) {
                 // don't run the compressor when the carriage exceeds 3V
-                RobotMap.compressor.closedLoopControl = !RobotState.isAutonomous() && motors.motorOutputVoltage.absoluteValue < 3.0
+                RobotMap.compressor.closedLoopControl = !RobotState.isAutonomous() && motors.motorOutputPercent < 0.1
                 heightEntry.setDouble(height)
 
                 if (RobotState.isEnabled())

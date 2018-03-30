@@ -32,16 +32,16 @@ object Telemetry {
 
         launch {
             var brownOutCount = 0
-            var sysInactiveCount = 0
+            var jitterCount = 0
 
             val timeEntry = table.getEntry("Time")
             val brownedOutEntry = table.getEntry("Browned Out")
             val brownOutsEntry = table.getEntry("Brown Outs")
-            val sysInactiveCountEntry = table.getEntry("Sys Inactive Count")
+            val jitterCountEntry = table.getEntry("Jitter Count")
             val sysActiveEntry = table.getEntry("System Active")
             val robotEnabledEntry = table.getEntry("Robot Enabled")
             brownOutsEntry.setNumber(0)
-            sysInactiveCountEntry.setNumber(0)
+            jitterCountEntry.setNumber(0)
 
             periodic(5) {
                 timeEntry.setDouble(Timer.getFPGATimestamp())
@@ -60,13 +60,12 @@ object Telemetry {
                     brownOutsEntry.setNumber(brownOutCount)
                 }
 
-                val sysActive = RobotController.isSysActive()
-                sysActiveEntry.setNumber(if (sysActive) 1 else 0)
-                if (!sysActive && RobotState.isEnabled()) {
-                    sysInactiveCount++
-                    DriverStation.reportWarning("Sys Inactive, Count: $sysInactiveCount", false)
-                    sysInactiveCountEntry.setNumber(sysInactiveCount)
-                    RobotController.isSysActive()
+                val jitter = RobotController.isSysActive() && !brownedOut
+                sysActiveEntry.setNumber(if (jitter) 1 else 0)
+                if (!jitter && RobotState.isEnabled()) {
+                    jitterCount++
+                    DriverStation.reportWarning("Jitter Detected, Count: $jitterCount", false)
+                    jitterCountEntry.setNumber(jitterCount)
                 }
             }
         }

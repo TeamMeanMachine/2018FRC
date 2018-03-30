@@ -24,9 +24,7 @@ import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.util.measureTimeFPGA
 import org.team2471.frc.lib.vector.Vector2
-import org.team2471.frc.powerup.Driver
-import org.team2471.frc.powerup.RobotMap
-import org.team2471.frc.powerup.Telemetry
+import org.team2471.frc.powerup.*
 import org.team2471.frc.powerup.carriage.Carriage
 import org.team2471.frc.powerup.carriage.CarriageConstants
 import org.team2471.frc.powerup.carriage.Lifter
@@ -373,9 +371,14 @@ object Drivetrain {
         rightMotors.sensorCollection.setQuadraturePosition(0, 0)
     }
 
-    fun calibrateGyro() = println("Gyro calibrated in ${measureTimeFPGA {
-        gyro.calibrate()
-    }} seconds")
+    fun calibrateGyro() {
+        val prevLEDState = LEDController.state
+        LEDController.state = CallibrateGyroState
+        println("Gyro calibrated in ${measureTimeFPGA {
+            gyro.calibrate()
+        }} seconds")
+        LEDController.state = prevLEDState
+    }
 
     init {
         val compassEntry = table.getEntry("Compass Angle")

@@ -86,7 +86,7 @@ object AutoChooser {
 
         // adjust gyro for starting position
         Drivetrain.gyroAngleOffset = if (nearSide == Side.CENTER) 0.0 else 180.0
-
+        Lifter.zero()
         val testPath = if(!Game.isFMSAttached) testAutoChooser.selected else null
         if (testPath != null) {
             val testAutonomous = autonomi.getAutoOrCancel("Tests")
@@ -217,10 +217,9 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             Carriage.animateToPose(Pose.SCALE_LOW)
             delay(100)
             Arm.isClamping = false
-            delay(300)
+            delay(500)
         })
-
-        Carriage.animateToPose(Pose.INTAKE)
+//        Carriage.animateToPose(Pose.INTAKE)
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
@@ -264,9 +263,9 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
             Carriage.animateToPose(Pose.SCALE_HIGH)
             Arm.intakeSpeed = 0.0
             Arm.isClamping = false
-            delay(300)
+            delay(500)
         })
-        Carriage.animateToPose(Pose.INTAKE)
+//        Carriage.animateToPose(Pose.INTAKE)
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
@@ -289,14 +288,13 @@ val centerAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
         }, {
             Carriage.animateToPose(Pose.SWITCH)
             delaySeconds(path.durationWithSpeed - 1.5)
-            Arm.intakeSpeed = -0.4
-            delay(500)
-            Arm.intakeSpeed = 0.0
+            Arm.intakeSpeed = -0.5
         })
 
         auto.isMirrored = Game.switchSide == Side.LEFT
 
         Drivetrain.driveAlongPath(auto.getPathOrCancel("Back From Right Switch"))
+        Arm.intakeSpeed = 0.0
 
         parallel({
             Arm.isClamping = false
@@ -329,11 +327,11 @@ val centerAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
                 Carriage.animateToPose(Pose.SWITCH)
             })
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube1 To Switch"))
-            Arm.intakeSpeed = -0.4
+            Arm.intakeSpeed = -0.6
 
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Switch To Cube2"))
 
-
+            Arm.intakeSpeed = 0.0
             parallel({
                 Drivetrain.driveAlongPath(auto.getPathOrCancel("To Cube2"))
             }, {

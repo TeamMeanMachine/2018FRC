@@ -16,7 +16,7 @@ import org.team2471.frc.powerup.carriage.Carriage
 import org.team2471.frc.powerup.carriage.Pose
 import org.team2471.frc.powerup.drivetrain.Drivetrain
 
-const val IS_COMP_BOT = false
+const val IS_COMP_BOT = true
 
 class Robot : IterativeRobot() {
     private var hasRunAuto = false
@@ -26,7 +26,8 @@ class Robot : IterativeRobot() {
         Game.updateGameData()
         println("${if (IS_COMP_BOT) "Competition" else "Practice"} mode")
         SmartDashboard.putNumber("Test Throttle", 1.0)
-        val gameAlliance = Game.alliance
+        SmartDashboard.putBoolean("Callibrate Gyro", false)
+       val gameAlliance = Game.alliance
         println("RobotInit alliance: $gameAlliance")
         LEDController.alliance = gameAlliance
 
@@ -71,6 +72,13 @@ class Robot : IterativeRobot() {
 
     override fun disabledInit() {
         LEDController.state = IdleState
+    }
+
+    override fun disabledPeriodic() {
+        if (SmartDashboard.getBoolean("Callibrate Gyro", false)) {
+            Drivetrain.calibrateGyro()
+           SmartDashboard.putBoolean("Callibrate Gyro", false)
+        }
     }
 
     override fun testInit() {

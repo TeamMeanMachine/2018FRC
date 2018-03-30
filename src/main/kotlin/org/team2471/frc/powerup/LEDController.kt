@@ -84,3 +84,8 @@ object BounceState : LEDState() {
     override val representation: String
         get() = "bounce"
 }
+
+object CallibrateGyroState: LEDState() {
+    override val representation: String
+        get() = "white"
+}
