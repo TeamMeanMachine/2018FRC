@@ -162,7 +162,7 @@ object Drivetrain {
         var leftPower = throttle + (softTurn * Math.abs(throttle)) + hardTurn
         var rightPower = throttle - (softTurn * Math.abs(throttle)) - hardTurn
 
-        val heightMultiplier = heightMultiplierCurve.getValue(Lifter.height)
+        val heightMultiplier = if(Carriage.targetPose == Pose.CLIMB_ACQUIRE_RUNG) 0.5 else heightMultiplierCurve.getValue(Lifter.height)
         leftPower *= heightMultiplier
         rightPower *= heightMultiplier
 
