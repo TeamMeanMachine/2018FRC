@@ -21,22 +21,15 @@ val climbCommand = Command("Climb", Carriage, Drivetrain, Wings, LEDController) 
         launch(this@Command.coroutineContext) {
             LEDController.state = ClimbGoState
             periodic {
-                val isAcquiringRung = // Lifter.setpoint < Pose.CLIMB_ACQUIRE_RUNG.lifterHeight + 2.0 &&
-                        (Game.matchTime > 5.0 || Game.matchTime == -1.0)
-
                 val deploy = SmartDashboard.getBoolean("Deploy Wings", true) &&
-                        isAcquiringRung &&
-                        Game.isEndGame
+                        Game.isEndGame && Lifter.height > Pose.CLIMB_ACQUIRE_RUNG.lifterHeight - 6.0
 
                 Wings.wingsDeployed = deploy
 
-                if (!isAcquiringRung) {
-                    Drivetrain.drive(0.0, 0.0, 0.0)
-                    LEDController.state = ClimbStopState
-                } else if (deploy) {
+                if (deploy) {
                     Drivetrain.drive(-0.1, 0.0, 0.0)
                     LEDController.state = ClimbGoState
-                } else if (!deploy) {
+                } else {
                     LEDController.state = ClimbStopState
                 }
             }

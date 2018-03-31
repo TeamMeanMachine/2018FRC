@@ -235,7 +235,7 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
         Arm.intakeSpeed = 0.2
         parallel({
             Drivetrain.driveAlongPath(path)
-            Arm.intakeSpeed = -1.0
+            Arm.intakeSpeed = -.5
             delay(450)
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
@@ -287,8 +287,9 @@ val centerAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
             Drivetrain.driveAlongPath(path)
         }, {
             Carriage.animateToPose(Pose.SWITCH)
-            delaySeconds(path.durationWithSpeed - 1.5)
-            Arm.intakeSpeed = -0.5
+            delaySeconds(path.durationWithSpeed - 1.25)
+            Arm.intakeSpeed = 0.0
+            Arm.isClamping = false
         })
 
         auto.isMirrored = Game.switchSide == Side.LEFT
@@ -297,7 +298,6 @@ val centerAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
         Arm.intakeSpeed = 0.0
 
         parallel({
-            Arm.isClamping = false
             Carriage.animateToPose(Pose.INTAKE)
             Arm.intakeSpeed = 0.6
         }, {
@@ -307,16 +307,15 @@ val centerAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
         delay(350)
         Arm.intakeSpeed = 0.2
 
-        auto.isMirrored = Game.scaleSide == Side.LEFT
-
         if (!SmartDashboard.getBoolean("Safe Center Auto", false)) {
+            auto.isMirrored = Game.scaleSide == Side.LEFT
             path = auto.getPathOrCancel("Cube To Scale")
             parallel({
                 Drivetrain.driveAlongPath(path)
             }, {
                 delaySeconds(path.durationWithSpeed - 1.5)
                 Carriage.animateToPose(Pose.SCALE_HIGH)
-                Arm.intakeSpeed = -0.5
+                Arm.intakeSpeed = -0.4
             })
             delay(300)
             Carriage.animateToPose(Pose.INTAKE)
