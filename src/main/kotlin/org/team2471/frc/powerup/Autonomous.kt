@@ -58,23 +58,24 @@ object AutoChooser {
         addObject("S Curve", "S Curve")
     }
 
-/*
     private val nearSwitchNearScaleChooser = SendableChooser<Command>().apply {
-        addDefault(nearScaleNearSwitchScale.name, nearScaleNearSwitchScale)
+        addDefault(nearScaleAuto.name, nearScaleAuto)
     }
 
     private val nearSwitchFarScaleChooser = SendableChooser<Command>().apply {
-
+        addDefault(farScaleAuto.name, farScaleAuto)
+        addObject(allFarScaleMeanMachine.name, allFarScaleMeanMachine)
     }
 
     private val farSwitchNearScaleChooser = SendableChooser<Command>().apply {
-
+        addDefault(nearScaleAuto.name, nearScaleAuto)
     }
 
     private val farSwitchFarScaleChooser = SendableChooser<Command>().apply {
-        addDefault(farScaleFarSwitch.name, farScaleFarSwitch)
+        addDefault(farScaleAuto.name, farScaleAuto)
+        addObject(allFarScaleMeanMachine.name, allFarScaleMeanMachine)
     }
-*/
+
 
     val auto = Command("Autonomous", Drivetrain, Carriage) {
         Arm.hold()
@@ -98,12 +99,12 @@ object AutoChooser {
         val chosenCommand = when {
 
             nearSide == Side.CENTER -> centerAuto
-//            Game.scaleSide == nearSide && Game.switchSide == nearSide -> nearScaleNearSwitchScale
-//            Game.scaleSide == farSide && Game.switchSide == farSide -> farScaleFarSwitch
-//            Game.scaleSide == farSide && Game.switchSide == nearSide -> farScaleNearSwitch
-//            Game.scaleSide == nearSide && Game.switchSide == farSide -> nearScaleFarSwitch
-            Game.scaleSide == nearSide -> nearScaleAuto
-            Game.scaleSide == farSide -> farScaleAuto
+            Game.switchSide == nearSide && Game.scaleSide == nearSide -> nearSwitchNearScaleChooser.selected
+            Game.switchSide == farSide && Game.scaleSide == farSide -> farSwitchFarScaleChooser.selected
+            Game.switchSide == farSide && Game.scaleSide == nearSide -> farSwitchNearScaleChooser.selected
+            Game.switchSide == nearSide && Game.scaleSide == farSide -> nearSwitchFarScaleChooser.selected
+//            Game.scaleSide == nearSide -> nearScaleAuto
+//            Game.scaleSide == farSide -> farScaleAuto
             else -> null
         }
         if (chosenCommand == null) {
@@ -114,12 +115,10 @@ object AutoChooser {
     }
 
     init {
-/*
         SmartDashboard.putData("Near Switch Near Scale Auto", nearSwitchNearScaleChooser)
         SmartDashboard.putData("Near Switch Far Scale Auto", nearSwitchFarScaleChooser)
         SmartDashboard.putData("Far Switch Near Scale Auto", farSwitchNearScaleChooser)
         SmartDashboard.putData("Far Switch Far Scale Auto", farSwitchFarScaleChooser)
-*/
 
         SmartDashboard.putData("Side Chooser", sideChooser)
         SmartDashboard.putData("Test Path Chooser", testAutoChooser)
@@ -344,5 +343,63 @@ val centerAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
         }
     } finally {
         Arm.intakeSpeed = 0.0
+    }
+
+}
+
+val allFarScaleMeanMachine = Command("All Far Scale Mean Machine", Drivetrain, Carriage, Arm) {
+    val auto = autonomi.getAutoOrCancel("All Far Scale Mean Machine")
+    auto.isMirrored = false
+    try {
+        var path = auto.getPathOrCancel("Start To Far Platform")
+        parallel({
+            Drivetrain.driveAlongPath(path)
+        }, {
+            delaySeconds(path.durationWithSpeed - 1.5)
+            Carriage.animateToPose(Pose.SCALE_HIGH, 6.0)
+        })
+        Arm.isClamping = false
+        delay(200)
+        parallel({
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Platform To Cube1"))
+        }, {
+            Carriage.animateToPose(Pose.INTAKE)
+            Arm.intakeSpeed = 0.5
+        })
+        Arm.isClamping = true
+        delay(300)
+        path = auto.getPathOrCancel("Cube1 To Far Platform")
+        parallel({
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube1 To Far Platform"))
+        }, {
+            delaySeconds(path.durationWithSpeed - 1.0)
+            Carriage.animateToPose(Pose.SCALE_HIGH, 6.0)
+        })
+        delay(200)
+        Arm.isClamping = false
+        delay(200)
+
+        parallel({
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Platform To Cube2"))
+        }, {
+            Carriage.animateToPose(Pose.INTAKE)
+            Arm.isClamping = false
+            Arm.intakeSpeed = 0.5
+        })
+        delay(200)
+        Arm.isClamping = true
+        Arm.intakeSpeed = 0.2
+        delay(200)
+        parallel({
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube2 To Far Platform"))
+        }, {
+            delaySeconds(path.durationWithSpeed - 1.0)
+            Carriage.animateToPose(Pose.SCALE_HIGH, 6.0)
+        })
+        Arm.isClamping = false
+        Carriage.animateToPose(Pose.INTAKE)
+    } finally {
+        Arm.intakeSpeed = 0.0
+        Arm.isClamping = true
     }
 }

@@ -4,6 +4,9 @@ object CarriageConstants {
     const val STANDARD_INTAKE_SPEED = 0.85
     const val LIFTER_MAX_HEIGHT = 61.5
 
+    const val ARM_VELOCITY_FEED_FORWARD = 0.004 / 2.0
+
+    const val ARM_P = 13.3 * 0.5
 
     // unit conversions
     const val LIFTER_TICKS_PER_INCH = 9437 / 64.25

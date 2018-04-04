@@ -66,7 +66,8 @@ class MainActivity : Activity(), CameraBridgeViewBase.CvCameraViewListener2 {
     override fun onCameraViewStopped() = Unit
 
     override fun onCameraFrame(inputFrame: CameraBridgeViewBase.CvCameraViewFrame): Mat {
-        val image = VisionProcessing.processImage(inputFrame.rgba())
+//        val image = VisionProcessing.processImage(inputFrame.rgba())
+        val image = inputFrame.rgba()
         wakeLock?.acquire(2000)
         CameraStream.updateImage(image)
         return image

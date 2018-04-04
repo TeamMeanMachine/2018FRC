@@ -1,6 +1,7 @@
 package org.team2471.frc.powerup.carriage
 
 import com.ctre.phoenix.motorcontrol.ControlMode
+import com.ctre.phoenix.motorcontrol.DemandType
 import com.ctre.phoenix.motorcontrol.FeedbackDevice
 import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
@@ -10,6 +11,7 @@ import edu.wpi.first.wpilibj.Solenoid
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.experimental.launch
+import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.math.average
 import org.team2471.frc.lib.motion_profiling.MotionCurve
@@ -24,7 +26,7 @@ object Arm {
 
     private val motor = TalonSRX(RobotMap.Talons.ARM_MOTOR_1).apply {
         configSelectedFeedbackSensor(FeedbackDevice.Analog, 0, 10)
-        config_kP(0, 13.3, 10)
+        config_kP(0, CarriageConstants.ARM_P, 10)
         config_kI(0, 0.0, 10)
         config_kD(0, 0.0, 10)
         config_kF(0, 0.0, 10)
@@ -95,14 +97,14 @@ object Arm {
                     cubeTimer.reset()
                 }
 
-                if (cubeTimer.get() > 0.3) {
+//                if (cubeTimer.get() > 0.15) {
+                if (detectingCube) {
                     hasCube = true
                 } else if (!isClamping || intakeMotorLeft.motorOutputPercent < -0.1) {
                     hasCube = false
                 }
                 CoDriver.passiveRumble = if (hasCube) .12 else 0.0
-                if (RobotState.isEnabled())
-                    outputEntry.setNumber(motor.motorOutputPercent)
+                outputEntry.setNumber(motor.motorOutputPercent)
                 angleEntry.setDouble(angle)
 
                 sensorVoltageEntry.setDouble(cubeSensor.voltage)
@@ -140,6 +142,10 @@ object Arm {
             SmartDashboard.putNumber("Angle Setpoint", value)
         }
 
+    fun set(position: Double, velocity: Double) = motor.set(ControlMode.Position, degreesToTicks(position),
+            DemandType.ArbitraryFeedForward, velocity * CarriageConstants.ARM_VELOCITY_FEED_FORWARD.also {
+    })
+
     val error get() = angle - setpoint
 
     var intakeSpeed: Double
@@ -147,6 +153,13 @@ object Arm {
         set(speed) {
             intakeMotorLeft.set(ControlMode.PercentOutput, speed)
             intakeMotorRight.set(ControlMode.PercentOutput, speed)
+        }
+
+    var rawPower: Double
+        get() = motor.motorOutputPercent
+        set(value) {
+            val angle = angle
+            motor.set(ControlMode.PercentOutput, if (angle > 0.0 || angle < Pose.SCALE_LOW.armAngle) value else 0.0)
         }
 
     private fun ticksToDegrees(nativeUnits: Int): Double = (nativeUnits - CarriageConstants.ARM_OFFSET_NATIVE) / CarriageConstants.ARM_TICKS_PER_DEGREE
@@ -157,3 +170,10 @@ object Arm {
         setpoint = angle
     }
 }
+
+val testArmCommand = Command("Test Arm Command", Carriage) {
+    periodic {
+        Arm.rawPower = CoDriver.leftStickUpDown
+    }
+}
+

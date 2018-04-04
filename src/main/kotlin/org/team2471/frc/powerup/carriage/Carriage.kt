@@ -3,12 +3,9 @@ package org.team2471.frc.powerup.carriage
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.periodic
-import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.lib.motion_profiling.MotionCurve
-import org.team2471.frc.powerup.CoDriver
 import org.team2471.frc.powerup.RobotMap
 import kotlin.math.max
 import kotlin.math.min
@@ -32,8 +29,14 @@ object Carriage {
 
         val lifterSetpoint = Lifter.curve.getValue(animationTime) + heightOffset
         val armSetpoint = Arm.curve.getValue(animationTime)
+        val armVelocity = if (dt != 0.0) {
+            (Arm.curve.getValue(animationTime + dt) - armSetpoint) / dt
+        } else {
+            0.0
+        }
+
         Lifter.setpoint = lifterSetpoint
-        Arm.setpoint = armSetpoint
+        Arm.set(armSetpoint, armVelocity)
     }
 
     val isAnimationCompleted: Boolean
@@ -48,8 +51,11 @@ object Carriage {
         Lifter.curve.storeValue(lifterTime + lifterTimeOffset,
                 min(pose.lifterHeight + heightOffset, CarriageConstants.LIFTER_MAX_HEIGHT))
 
-        Arm.curve.storeValueSlopeAndMagnitude(armTimeOffset, Arm.angle, 0.0, 0.75) //0.5
-        Arm.curve.storeValueSlopeAndMagnitude(armTime + armTimeOffset, pose.armAngle, 0.0, 3.0) //2.0
+        val armEndTime = armTime + armTimeOffset
+        val armStartPosition = Arm.angle
+        val armEndPosition = pose.armAngle
+        Arm.curve.storeValue(armTimeOffset, armStartPosition) //0.5
+        Arm.curve.storeValue(armEndTime, armEndPosition) //2.0
 
         animationTime = 0.0
     }
@@ -58,7 +64,7 @@ object Carriage {
         val lifterDelta = pose.lifterHeight + heightOffset - Lifter.height
         val armDelta = pose.armAngle - Arm.angle
         val lifterTime = (1.25 / 58.0) * (Math.abs(lifterDelta)) + 0.25
-        val armSpeed = if (Arm.hasCube) 1.4 else 1.0
+        val armSpeed = 1.1 //if (Arm.hasCube) 1.4 else 1.0
         val armTime = (armSpeed / 180.0) * Math.abs(armDelta) + 0.25
         var lifterTimeOffset = 0.0
         var armTimeOffset = 0.0

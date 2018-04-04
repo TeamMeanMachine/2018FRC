@@ -110,8 +110,7 @@ val driverIntake = Command("Intake", Carriage) {
             }
         }
 
-        delay(800)
-        if (Arm.hasCube) Carriage.animateToPose(Pose.CARRY)
+        delay(600)
     } finally {
         Arm.isClamping = true
         Arm.intakeSpeed = 0.0

@@ -65,6 +65,14 @@ val carriageDefaultCommand = Command("Carriage Default", Carriage) {
             Lifter.isLowGear = false
             Lifter.isBraking = false
 
+
+            // intake and carry positions
+            if (Arm.hasCube && Carriage.targetPose == Pose.INTAKE) {
+                Carriage.animateToPose(Pose.CARRY)
+            } else if (!Arm.hasCube && Carriage.targetPose == Pose.CARRY) {
+                Carriage.animateToPose(Pose.INTAKE)
+            }
+
             SmartDashboard.putNumber("Arm Amperage", RobotMap.pdp.getCurrent(RobotMap.Talons.ARM_MOTOR_1))
             SmartDashboard.putBoolean("Low Gear", Lifter.isLowGear)
             SmartDashboard.putBoolean("Braking", Lifter.isBraking)

@@ -3,9 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://C:\Users\Team2471CAD3\Documents\Programming\2018FRC\vision_app\app\app.iml" filepath="C:\Users\Team2471CAD3\Documents\Programming\2018FRC\vision_app\app\app.iml" />
       <module fileurl="file://$PROJECT_DIR$/vision_app.iml" filepath="$PROJECT_DIR$/vision_app.iml" />
-      <module fileurl="file://C:\Users\Team2471CAD3\Documents\Programming\2018FRC\vision_app\vision_app.iml" filepath="C:\Users\Team2471CAD3\Documents\Programming\2018FRC\vision_app\vision_app.iml" />
     </modules>
   </component>
 </project>

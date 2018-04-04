@@ -11,6 +11,7 @@ import org.team2471.frc.powerup.carriage.Carriage
 import org.team2471.frc.powerup.carriage.Lifter
 import org.team2471.frc.powerup.carriage.Pose
 import org.team2471.frc.powerup.drivetrain.Drivetrain
+import kotlin.math.max
 
 
 val climbCommand = Command("Climb", Carriage, Drivetrain, Wings, LEDController) {
@@ -27,7 +28,7 @@ val climbCommand = Command("Climb", Carriage, Drivetrain, Wings, LEDController) 
                 Wings.wingsDeployed = deploy
 
                 if (deploy) {
-                    Drivetrain.drive(-0.1, 0.0, 0.0)
+                    Drivetrain.driveRaw(-max(0.2, Driver.leftTrigger), -max(0.2, Driver.rightTrigger))
                     LEDController.state = ClimbGoState
                 } else {
                     LEDController.state = ClimbStopState

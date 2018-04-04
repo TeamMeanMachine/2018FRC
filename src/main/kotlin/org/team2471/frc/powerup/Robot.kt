@@ -1,22 +1,19 @@
 package org.team2471.frc.powerup
 
+import edu.wpi.cscore.MjpegServer
+import edu.wpi.cscore.UsbCamera
 import edu.wpi.first.wpilibj.IterativeRobot
-import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.RobotController
-import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.livewindow.LiveWindow
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.EventMapper
-import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.util.measureTimeFPGA
 import org.team2471.frc.powerup.carriage.Carriage
 import org.team2471.frc.powerup.carriage.Pose
 import org.team2471.frc.powerup.drivetrain.Drivetrain
 
-const val IS_COMP_BOT = true
+const val IS_COMP_BOT = false
 
 class Robot : IterativeRobot() {
     private var hasRunAuto = false
@@ -27,13 +24,15 @@ class Robot : IterativeRobot() {
         println("${if (IS_COMP_BOT) "Competition" else "Practice"} mode")
         SmartDashboard.putNumber("Test Throttle", 1.0)
         SmartDashboard.putBoolean("Callibrate Gyro", false)
-       val gameAlliance = Game.alliance
+        val gameAlliance = Game.alliance
         println("RobotInit alliance: $gameAlliance")
         LEDController.alliance = gameAlliance
 
+//        AndroidPhone
 
         LiveWindow.disableAllTelemetry()
 
+        CameraStream
         Drivetrain
         Carriage
         Driver
@@ -53,7 +52,7 @@ class Robot : IterativeRobot() {
 
     override fun teleopInit() {
         if (!hasRunAuto) runBlocking {
-            Carriage.animateToPose( Pose.INTAKE)
+            Carriage.animateToPose(Pose.INTAKE)
         }
         LEDController.state = FireState
         Drivetrain.zeroEncoders()
@@ -77,7 +76,7 @@ class Robot : IterativeRobot() {
     override fun disabledPeriodic() {
         if (SmartDashboard.getBoolean("Callibrate Gyro", false)) {
             Drivetrain.calibrateGyro()
-           SmartDashboard.putBoolean("Callibrate Gyro", false)
+            SmartDashboard.putBoolean("Callibrate Gyro", false)
         }
     }
 

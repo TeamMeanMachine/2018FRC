@@ -162,7 +162,7 @@ object Drivetrain {
         var leftPower = throttle + (softTurn * Math.abs(throttle)) + hardTurn
         var rightPower = throttle - (softTurn * Math.abs(throttle)) - hardTurn
 
-        val heightMultiplier = if(Carriage.targetPose == Pose.CLIMB_ACQUIRE_RUNG) 0.5 else heightMultiplierCurve.getValue(Lifter.height)
+        val heightMultiplier = if(Carriage.targetPose == Pose.CLIMB_ACQUIRE_RUNG) 0.8 else heightMultiplierCurve.getValue(Lifter.height)
         leftPower *= heightMultiplier
         rightPower *= heightMultiplier
 
@@ -256,7 +256,7 @@ object Drivetrain {
     }
 
     @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    suspend fun driveAlongPath(path: Path2D) {
+    suspend fun driveAlongPath(path: Path2D, extraTime: Double = 0.0) {
         println("Driving along path ${path.name}, duration: ${path.durationWithSpeed}, travel direction: ${path.robotDirection}, mirrored: ${path.isMirrored}")
         path.resetDistances()
 
@@ -351,7 +351,7 @@ object Drivetrain {
                     DriverStation.reportWarning("Right motor is saturated", false)
                 }
 
-                finished = t >= path.durationWithSpeed
+                finished = t >= path.durationWithSpeed + extraTime
 //                        && abs(angleError) < 3.5
 
                 prevTime = t

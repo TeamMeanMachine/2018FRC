@@ -47,6 +47,12 @@ object Driver {
     val acquireRung: Boolean
         get() = controller.backButton
 
+    val leftTrigger: Double
+        get() = controller.getTriggerAxis(GenericHID.Hand.kLeft)
+
+    val rightTrigger: Double
+        get() = controller.getTriggerAxis(GenericHID.Hand.kRight)
+
     init {
         driverIntake.runWhen { intaking }
         driverSpit.runWhile { controller.getBumper(GenericHID.Hand.kLeft) }
@@ -101,6 +107,7 @@ object CoDriver {
         goToIntakePreset.runWhen { controller.bButton }
         incrementScaleStackHeight.runWhen { controller.pov == 0 }
         decrementScaleStackHeight.runWhen { controller.pov == 180 }
+        testArmCommand.runWhen { controller.getStickButton(GenericHID.Hand.kLeft) }
 
         tuneArmPID.runWhen { SmartDashboard.getBoolean("Tune Arm PID", false) }
         commandReset.runWhen { controller.startButton }
