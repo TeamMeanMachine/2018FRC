@@ -15,6 +15,7 @@ import org.team2471.frc.powerup.drivetrain.Drivetrain
 import org.team2471.frc.powerup.drivetrain.driveTest
 import org.team2471.frc.powerup.endgame.Wings
 import org.team2471.frc.powerup.endgame.climbCommand
+import org.team2471.frc.powerup.endgame.newClimbCommand
 import java.lang.Double.max
 
 object Driver {
@@ -47,6 +48,9 @@ object Driver {
     val acquireRung: Boolean
         get() = controller.backButton
 
+    val climb: Boolean
+        get() = controller.startButton
+
     val leftTrigger: Double
         get() = controller.getTriggerAxis(GenericHID.Hand.kLeft)
 
@@ -56,7 +60,7 @@ object Driver {
     init {
         driverIntake.runWhen { intaking }
         driverSpit.runWhile { controller.getBumper(GenericHID.Hand.kLeft) }
-        climbCommand.toggleWhen { controller.startButton }
+        newClimbCommand.runWhen { controller.startButton }
         toggleCubeSensor.runWhen { controller.bButton }
         driveTest.runWhen { controller.getStickButton(GenericHID.Hand.kLeft) }
     }

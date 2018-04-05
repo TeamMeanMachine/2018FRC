@@ -98,9 +98,9 @@ object Arm {
                 }
 
 //                if (cubeTimer.get() > 0.15) {
-                if (detectingCube) {
+                if (detectingCube && Carriage.targetPose == Pose.INTAKE) {
                     hasCube = true
-                } else if (!isClamping || intakeMotorLeft.motorOutputPercent < -0.1) {
+                } else if ((!isClamping && !detectingCube) || intakeMotorLeft.motorOutputPercent < -0.1) {
                     hasCube = false
                 }
                 CoDriver.passiveRumble = if (hasCube) .12 else 0.0

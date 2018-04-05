@@ -13,13 +13,14 @@ import org.team2471.frc.powerup.carriage.Carriage
 import org.team2471.frc.powerup.carriage.Pose
 import org.team2471.frc.powerup.drivetrain.Drivetrain
 
-const val IS_COMP_BOT = false
+const val IS_COMP_BOT = true
 
 class Robot : IterativeRobot() {
     private var hasRunAuto = false
 
     override fun robotInit() {
         System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "2") // use 2 threads in CommonPool
+        CameraStream
         Game.updateGameData()
         println("${if (IS_COMP_BOT) "Competition" else "Practice"} mode")
         SmartDashboard.putNumber("Test Throttle", 1.0)
@@ -32,7 +33,6 @@ class Robot : IterativeRobot() {
 
         LiveWindow.disableAllTelemetry()
 
-        CameraStream
         Drivetrain
         Carriage
         Driver
