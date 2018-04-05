@@ -71,11 +71,10 @@ object Arm {
 
     private val cubeSensor = AnalogInput(1)
 
-    @Suppress("ConstantConditionIf")
     val detectingCube: Boolean
         get() = Carriage.targetPose == Pose.INTAKE && Carriage.isAnimationCompleted &&
                 if (usingIntakeSensor) cubeSensor.voltage < 0.15
-                else minAmperage > 15
+                else isClamping && minAmperage > 20
 
     init {
         launch {

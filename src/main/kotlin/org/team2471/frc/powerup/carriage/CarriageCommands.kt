@@ -79,14 +79,7 @@ val driverIntake = Command("Intake", Carriage) {
         Arm.isClamping = false
         Arm.intakeSpeed = CarriageConstants.STANDARD_INTAKE_SPEED
 
-        val timer = Timer()
-        timer.start()
-        var previousTime = 0.0
-        periodic(condition = { !Carriage.isAnimationCompleted }) {
-            val t = timer.get()
-            Carriage.adjustAnimationTime(t - previousTime)
-            previousTime = t
-        }
+        Carriage.animateToPose(Pose.INTAKE)
 
         var prevIntaking = Driver.intaking
         suspendUntil {

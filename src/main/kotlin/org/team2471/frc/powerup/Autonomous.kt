@@ -111,7 +111,8 @@ object AutoChooser {
             DriverStation.reportError("Autonomous could not be chosen", false)
             return@Command
         }
-        chosenCommand(coroutineContext)
+//        chosenCommand(coroutineContext)
+        farScaleAuto(coroutineContext)
     }
 
     init {
@@ -167,7 +168,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
-            delaySeconds(path.durationWithSpeed - 2.0)
+            delaySeconds(path.durationWithSpeed - 2.4)
             Carriage.animateToPose(Pose.SCALE_HIGH)
             Arm.intakeSpeed = -0.5
             delay(250)
@@ -189,7 +190,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
         }, {
             delay(300)
             Arm.intakeSpeed = 0.2
-            delaySeconds(path.durationWithSpeed - 2.0)
+            delaySeconds(path.durationWithSpeed - 2.4)
             Carriage.animateToPose(Pose.SCALE_MED)
             Arm.intakeSpeed = -0.4
             delay(350)
@@ -234,11 +235,11 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
         Arm.intakeSpeed = 0.2
         parallel({
             Drivetrain.driveAlongPath(path)
-            Arm.intakeSpeed = -0.5
-            delay(450)
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Pose.SCALE_HIGH)
+            Arm.intakeSpeed = -0.5
+            delay(200)
         })
         parallel({
             Arm.isClamping = false
@@ -249,7 +250,6 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
             Arm.intakeSpeed = 0.2
         }, {
             Carriage.animateToPose(Pose.INTAKE)
-            Arm.intakeSpeed = 0.6
         })
 
         path = auto.getPathOrCancel("Cube1 To Far Scale")
@@ -257,15 +257,20 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
-            Carriage.animateToPose(Pose.CARRY)
-        }, {
-            delaySeconds(path.durationWithSpeed - 1.3)
+            delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Pose.SCALE_HIGH)
             Arm.intakeSpeed = 0.0
             Arm.isClamping = false
-            delay(500)
+            delay(200)
         })
-//        Carriage.animateToPose(Pose.INTAKE)
+        parallel({
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Scale To Cube2"))
+        }, {
+            Arm.intakeSpeed = 0.6
+            Carriage.animateToPose(Pose.INTAKE)
+        })
+        Arm.isClamping = true
+        delay(250)
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
