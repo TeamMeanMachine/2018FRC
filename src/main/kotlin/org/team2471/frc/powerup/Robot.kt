@@ -22,14 +22,14 @@ class Robot : IterativeRobot() {
         System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "2") // use 2 threads in CommonPool
         CameraStream
         Game.updateGameData()
+
         println("${if (IS_COMP_BOT) "Competition" else "Practice"} mode")
+
         SmartDashboard.putNumber("Test Throttle", 1.0)
         SmartDashboard.putBoolean("Callibrate Gyro", false)
+        LEDController.state = IdleState
         val gameAlliance = Game.alliance
-        println("RobotInit alliance: $gameAlliance")
         LEDController.alliance = gameAlliance
-
-//        AndroidPhone
 
         LiveWindow.disableAllTelemetry()
 
@@ -45,7 +45,6 @@ class Robot : IterativeRobot() {
         hasRunAuto = true
         Game.updateGameData()
         LEDController.alliance = Game.alliance
-        LEDController.state = TheatreState
         Drivetrain.zeroGyro()
         AutoChooser.auto.launch()
     }

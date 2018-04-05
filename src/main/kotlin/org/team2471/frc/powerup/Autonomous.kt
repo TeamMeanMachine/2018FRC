@@ -234,7 +234,7 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
         Arm.intakeSpeed = 0.2
         parallel({
             Drivetrain.driveAlongPath(path)
-            Arm.intakeSpeed = -.5
+            Arm.intakeSpeed = -0.5
             delay(450)
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
@@ -242,6 +242,7 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
         })
         parallel({
             Arm.isClamping = false
+            Arm.intakeSpeed = 0.6
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Scale To Cube1"))
             Arm.isClamping = true
             delay(250)

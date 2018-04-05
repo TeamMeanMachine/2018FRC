@@ -43,7 +43,7 @@ object CameraStream {
             var prevIsScale = Carriage.targetPose.isScale
             while (true) {
                 cameraSink.grabFrame(image)
-                if (Arm.angle > 100.0) {
+                if (Arm.angle < 100.0) {
                     Core.rotate(image, image, 1) // Rotate 180 degrees
                 }
                 Imgproc.line(image, Point(WIDTH/2.0, 0.0), Point(WIDTH/2.0, HEIGHT.toDouble()), red, 1)
