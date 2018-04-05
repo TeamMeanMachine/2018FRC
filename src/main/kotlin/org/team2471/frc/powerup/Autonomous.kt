@@ -111,8 +111,8 @@ object AutoChooser {
             DriverStation.reportError("Autonomous could not be chosen", false)
             return@Command
         }
-//        chosenCommand(coroutineContext)
-        farScaleAuto(coroutineContext)
+        chosenCommand(coroutineContext)
+//        farScaleAuto(coroutineContext)
     }
 
     init {
@@ -168,7 +168,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
-            delaySeconds(path.durationWithSpeed - 2.4)
+            delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Pose.SCALE_HIGH)
             Arm.intakeSpeed = -0.5
             delay(250)
@@ -190,7 +190,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
         }, {
             delay(300)
             Arm.intakeSpeed = 0.2
-            delaySeconds(path.durationWithSpeed - 2.4)
+            delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Pose.SCALE_MED)
             Arm.intakeSpeed = -0.4
             delay(350)

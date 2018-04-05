@@ -7,7 +7,7 @@ enum class Pose(val lifterHeight: Double, val armAngle: Double) {
     CRITICAL_JUNCTION(24.0, 110.0),
     SCALE_LOW(25.0, if (IS_COMP_BOT) 195.0 else 180.0),
     SCALE_MED(26.0, if (IS_COMP_BOT) 195.0 else 180.0),
-    SCALE_HIGH(35.5, if (IS_COMP_BOT) 195.0 else 180.0),
+    SCALE_HIGH(37.0, if (IS_COMP_BOT) 195.0 else 180.0),
     /*    SCALE_LOW(25.5, 190.0),
         SCALE_MED(36.0, 185.0),
         SCALE_HIGH(45.0, 185.0),*/
