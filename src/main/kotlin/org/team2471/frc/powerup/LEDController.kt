@@ -47,7 +47,7 @@ object LEDController {
 
     private fun write(data: String) = try {
         println("sending $data to LedController")
-        port!!.writeString("$data\n")
+        port?.writeString("$data\n")
     } catch (e: Exception) {
         DriverStation.reportError("Error writing string to LEDController: ${e.message}", false)
     }
