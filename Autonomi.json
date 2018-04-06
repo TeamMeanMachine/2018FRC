@@ -2529,41 +2529,66 @@
 							"m_markBeginOrEndKeysToZeroSlope": true,
 							"m_nextAngleAndMagnitude": {
 								"x": 0.0,
-								"y": 1.0
+								"y": 2.5
 							},
 							"m_nextKey": {
-								"m_markBeginOrEndKeysToZeroSlope": true,
+								"m_markBeginOrEndKeysToZeroSlope": false,
 								"m_nextAngleAndMagnitude": {
-									"x": 0.0,
-									"y": 1.0
+									"x": 0.0698860016346425,
+									"y": 8.0
 								},
-								"m_nextSlopeMethod": "SLOPE_FLAT",
+								"m_nextKey": {
+									"m_markBeginOrEndKeysToZeroSlope": true,
+									"m_nextAngleAndMagnitude": {
+										"x": 0.0,
+										"y": 5.0
+									},
+									"m_nextSlopeMethod": "SLOPE_FLAT",
+									"m_nextTangent": {
+										"x": 0.0,
+										"y": 0.0
+									},
+									"m_prevAngleAndMagnitude": {
+										"x": 0.0,
+										"y": 5.0
+									},
+									"m_prevSlopeMethod": "SLOPE_FLAT",
+									"m_prevTangent": {
+										"x": 3.0833333333333335,
+										"y": 0.0
+									},
+									"m_timeAndValue": {
+										"x": 7.0,
+										"y": 1.0
+									}
+								},
+								"m_nextSlopeMethod": "SLOPE_MANUAL",
 								"m_nextTangent": {
-									"x": 0.0,
-									"y": 0.0
+									"x": 2.6601572457110043,
+									"y": 0.1862110071997703
 								},
 								"m_prevAngleAndMagnitude": {
-									"x": 0.0,
-									"y": 1.0
+									"x": 0.0698860016346425,
+									"y": 8.0
 								},
-								"m_prevSlopeMethod": "SLOPE_FLAT",
+								"m_prevSlopeMethod": "SLOPE_MANUAL",
 								"m_prevTangent": {
-									"x": 1.25,
-									"y": 0.0
+									"x": 2.6601572457110043,
+									"y": 0.1862110071997703
 								},
 								"m_timeAndValue": {
-									"x": 7.5,
-									"y": 1.0
+									"x": 3.3,
+									"y": 0.47
 								}
 							},
 							"m_nextSlopeMethod": "SLOPE_FLAT",
 							"m_nextTangent": {
-								"x": 2.5,
+								"x": 2.75,
 								"y": 0.0
 							},
 							"m_prevAngleAndMagnitude": {
 								"x": 0.0,
-								"y": 1.0
+								"y": 2.5
 							},
 							"m_prevSlopeMethod": "SLOPE_FLAT",
 							"m_prevTangent": {
