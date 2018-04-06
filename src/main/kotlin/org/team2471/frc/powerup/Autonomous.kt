@@ -97,7 +97,6 @@ object AutoChooser {
         }
 
         val chosenCommand = when {
-
             nearSide == Side.CENTER -> centerAuto
             Game.switchSide == nearSide && Game.scaleSide == nearSide -> nearSwitchNearScaleChooser.selected
             Game.switchSide == farSide && Game.scaleSide == farSide -> farSwitchFarScaleChooser.selected
@@ -111,8 +110,8 @@ object AutoChooser {
             DriverStation.reportError("Autonomous could not be chosen", false)
             return@Command
         }
-        chosenCommand(coroutineContext)
-//        farScaleAuto(coroutineContext)
+//        chosenCommand(coroutineContext)
+        farScaleAuto(coroutineContext)
     }
 
     init {
