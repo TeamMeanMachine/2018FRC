@@ -27,10 +27,6 @@ class Robot : IterativeRobot() {
 
         SmartDashboard.putNumber("Test Throttle", 1.0)
         SmartDashboard.putBoolean("Callibrate Gyro", false)
-        LEDController.state = IdleState
-        val gameAlliance = Game.alliance
-        LEDController.alliance = gameAlliance
-
         LiveWindow.disableAllTelemetry()
 
         Drivetrain
@@ -38,6 +34,10 @@ class Robot : IterativeRobot() {
         Driver
         AutoChooser
         Telemetry.start()
+
+        LEDController.state = IdleState
+        val gameAlliance = Game.alliance
+        LEDController.alliance = gameAlliance
 
     }
 
