@@ -111,8 +111,8 @@ object AutoChooser {
             DriverStation.reportError("Autonomous could not be chosen", false)
             return@Command
         }
-//        chosenCommand(coroutineContext)
-        farScaleAuto(coroutineContext)
+        chosenCommand(coroutineContext)
+//        farScaleAuto(coroutineContext)
     }
 
     init {
@@ -132,7 +132,7 @@ object AutoChooser {
         try {
             autonomi = Autonomi.fromJsonString(cacheFile.readText())
             println("Autonomi cache loaded.")
-        } catch (_: FileNotFoundException) {
+        } catch (_: Exception) {
             DriverStation.reportError("Autonomi cache could not be found", false)
             autonomi = Autonomi()
         }
