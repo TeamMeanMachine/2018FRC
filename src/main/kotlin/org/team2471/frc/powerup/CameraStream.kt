@@ -26,13 +26,14 @@ object CameraStream {
         camera.setResolution(WIDTH, HEIGHT)
         camera.setFPS(FPS)
 
-        val cameraSink = CvSink("Camera Sink")
-        cameraSink.source = camera
+//        val cameraSink = CvSink("Camera Sink")
+//        cameraSink.source = camera
 
         val server = MjpegServer("Arm Camera Server", 5805)
-        val processedSource = CvSource("Processed Source", VideoMode.PixelFormat.kBGR, WIDTH + WIDTH/4, HEIGHT, FPS)
-        server.source = processedSource
+//        val processedSource = CvSource("Processed Source", VideoMode.PixelFormat.kBGR, WIDTH + WIDTH/4, HEIGHT, FPS)
+        server.source = camera
 
+        /*
         thread {
             val image = Mat()
             val info = Mat(FREEZEFRAME_WIDTH, HEIGHT - FREEZEFRAME_HEIGHT, CvType.CV_8U)
@@ -65,7 +66,6 @@ object CameraStream {
                 processedSource.putFrame(image)
                 prevIsScale = isScale
             }
-        }
-
+        }*/
     }
 }

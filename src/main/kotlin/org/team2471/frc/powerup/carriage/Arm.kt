@@ -89,9 +89,11 @@ object Arm {
 
             val cubeTimer = Timer()
             cubeTimer.start()
-            periodic(40) {
+            periodic {
                 usingIntakeSensor = useCubeSensorEntry.getBoolean(true)
                 SmartDashboard.putBoolean("Using Intake Sensor" ,usingIntakeSensor)
+
+
 
                 if (!detectingCube) {
                     cubeTimer.reset()

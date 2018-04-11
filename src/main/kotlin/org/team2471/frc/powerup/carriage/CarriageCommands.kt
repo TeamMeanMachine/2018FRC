@@ -75,12 +75,24 @@ val returnToIntakePosition = Command("Return to Intake Position", Carriage) {
 }
 
 val driverIntake = Command("Intake", Carriage) {
+    val rumbleJob = launch(coroutineContext) {
+        try {
+            periodic {
+                val detectingCube = Arm.detectingCube
+                Driver.rumble = if (detectingCube) 1.0 else 0.12
+                CoDriver.rumble = if (detectingCube) 1.0 else 0.0
+            }
+        } finally {
+            Driver.rumble = 0.0
+            CoDriver.rumble = 0.0
+        }
+    }
+
     try {
         Arm.isClamping = false
         Arm.intakeSpeed = CarriageConstants.STANDARD_INTAKE_SPEED
-
+        Driver.rumble = 0.12
         Carriage.animateToPose(Pose.INTAKE)
-
         var prevIntaking = Driver.intaking
         suspendUntil {
             val intaking = Driver.intaking
@@ -88,25 +100,14 @@ val driverIntake = Command("Intake", Carriage) {
             prevIntaking = intaking
             finished
         }
+
         Arm.isClamping = true
-
-        if (Arm.detectingCube) {
-            launch(coroutineContext) {
-                Driver.rumble = 1.0
-                CoDriver.rumble = 1.0
-                try {
-                    delay(700)
-                } finally {
-                    Driver.rumble = 0.0
-                    CoDriver.rumble = 0.0
-                }
-            }
-        }
-
         delay(600)
     } finally {
+        rumbleJob.cancel()
         Arm.isClamping = true
         Arm.intakeSpeed = 0.0
+        Driver.rumble = 0.0
     }
 }
 

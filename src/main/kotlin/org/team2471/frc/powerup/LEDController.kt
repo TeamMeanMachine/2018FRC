@@ -2,26 +2,16 @@ package org.team2471.frc.powerup
 
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.SerialPort
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.launch
 import org.team2471.frc.lib.util.Alliance
 
 object LEDController {
-    private var port: SerialPort? = null
-
-    init {
-        launch {
-            while(port == null) {
-                try {
-                    port = SerialPort(9600, SerialPort.Port.kUSB1).also {
-                        println("LEDController found")
-                    }
-                } catch (e: Exception) {
-                    DriverStation.reportError("Failed to connect to LEDController\n${e.message}. Trying again in 5 seconds.", false)
-                    delay(5000)
-                }
-            }
+    private val port: SerialPort? = try {
+        SerialPort(9600, SerialPort.Port.kUSB1).also {
+            println("LEDController found")
         }
+    } catch (e: Exception) {
+        DriverStation.reportError("Failed to connect to LEDController\n${e.message}", false)
+        null
     }
 
     var alliance: Alliance? = null
@@ -95,7 +85,7 @@ object BounceState : LEDState() {
         get() = "bounce"
 }
 
-object CallibrateGyroState: LEDState() {
+object CallibrateGyroState : LEDState() {
     override val representation: String
         get() = "white"
 }

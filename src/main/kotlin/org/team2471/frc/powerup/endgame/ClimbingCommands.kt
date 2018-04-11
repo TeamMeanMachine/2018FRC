@@ -42,7 +42,7 @@ val climbCommand = Command("Climb", Carriage, Drivetrain, Wings, LEDController) 
 
 
     try {
-        Wings.climbingGuideDeployed = true
+//        Wings.climbingGuideDeployed = true
         periodic(condition = { acquireRung.isActive }) {
             Drivetrain.drive(Driver.throttle, Driver.softTurn, Driver.hardTurn)
         }
@@ -82,10 +82,10 @@ val climbCommand = Command("Climb", Carriage, Drivetrain, Wings, LEDController) 
 
 val newClimbCommand = Command("New Climb", Drivetrain, Carriage, Wings) {
     try {
-        Wings.climbingGuideDeployed = true
+//        Wings.climbingGuideDeployed = true
         val driveJob = launch(coroutineContext) {
             periodic {
-                Drivetrain.drive(Driver.throttle, Driver.softTurn, Driver.hardTurn)
+                Drivetrain.drive(Driver.throttle, Driver.softTurn, Driver.hardTurn * 0.5)
             }
         }
         LEDController.state = ClimbStopState
