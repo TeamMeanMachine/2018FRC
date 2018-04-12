@@ -102,7 +102,7 @@ val driverIntake = Command("Intake", Carriage) {
         }
 
         Arm.isClamping = true
-        delay(600)
+        delay(800)
     } finally {
         rumbleJob.cancel()
         Arm.isClamping = true
