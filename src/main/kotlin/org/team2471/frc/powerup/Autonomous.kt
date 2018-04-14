@@ -20,7 +20,6 @@ import org.team2471.frc.powerup.carriage.Pose
 import org.team2471.frc.powerup.drivetrain.Drivetrain
 import sun.plugin.dom.exception.InvalidStateException
 import java.io.File
-import java.io.FileNotFoundException
 
 private lateinit var autonomi: Autonomi
 
@@ -88,7 +87,7 @@ object AutoChooser {
         // adjust gyro for starting position
         Drivetrain.gyroAngleOffset = if (nearSide == Side.CENTER) 0.0 else 180.0
         Lifter.zero()
-        val testPath = if(!Game.isFMSAttached) testAutoChooser.selected else null
+        val testPath = if (!Game.isFMSAttached) testAutoChooser.selected else null
         if (testPath != null) {
             val testAutonomous = autonomi.getAutoOrCancel("Tests")
             Drivetrain.driveAlongPath(testAutonomous.getPathOrCancel(testPath))
@@ -237,32 +236,55 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
             Drivetrain.driveAlongPath(path)
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
-            Carriage.animateToPose(Pose.SCALE_HIGH)
-            Arm.intakeSpeed = -0.5
-            delay(200)
+            Carriage.animateToPose(Pose.SCALE_HIGH, -6.0, -30.0)
+            Arm.intakeSpeed = -0.6
         })
+
         parallel({
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Scale To Cube1"))
+        }, {
+            delay(300)
             Arm.isClamping = false
             Arm.intakeSpeed = 0.6
-            Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Scale To Cube1"))
-            Arm.isClamping = true
-            delay(250)
-            Arm.intakeSpeed = 0.2
-        }, {
             Carriage.animateToPose(Pose.INTAKE)
         })
+
+        Arm.isClamping = true
+        delay(250)
+        Arm.intakeSpeed = 0.3
 
         path = auto.getPathOrCancel("Cube1 To Far Scale")
 
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
-            delaySeconds(path.durationWithSpeed - 1.5)
-            Carriage.animateToPose(Pose.SCALE_HIGH)
-            Arm.intakeSpeed = 0.0
-            Arm.isClamping = false
-            delay(200)
+            delaySeconds(path.durationWithSpeed - 1.6)
+            Carriage.animateToPose(Pose.SCALE_HIGH, -6.0, -30.0)
+            Arm.intakeSpeed = -0.5
         })
+        parallel({
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Scale To Cube2"))
+        }, {
+            delay(300)
+            Arm.isClamping = false
+            Arm.intakeSpeed = 0.6
+            Carriage.animateToPose(Pose.INTAKE)
+        })
+
+        Arm.isClamping = true
+        delay(250)
+        Arm.intakeSpeed = 0.3
+
+        path = auto.getPathOrCancel("Cube2 To Far Scale")
+        parallel({
+            Drivetrain.driveAlongPath(path)
+        }, {
+            delaySeconds(path.durationWithSpeed - 1.6)
+            Carriage.animateToPose(Pose.SCALE_HIGH, -10.0, -20.0)
+            Arm.intakeSpeed = -0.4
+            delay(300)
+        })
+
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
@@ -357,14 +379,17 @@ val allFarScaleMeanMachine = Command("All Far Scale Mean Machine", Drivetrain, C
             Carriage.animateToPose(Pose.SCALE_HIGH, 6.0)
         })
         Arm.isClamping = false
-        delay(200)
+        delay(300)
+        Arm.isClamping = true
         parallel({
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Platform To Cube1"))
         }, {
             Carriage.animateToPose(Pose.INTAKE)
+            Arm.isClamping = false
             Arm.intakeSpeed = 0.5
         })
         Arm.isClamping = true
+        Arm.intakeSpeed = 0.3
         delay(300)
         path = auto.getPathOrCancel("Cube1 To Far Platform")
         parallel({
@@ -375,9 +400,8 @@ val allFarScaleMeanMachine = Command("All Far Scale Mean Machine", Drivetrain, C
         })
         delay(200)
         Arm.isClamping = false
-        delay(200)
-
-        parallel({
+        delay(300)
+/*        parallel({
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Platform To Cube2"))
         }, {
             Carriage.animateToPose(Pose.INTAKE)
@@ -395,7 +419,7 @@ val allFarScaleMeanMachine = Command("All Far Scale Mean Machine", Drivetrain, C
             Carriage.animateToPose(Pose.SCALE_HIGH, 6.0)
         })
         Arm.isClamping = false
-        Carriage.animateToPose(Pose.INTAKE)
+        Carriage.animateToPose(Pose.INTAKE)*/
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true

@@ -43,7 +43,8 @@ object Carriage {
         get() = animationTime >= max(Lifter.curve.length, Arm.curve.length)
 
     fun setAnimation(pose: Pose, lifterTime: Double = 1.5, armTime: Double = 1.5,
-                     lifterTimeOffset: Double = 0.0, armTimeOffset: Double = 0.0, heightOffset: Double = 0.0) {
+                     lifterTimeOffset: Double = 0.0, armTimeOffset: Double = 0.0,
+                     heightOffset: Double = 0.0, angleOffset: Double = 0.0) {
         targetPose = pose
         Lifter.curve = MotionCurve()
         Arm.curve = MotionCurve()
@@ -55,14 +56,14 @@ object Carriage {
         val armStartPosition = Arm.angle
         val armEndPosition = pose.armAngle
         Arm.curve.storeValue(armTimeOffset, armStartPosition) //0.5
-        Arm.curve.storeValue(armEndTime, armEndPosition) //2.0
+        Arm.curve.storeValue(armEndTime, armEndPosition + angleOffset ) //2.0
 
         animationTime = 0.0
     }
 
-    suspend fun animateToPose(pose: Pose, heightOffset: Double = 0.0) {
+    suspend fun animateToPose(pose: Pose, heightOffset: Double = 0.0, angleOffset: Double = 0.0) {
         val lifterDelta = pose.lifterHeight + heightOffset - Lifter.height
-        val armDelta = pose.armAngle - Arm.angle
+        val armDelta = pose.armAngle + angleOffset - Arm.angle
         val lifterTime = (1.25 / 58.0) * (Math.abs(lifterDelta)) + 0.25
         val armSpeed = 1.1 //if (Arm.hasCube) 1.4 else 1.0
         val armTime = (armSpeed / 180.0) * Math.abs(armDelta) + 0.25
@@ -75,7 +76,7 @@ object Carriage {
         if (lifterDelta < 0.0 && armTime > lifterTime) { // going down and arm time is longer
             lifterTimeOffset = armTime - lifterTime
         }
-        setAnimation(pose, lifterTime, armTime, lifterTimeOffset, armTimeOffset, heightOffset)
+        setAnimation(pose, lifterTime, armTime, lifterTimeOffset, armTimeOffset, heightOffset, angleOffset)
 
         val timer = Timer()
         timer.start()
