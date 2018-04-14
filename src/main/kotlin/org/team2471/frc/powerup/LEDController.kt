@@ -36,10 +36,10 @@ object LEDController {
         }
 
     private fun write(data: String) = try {
-        println("attempting to send string '$data' to LEDController")
+        println("sending $data to LedController")
         port?.writeString("$data\n")
     } catch (e: Exception) {
-        DriverStation.reportError("Error writing string '$data' to LEDController: $e", false)
+        DriverStation.reportError("Error writing string to LEDController: ${e.message}", false)
     }
 }
 
@@ -85,7 +85,7 @@ object BounceState : LEDState() {
         get() = "bounce"
 }
 
-object CallibrateGyroState: LEDState() {
+object CallibrateGyroState : LEDState() {
     override val representation: String
         get() = "white"
 }

@@ -1,7 +1,5 @@
 package org.team2471.frc.powerup
 
-import edu.wpi.cscore.MjpegServer
-import edu.wpi.cscore.UsbCamera
 import edu.wpi.first.wpilibj.IterativeRobot
 import edu.wpi.first.wpilibj.livewindow.LiveWindow
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -13,32 +11,30 @@ import org.team2471.frc.powerup.carriage.Carriage
 import org.team2471.frc.powerup.carriage.Pose
 import org.team2471.frc.powerup.drivetrain.Drivetrain
 
-const val IS_COMP_BOT = true
+const val IS_COMP_BOT = false
 
 class Robot : IterativeRobot() {
     private var hasRunAuto = false
 
     override fun robotInit() {
-        System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "2") // use 2 threads in CommonPool
-        CameraStream
+        System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "1") // use 1 threads in CommonPool
+//        CameraStream
         Game.updateGameData()
 
         println("${if (IS_COMP_BOT) "Competition" else "Practice"} mode")
-
-        SmartDashboard.putNumber("Test Throttle", 1.0)
-        SmartDashboard.putBoolean("Callibrate Gyro", false)
-        LEDController.state = IdleState
-        val gameAlliance = Game.alliance
-        LEDController.alliance = gameAlliance
-
-        LiveWindow.disableAllTelemetry()
 
         Drivetrain
         Carriage
         Driver
         AutoChooser
-        Telemetry.start()
 
+        LEDController.state = IdleState
+        val gameAlliance = Game.alliance
+        LEDController.alliance = gameAlliance
+
+        SmartDashboard.putNumber("Test Throttle", 1.0)
+        SmartDashboard.putBoolean("Callibrate Gyro", false)
+        LiveWindow.disableAllTelemetry()
     }
 
     override fun autonomousInit() {
