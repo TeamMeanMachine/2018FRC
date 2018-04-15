@@ -3,7 +3,7 @@ package org.team2471.frc.powerup.carriage
 import org.team2471.frc.powerup.IS_COMP_BOT
 
 enum class Pose(val lifterHeight: Double, val armAngle: Double) {
-    INTAKE(6.0, 0.0),
+    INTAKE(5.5, 0.0),
     CRITICAL_JUNCTION(24.0, 110.0),
     SCALE_LOW(22.5, if (IS_COMP_BOT) 195.0 else 180.0),
     SCALE_MED(26.0, if (IS_COMP_BOT) 195.0 else 180.0),

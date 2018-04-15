@@ -1,6 +1,7 @@
 package org.team2471.frc.powerup.carriage
 
 import com.ctre.phoenix.motorcontrol.ControlMode
+import com.ctre.phoenix.motorcontrol.DemandType
 import com.ctre.phoenix.motorcontrol.FeedbackDevice
 import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
@@ -12,9 +13,7 @@ import org.team2471.frc.lib.control.plus
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.powerup.RobotMap
 import org.team2471.frc.powerup.Telemetry
-import kotlin.math.absoluteValue
 import kotlin.math.min
-import kotlin.math.roundToInt
 
 object Lifter {
     private val motors = TalonSRX(RobotMap.Talons.ELEVATOR_MOTOR_1).apply {
@@ -90,26 +89,12 @@ object Lifter {
     val height: Double
         get() = ticksToInches(motors.getSelectedSensorPosition(0).toDouble())
 
-    var setpoint: Double = height
-        set(value) {
-            val min = when {
-                Arm.angle > 150.0 -> min(height, Pose.SCALE_LOW.lifterHeight)
-                Arm.angle < 50.0 -> min(height, Pose.INTAKE.lifterHeight)
-                else -> 0.0
-            }
-
-            val v = value.coerceIn(min, CarriageConstants.LIFTER_MAX_HEIGHT)
-            motors.set(ControlMode.Position, inchesToTicks(v))
-            field = v
-        }
-
     var heightRawSpeed: Double = 0.0
         set(value) {
             motors.set(ControlMode.PercentOutput, value)
             field = value
         }
 
-    val heightError = height - setpoint
 
     var isLowGear: Boolean
         get() = shifter.get()
@@ -132,6 +117,18 @@ object Lifter {
 
     fun zero() {
         motors.setSelectedSensorPosition(0, 0, 10)
+    }
+
+    fun set(setpoint: Double, feedForward: Double) {
+
+        val min = when {
+            Arm.angle > 150.0 -> min(height, Pose.SCALE_LOW.lifterHeight)
+            Arm.angle < 50.0 -> min(height, Pose.INTAKE.lifterHeight)
+            else -> 0.0
+        }
+
+        motors.set(ControlMode.Position, inchesToTicks(setpoint.coerceIn(min, CarriageConstants.LIFTER_MAX_HEIGHT)) ,
+                DemandType.ArbitraryFeedForward, feedForward)
     }
 
 
