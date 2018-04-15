@@ -109,8 +109,7 @@ object AutoChooser {
             DriverStation.reportError("Autonomous could not be chosen", false)
             return@Command
         }
-//        chosenCommand(coroutineContext)
-        farScaleAuto(coroutineContext)
+        chosenCommand(coroutineContext)
     }
 
     init {
@@ -161,63 +160,88 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
     auto.isMirrored = startingSide == Side.LEFT
 
     try {
-        Arm.intakeSpeed = 0.2
+        Arm.intakeSpeed = 0.4
         var path = auto.getPathOrCancel("Start To Near Scale")
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
-            Carriage.animateToPose(Pose.SCALE_HIGH)
-            Arm.intakeSpeed = -0.5
-            delay(250)
+            Carriage.animateToPose(Pose.SCALE_MED, -3.0, -30.0)
+            Arm.intakeSpeed = -0.75
         })
-        Arm.isClamping = false
 
         parallel({
-            Arm.intakeSpeed = 0.8
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Near Scale To Cube1"))
-            Arm.isClamping = true
         }, {
             Carriage.animateToPose(Pose.INTAKE)
+        }, {
+            delay(500)
+            Arm.isClamping = false
+            Arm.intakeSpeed = 0.8
         })
+        Arm.isClamping = true
 
 
         path = auto.getPathOrCancel("Cube1 To Near Scale")
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
-            delay(300)
-            Arm.intakeSpeed = 0.2
             delaySeconds(path.durationWithSpeed - 1.5)
-            Carriage.animateToPose(Pose.SCALE_MED)
-            Arm.intakeSpeed = -0.4
-            delay(350)
+            Carriage.animateToPose(Pose.SCALE_MED, -6.0, -30.0)
+            Arm.intakeSpeed = -0.68
+        }, {
+            delay(400)
+            Arm.intakeSpeed = 0.4
         })
-        Arm.intakeSpeed = 0.0
 
         parallel({
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Near Scale To Cube2"))
         }, {
-            Arm.isClamping = false
             Carriage.animateToPose(Pose.INTAKE)
-            Arm.intakeSpeed = 0.8
+        }, {
+            delay(500)
+            Arm.isClamping = false
+            Arm.intakeSpeed = 0.7
         })
-
         Arm.isClamping = true
 
         path = auto.getPathOrCancel("Cube2 To Near Scale")
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
-            delay(300)
-            Arm.intakeSpeed = 0.2
-            delaySeconds(path.durationWithSpeed - 2.0)
-            Carriage.animateToPose(Pose.SCALE_LOW)
-            delay(100)
-            Arm.isClamping = false
-            delay(500)
+            delaySeconds(path.durationWithSpeed - 1.5)
+            Carriage.animateToPose(Pose.SCALE_LOW, angleOffset = -30.0)
+            Arm.intakeSpeed = -0.65
+        }, {
+            delay(400)
+            Arm.intakeSpeed = 0.4
         })
-//        Carriage.animateToPose(Pose.INTAKE)
+        delay(250)
+
+        parallel({
+            Drivetrain.driveAlongPath(auto.getPathOrCancel("Near Scale To Cube3"))
+        },  {
+            Carriage.animateToPose(Pose.INTAKE)
+        }, {
+            delay(500)
+            Arm.isClamping = false
+            Arm.intakeSpeed = 0.5
+        })
+        Arm.isClamping = true
+        delay(300)
+
+        path = auto.getPathOrCancel("Cube3 To Near Scale")
+        parallel({
+            Drivetrain.driveAlongPath(path)
+        }, {
+            delaySeconds(path.durationWithSpeed - 1.5)
+            Carriage.animateToPose(Pose.SCALE_LOW, angleOffset = -15.0 )
+            Arm.intakeSpeed = -0.55
+        }, {
+            delay(400)
+            Arm.intakeSpeed = 0.4
+        })
+        delay(250)
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
