@@ -21,7 +21,7 @@ object Carriage {
             else -> field = value
         }
 
-    var targetPose = Pose.INTAKE
+    var targetPose = Pose.STARTING_POSITION
         private set
 
     fun adjustAnimationTime(dt: Double, heightOffset: Double = 0.0) {
