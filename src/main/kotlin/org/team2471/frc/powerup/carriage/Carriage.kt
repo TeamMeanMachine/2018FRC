@@ -80,7 +80,10 @@ object Carriage {
         if (lifterDelta < 0.0 && armTime > lifterTime) { // going down and arm time is longer
             lifterTimeOffset = armTime - lifterTime
         }
-        setAnimation(pose, lifterTime, armTime, lifterTimeOffset, armTimeOffset, heightOffset, angleOffset)
+
+        if (pose != targetPose || isAnimationCompleted) {
+            setAnimation(pose, lifterTime, armTime, lifterTimeOffset, armTimeOffset, heightOffset, angleOffset)
+        }
 
         val timer = Timer()
         timer.start()
