@@ -181,14 +181,13 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
         })
         Arm.isClamping = true
 
-
         path = auto.getPathOrCancel("Cube1 To Near Scale")
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Pose.SCALE_LOW, -3.0, -30.0)
-            Arm.intakeSpeed = -0.45
+            Arm.intakeSpeed = -0.6
         }, {
             delay(400)
             Arm.intakeSpeed = 0.4
@@ -228,20 +227,19 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             Arm.intakeSpeed = 0.5
         })
         Arm.isClamping = true
-        delay(300)
 
         path = auto.getPathOrCancel("Cube3 To Near Scale")
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
-            Carriage.animateToPose(Pose.SCALE_LOW, -6.0, -15.0 )
+            Carriage.animateToPose(Pose.SCALE_LOW)
             Arm.intakeSpeed = -0.4
         }, {
             delay(400)
             Arm.intakeSpeed = 0.4
         })
-        delay(250)
+       delay(250)
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
