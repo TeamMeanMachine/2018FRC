@@ -167,7 +167,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Pose.SCALE_MED, -3.0, -30.0)
-            Arm.intakeSpeed = -0.7
+            Arm.intakeSpeed = -0.65
         })
 
         parallel({
