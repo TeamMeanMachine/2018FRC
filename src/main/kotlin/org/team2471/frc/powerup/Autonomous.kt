@@ -43,9 +43,9 @@ object AutoChooser {
     private val cacheFile = File("/home/lvuser/autonomi.json")
 
     private val sideChooser = SendableChooser<Side>().apply {
-        addObject("Left", Side.LEFT)
+        addDefault("Left", Side.LEFT)
         addObject("Center", Side.CENTER)
-        addDefault("Right", Side.RIGHT)
+        addObject("Right", Side.RIGHT)
     }
 
     private val testAutoChooser = SendableChooser<String?>().apply {

@@ -17,7 +17,7 @@ enum class Pose(val lifterHeight: Double, val armAngle: Double) {
     CLIMB(60.0, 0.0),
     CLIMB_ACQUIRE_RUNG(30.0, 90.0),
     FACE_THE_BOSS(0.5, 90.0),
-    STARTING_POSITION(6.0, 110.0),
+    STARTING_POSITION(0.0, 110.0),
     INTAKE_RAISED(17.0, 0.0);
 
     val isScale get() = this == SCALE_LOW || this == SCALE_MED || this == SCALE_HIGH || this == SCALE_FRONT
