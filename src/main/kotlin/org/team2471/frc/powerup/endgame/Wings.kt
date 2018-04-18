@@ -12,8 +12,12 @@ object Wings {
     private val button = AnalogInput(RobotMap.DIO.CLIMB_BUTTON)
 
     init {
-        SmartDashboard.putBoolean("Deploy Wings", true)
+        if(!SmartDashboard.containsKey("Deploy Wings"))
+            SmartDashboard.putBoolean("Deploy Wings", true)
         SmartDashboard.setPersistent("Deploy Wings")
+        if(!SmartDashboard.containsKey("Solo Climb"))
+            SmartDashboard.putBoolean("Solo Climb", false)
+        SmartDashboard.setPersistent("Solo Climb")
     }
 
     var wingsDeployed: Boolean

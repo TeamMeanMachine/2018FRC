@@ -32,7 +32,7 @@ object Game {
         get() = ds.matchTime
 
     val isEndGame: Boolean
-        get() = matchTime <= 28
+        get() = matchTime <= 29
 
     var switchSide: Side? = null
         private set

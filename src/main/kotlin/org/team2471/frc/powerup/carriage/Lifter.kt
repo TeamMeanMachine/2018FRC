@@ -21,7 +21,7 @@ object Lifter {
         setSelectedSensorPosition(0, 0, 10)
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(0, 10)
-        configPeakCurrentDuration(100, 10)
+        configPeakCurrentDuration(0, 10)
         enableCurrentLimit(true)
         setNeutralMode(NeutralMode.Brake)
         configPeakOutputForward(1.0, 10)

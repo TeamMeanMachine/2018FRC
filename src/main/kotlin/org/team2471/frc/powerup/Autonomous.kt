@@ -405,7 +405,7 @@ val centerAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
 
 }
 
-val allFarScaleMeanMachine = Command("All Far Scale Mean Machine", Drivetrain, Carriage, Arm) {
+val allFarScaleMeanMachine = Command("All Far Scale Platform", Drivetrain, Carriage, Arm) {
     val auto = autonomi.getAutoOrCancel("All Far Scale Mean Machine")
     auto.isMirrored = false
     try {
@@ -415,26 +415,28 @@ val allFarScaleMeanMachine = Command("All Far Scale Mean Machine", Drivetrain, C
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Pose.SCALE_HIGH, 6.0)
+            Arm.isClamping = false
         })
-        Arm.isClamping = false
-        delay(300)
-        Arm.isClamping = true
         parallel({
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Platform To Cube1"))
         }, {
             Carriage.animateToPose(Pose.INTAKE)
             Arm.isClamping = false
-            Arm.intakeSpeed = 0.5
+            Arm.intakeSpeed = 0.6
+        }, {
+            delay(300)
+            Arm.isClamping = true
         })
         Arm.isClamping = true
-        Arm.intakeSpeed = 0.3
-        delay(300)
         path = auto.getPathOrCancel("Cube1 To Far Platform")
         parallel({
             Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube1 To Far Platform"))
         }, {
             delaySeconds(path.durationWithSpeed - 1.0)
             Carriage.animateToPose(Pose.SCALE_HIGH, 6.0)
+        }, {
+            delay(400)
+            Arm.intakeSpeed = 0.3
         })
         delay(200)
         Arm.isClamping = false
