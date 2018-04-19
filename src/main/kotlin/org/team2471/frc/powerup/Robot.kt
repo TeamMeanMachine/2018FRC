@@ -11,7 +11,7 @@ import org.team2471.frc.powerup.carriage.Carriage
 import org.team2471.frc.powerup.carriage.Pose
 import org.team2471.frc.powerup.drivetrain.Drivetrain
 
-const val IS_COMP_BOT = false
+const val IS_COMP_BOT = true
 
 class Robot : IterativeRobot() {
     private var hasRunAuto = false
