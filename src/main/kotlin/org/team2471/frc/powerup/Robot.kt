@@ -3,6 +3,7 @@ package org.team2471.frc.powerup
 import edu.wpi.first.wpilibj.IterativeRobot
 import edu.wpi.first.wpilibj.livewindow.LiveWindow
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import javafx.scene.Camera
 import kotlinx.coroutines.experimental.runBlocking
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.EventMapper
@@ -17,8 +18,8 @@ class Robot : IterativeRobot() {
     private var hasRunAuto = false
 
     override fun robotInit() {
-        System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "1") // use 1 threads in CommonPool
-//        CameraStream
+        System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "1") // use 1 thread in CommonPool
+        CameraStream.isEnabled = true
         Game.updateGameData()
 
         println("${if (IS_COMP_BOT) "Competition" else "Practice"} mode")
@@ -38,6 +39,7 @@ class Robot : IterativeRobot() {
     }
 
     override fun autonomousInit() {
+        CameraStream.isEnabled = false
         hasRunAuto = true
         Game.updateGameData()
         LEDController.alliance = Game.alliance
@@ -46,6 +48,7 @@ class Robot : IterativeRobot() {
     }
 
     override fun teleopInit() {
+        CameraStream.isEnabled = true
         if (!hasRunAuto) runBlocking {
             Carriage.animateToPose(Pose.INTAKE)
         }
@@ -65,6 +68,7 @@ class Robot : IterativeRobot() {
     }
 
     override fun disabledInit() {
+        CameraStream.isEnabled = true
         LEDController.state = IdleState
     }
 

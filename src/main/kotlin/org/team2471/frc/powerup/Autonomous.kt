@@ -59,20 +59,24 @@ object AutoChooser {
 
     private val nearSwitchNearScaleChooser = SendableChooser<Command>().apply {
         addDefault(nearScaleAuto.name, nearScaleAuto)
+        addObject(driveStraightAuto.name, driveStraightAuto)
     }
 
     private val nearSwitchFarScaleChooser = SendableChooser<Command>().apply {
         addDefault(farScaleAuto.name, farScaleAuto)
         addObject(allFarScaleMeanMachine.name, allFarScaleMeanMachine)
+        addObject(driveStraightAuto.name, driveStraightAuto)
     }
 
     private val farSwitchNearScaleChooser = SendableChooser<Command>().apply {
         addDefault(nearScaleAuto.name, nearScaleAuto)
+        addObject(driveStraightAuto.name, driveStraightAuto)
     }
 
     private val farSwitchFarScaleChooser = SendableChooser<Command>().apply {
         addDefault(farScaleAuto.name, farScaleAuto)
         addObject(allFarScaleMeanMachine.name, allFarScaleMeanMachine)
+        addObject(driveStraightAuto.name, driveStraightAuto)
     }
 
 
@@ -167,7 +171,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Pose.SCALE_MED, -3.0, -30.0)
-            Arm.intakeSpeed = -0.50
+            Arm.intakeSpeed = -0.525
         })
 
         parallel({
@@ -258,7 +262,7 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Pose.SCALE_HIGH, -6.0, -30.0)
-            Arm.intakeSpeed = -0.6
+            Arm.intakeSpeed = -0.5
         })
 
         parallel({
@@ -460,6 +464,17 @@ val allFarScaleMeanMachine = Command("All Far Scale Platform", Drivetrain, Carri
         })
         Arm.isClamping = false
         Carriage.animateToPose(Pose.INTAKE)*/
+    } finally {
+        Arm.intakeSpeed = 0.0
+        Arm.isClamping = true
+    }
+}
+
+val driveStraightAuto = Command("Drive Straight",  Drivetrain) {
+    val auto = autonomi.getAutoOrCancel("Tests")
+    auto.isMirrored = false
+    try {
+        Drivetrain.driveAlongPath(auto.getPathOrCancel("8 Foot Straight"))
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
