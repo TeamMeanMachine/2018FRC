@@ -35,7 +35,7 @@ object Arm {
         setNeutralMode(NeutralMode.Brake)
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(0, 10)
-        configPeakCurrentDuration(100, 10)
+        configPeakCurrentDuration(0, 10)
         enableCurrentLimit(true)
         setSensorPhase(false)
         inverted = true

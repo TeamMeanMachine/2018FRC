@@ -111,7 +111,6 @@ object CoDriver {
         goToIntakePreset.runWhen { controller.bButton }
         incrementScaleStackHeight.runWhen { controller.pov == 0 }
         decrementScaleStackHeight.runWhen { controller.pov == 180 }
-        testArmCommand.runWhen { controller.getStickButton(GenericHID.Hand.kLeft) }
 
         tuneArmPID.runWhen { SmartDashboard.getBoolean("Tune Arm PID", false) }
         commandReset.runWhen { controller.startButton }
