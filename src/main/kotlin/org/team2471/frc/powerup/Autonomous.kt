@@ -79,6 +79,12 @@ object AutoChooser {
         addObject(driveStraightAuto.name, driveStraightAuto)
     }
 
+    private val scaleSideChooser = SendableChooser<Side?>().apply {
+        addDefault("Get from FMS", null)
+        addObject("Force Left", Side.LEFT)
+        addObject("Force Right", Side.RIGHT)
+    }
+
 
     val auto = Command("Autonomous", Drivetrain, Carriage) {
         Arm.hold()
@@ -99,12 +105,14 @@ object AutoChooser {
             return@Command
         }
 
+        val scaleSide = scaleSideChooser.selected ?: Game.scaleSide
+
         val chosenCommand = when {
             nearSide == Side.CENTER -> centerAuto
-            Game.switchSide == nearSide && Game.scaleSide == nearSide -> nearSwitchNearScaleChooser.selected
-            Game.switchSide == farSide && Game.scaleSide == farSide -> farSwitchFarScaleChooser.selected
-            Game.switchSide == farSide && Game.scaleSide == nearSide -> farSwitchNearScaleChooser.selected
-            Game.switchSide == nearSide && Game.scaleSide == farSide -> nearSwitchFarScaleChooser.selected
+            Game.switchSide == nearSide && scaleSide == nearSide -> nearSwitchNearScaleChooser.selected
+            Game.switchSide == farSide && scaleSide == farSide -> farSwitchFarScaleChooser.selected
+            Game.switchSide == farSide && scaleSide == nearSide -> farSwitchNearScaleChooser.selected
+            Game.switchSide == nearSide && scaleSide == farSide -> nearSwitchFarScaleChooser.selected
 //            Game.scaleSide == nearSide -> nearScaleAuto
 //            Game.scaleSide == farSide -> farScaleAuto
             else -> null
@@ -124,6 +132,7 @@ object AutoChooser {
 
         SmartDashboard.putData("Side Chooser", sideChooser)
         SmartDashboard.putData("Test Path Chooser", testAutoChooser)
+        SmartDashboard.putData("Scale Side Chooser", scaleSideChooser)
         if (!SmartDashboard.containsKey("Safe Center Auto")) {
             SmartDashboard.putBoolean("Safe Center Auto", false)
         }
@@ -159,6 +168,7 @@ object AutoChooser {
 
 }
 
+
 val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
     val auto = autonomi.getAutoOrCancel("All Near Scale")
     auto.isMirrored = startingSide == Side.LEFT
@@ -174,8 +184,9 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             Arm.intakeSpeed = -0.525
         })
 
+        path = auto.getPathOrCancel("Near Scale To Cube1")
         parallel({
-            Drivetrain.driveAlongPath(auto.getPathOrCancel("Near Scale To Cube1"))
+            Drivetrain.driveAlongPath(path)
         }, {
             Carriage.animateToPose(Pose.INTAKE)
         }, {
@@ -315,18 +326,18 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
         })
 
 
-        parallel({
-            Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Scale To Cube3"))
-        }, {
-            Carriage.animateToPose(Pose.INTAKE)
-        }, {
-            delay(300)
-            Arm.isClamping = false
-            Arm.intakeSpeed = 0.6
-        })
-
-        Arm.isClamping = true
-        delay(400)
+//        parallel({
+//            Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Scale To Cube3"))
+//        }, {
+//            Carriage.animateToPose(Pose.INTAKE)
+//        }, {
+//            delay(300)
+//            Arm.isClamping = false
+//            Arm.intakeSpeed = 0.6
+//        })
+//
+//        Arm.isClamping = true
+//        delay(400)
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
