@@ -27,7 +27,7 @@ val zero = Command("Carriage Zero", Carriage) {
 
 var scaleOffset = 0.0
     set(value) {
-        field = value.coerceIn(0.0, 33.0)
+        field = value.coerceIn(0.0, 66.0) //33.0
     }
 
 var switchOffset = 0.0
