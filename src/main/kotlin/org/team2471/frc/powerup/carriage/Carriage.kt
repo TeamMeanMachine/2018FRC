@@ -21,7 +21,7 @@ object Carriage {
             else -> field = value
         }
 
-    var targetPose = Pose.INTAKE
+    var targetPose = Pose.STARTING_POSITION
         private set
 
     fun adjustAnimationTime(dt: Double, heightOffset: Double = 0.0) {
@@ -35,7 +35,11 @@ object Carriage {
             0.0
         }
 
-        Lifter.setpoint = lifterSetpoint
+        Lifter.set(lifterSetpoint, if (lifterSetpoint - Lifter.height >= 0) {
+            CarriageConstants.LIFTER_UPWARD_FEED_FORWARD
+        } else {
+            CarriageConstants.LIFTER_DOWNWARD_FEED_FORWARD
+        })
         Arm.set(armSetpoint, armVelocity)
     }
 
@@ -56,7 +60,7 @@ object Carriage {
         val armStartPosition = Arm.angle
         val armEndPosition = pose.armAngle
         Arm.curve.storeValue(armTimeOffset, armStartPosition) //0.5
-        Arm.curve.storeValue(armEndTime, armEndPosition + angleOffset ) //2.0
+        Arm.curve.storeValue(armEndTime, armEndPosition + angleOffset) //2.0
 
         animationTime = 0.0
     }
@@ -76,7 +80,10 @@ object Carriage {
         if (lifterDelta < 0.0 && armTime > lifterTime) { // going down and arm time is longer
             lifterTimeOffset = armTime - lifterTime
         }
-        setAnimation(pose, lifterTime, armTime, lifterTimeOffset, armTimeOffset, heightOffset, angleOffset)
+
+        if (pose != targetPose || isAnimationCompleted) {
+            setAnimation(pose, lifterTime, armTime, lifterTimeOffset, armTimeOffset, heightOffset, angleOffset)
+        }
 
         val timer = Timer()
         timer.start()

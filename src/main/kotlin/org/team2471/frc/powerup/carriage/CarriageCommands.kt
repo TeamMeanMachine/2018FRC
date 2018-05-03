@@ -1,6 +1,5 @@
 package org.team2471.frc.powerup.carriage
 
-import edu.wpi.first.wpilibj.Timer
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import org.team2471.frc.lib.control.experimental.Command
@@ -19,11 +18,10 @@ val zero = Command("Carriage Zero", Carriage) {
             Lifter.heightRawSpeed = CoDriver.leftStickUpDown * 0.4
         }
     } finally {
-        Carriage.setAnimation(Pose.INTAKE)
+        Carriage.setAnimation(Pose.STARTING_POSITION)
         Arm.hold()
         Lifter.stop()
         Lifter.zero()
-        Lifter.isBraking = true
     }
 }
 

@@ -8,6 +8,8 @@ object CarriageConstants {
 
     const val ARM_P = 13.3 * 0.5
 
+    const val LIFTER_UPWARD_FEED_FORWARD = 0.15
+    const val LIFTER_DOWNWARD_FEED_FORWARD = 0.05
     // unit conversions
     const val LIFTER_TICKS_PER_INCH = 9437 / 64.25
 

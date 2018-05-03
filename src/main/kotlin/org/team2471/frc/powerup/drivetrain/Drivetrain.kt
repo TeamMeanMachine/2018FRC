@@ -403,14 +403,15 @@ object Drivetrain {
             val leftVelocityEntry = table.getEntry("Left Velocity")
             val rightVelocityEntry = table.getEntry("Right Velocity")
             SmartDashboard.putData("Gyro", gyro)
-            val accelXEntry = table.getEntry("Accelerometer X")
-            val accelYEntry = table.getEntry("Accelerometer Y")
-            val accelZEntry = table.getEntry("Accelerometer Z")
+
+            val outputsEntry = table.getEntry("Outputs")
 
             periodic {
                 compassEntry.setDouble(gyro.magZ)
                 leftVelocityEntry.setDouble(leftVelocity)
                 rightVelocityEntry.setDouble(rightVelocity)
+
+                outputsEntry.setDoubleArray(doubleArrayOf(leftMotors.motorOutputPercent, rightMotors.motorOutputPercent))
 
                 SmartDashboard.putNumberArray("Encoder Distances",
                         arrayOf(ticksToFeet(leftMotors.getSelectedSensorPosition(0)),
