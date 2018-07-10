@@ -1,17 +1,19 @@
 package org.team2471.frc.powerup
 
+import com.ctre.phoenix.motorcontrol.ControlMode
+import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import edu.wpi.first.networktables.EntryListenerFlags
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.Talon
+import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import kotlinx.coroutines.experimental.CancellationException
 import kotlinx.coroutines.experimental.delay
 import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.delaySeconds
 import org.team2471.frc.lib.control.experimental.parallel
 import org.team2471.frc.lib.motion_profiling.Autonomi
-import org.team2471.frc.lib.motion_profiling.Autonomous
 import org.team2471.frc.lib.util.measureTimeFPGA
 import org.team2471.frc.powerup.carriage.Arm
 import org.team2471.frc.powerup.carriage.Carriage
@@ -22,20 +24,6 @@ import sun.plugin.dom.exception.InvalidStateException
 import java.io.File
 
 private lateinit var autonomi: Autonomi
-
-fun Autonomi.getAutoOrCancel(autoName: String) =
-        this[autoName] ?: run {
-            val message = "Failed to find auto $autoName"
-            DriverStation.reportError(message, false)
-            throw CancellationException(message)
-        }
-
-fun Autonomous.getPathOrCancel(pathName: String) =
-        this[pathName] ?: run {
-            val message = "Failed to find path $pathName"
-            DriverStation.reportError(message, false)
-            throw CancellationException(message)
-        }
 
 private var startingSide = Side.RIGHT
 
@@ -60,23 +48,27 @@ object AutoChooser {
     private val nearSwitchNearScaleChooser = SendableChooser<Command>().apply {
         addDefault(nearScaleAuto.name, nearScaleAuto)
         addObject(driveStraightAuto.name, driveStraightAuto)
+        addObject(preMatchTest.name, preMatchTest)
     }
 
     private val nearSwitchFarScaleChooser = SendableChooser<Command>().apply {
         addDefault(farScaleAuto.name, farScaleAuto)
         addObject(allFarScaleMeanMachine.name, allFarScaleMeanMachine)
         addObject(driveStraightAuto.name, driveStraightAuto)
+        addObject(preMatchTest.name, preMatchTest)
     }
 
     private val farSwitchNearScaleChooser = SendableChooser<Command>().apply {
         addDefault(nearScaleAuto.name, nearScaleAuto)
         addObject(driveStraightAuto.name, driveStraightAuto)
+        addObject(preMatchTest.name, preMatchTest)
     }
 
     private val farSwitchFarScaleChooser = SendableChooser<Command>().apply {
         addDefault(farScaleAuto.name, farScaleAuto)
         addObject(allFarScaleMeanMachine.name, allFarScaleMeanMachine)
         addObject(driveStraightAuto.name, driveStraightAuto)
+        addObject(preMatchTest.name, preMatchTest)
     }
 
     private val scaleSideChooser = SendableChooser<Side?>().apply {
@@ -84,7 +76,6 @@ object AutoChooser {
         addObject("Force Left", Side.LEFT)
         addObject("Force Right", Side.RIGHT)
     }
-
 
     val auto = Command("Autonomous", Drivetrain, Carriage) {
         Arm.hold()
@@ -99,8 +90,8 @@ object AutoChooser {
         Lifter.zero()
         val testPath = if (!Game.isFMSAttached) testAutoChooser.selected else null
         if (testPath != null) {
-            val testAutonomous = autonomi.getAutoOrCancel("Tests")
-            Drivetrain.driveAlongPath(testAutonomous.getPathOrCancel(testPath))
+            val testAutonomous = autonomi["Tests"]
+            Drivetrain.driveAlongPath(testAutonomous[testPath])
             delay(Long.MAX_VALUE)
             return@Command
         }
@@ -113,8 +104,6 @@ object AutoChooser {
             Game.switchSide == farSide && scaleSide == farSide -> farSwitchFarScaleChooser.selected
             Game.switchSide == farSide && scaleSide == nearSide -> farSwitchNearScaleChooser.selected
             Game.switchSide == nearSide && scaleSide == farSide -> nearSwitchFarScaleChooser.selected
-//            Game.scaleSide == nearSide -> nearScaleAuto
-//            Game.scaleSide == farSide -> farScaleAuto
             else -> null
         }
         if (chosenCommand == null) {
@@ -171,12 +160,13 @@ object AutoChooser {
 const val RELEASE_DELAY = 500L
 
 val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
-    val auto = autonomi.getAutoOrCancel("All Near Scale")
+    val auto = autonomi["All Near Scale"]
     auto.isMirrored = startingSide == Side.LEFT
 
     try {
         Arm.intakeSpeed = 0.4
-        var path = auto.getPathOrCancel("Start To Near Scale")
+        var path = auto["Start To Near Scale"]
+
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
@@ -185,7 +175,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             Arm.intakeSpeed = -0.525
         })
 
-        path = auto.getPathOrCancel("Near Scale To Cube1")
+        path = auto["Near Scale To Cube1"]
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
@@ -198,7 +188,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             Arm.isClamping = true
         })
 
-        path = auto.getPathOrCancel("Cube1 To Near Scale")
+        path = auto["Cube1 To Near Scale"]
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
@@ -210,7 +200,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             Arm.intakeSpeed = 0.4
         })
 
-        path = auto.getPathOrCancel("Near Scale To Cube2")
+        path = auto["Near Scale To Cube2"]
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
@@ -223,7 +213,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             Arm.isClamping = true
         })
 
-        path = auto.getPathOrCancel("Cube2 To Near Scale")
+        path = auto["Cube2 To Near Scale"]
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
@@ -235,7 +225,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             Arm.intakeSpeed = 0.4
         })
         delay(250)
-        path = auto.getPathOrCancel("Near Scale To Cube3")
+        path = auto["Near Scale To Cube3"]
         parallel({
             Drivetrain.driveAlongPath(path)
         },  {
@@ -248,7 +238,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             Arm.isClamping = true
         })
 
-        path = auto.getPathOrCancel("Cube3 To Near Scale")
+        path = auto["Cube3 To Near Scale"]
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
@@ -267,11 +257,11 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
 }
 
 val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
-    val auto = autonomi.getAutoOrCancel("All Far Scale")
+    val auto = autonomi["All Far Scale"]
     auto.isMirrored = startingSide == Side.LEFT
 
     try {
-        var path = auto.getPathOrCancel("Start To Far Scale")
+        var path = auto["Start To Far Scale"]
         Arm.intakeSpeed = 0.2
         parallel({
             Drivetrain.driveAlongPath(path)
@@ -282,7 +272,7 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
         })
 
         parallel({
-            Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Scale To Cube1"))
+            Drivetrain.driveAlongPath(auto["Far Scale To Cube1"])
         }, {
             Carriage.animateToPose(Pose.INTAKE)
         },  {
@@ -293,7 +283,7 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
 
         Arm.isClamping = true
 
-        path = auto.getPathOrCancel("Cube1 To Far Scale")
+        path = auto["Cube1 To Far Scale"]
 
         parallel({
             Drivetrain.driveAlongPath(path)
@@ -307,7 +297,7 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
         })
 
         parallel({
-            Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Scale To Cube2"))
+            Drivetrain.driveAlongPath(auto["Far Scale To Cube2"])
         }, {
             Carriage.animateToPose(Pose.INTAKE)
         }, {
@@ -318,7 +308,7 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
 
         Arm.isClamping = true
 
-        path = auto.getPathOrCancel("Cube2 To Far Scale")
+        path = auto["Cube2 To Far Scale"]
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
@@ -329,20 +319,6 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
             delay(400)
             Arm.intakeSpeed = 0.3
         })
-
-
-//        parallel({
-//            Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Scale To Cube3"))
-//        }, {
-//            Carriage.animateToPose(Pose.INTAKE)
-//        }, {
-//            delay(300)
-//            Arm.isClamping = false
-//            Arm.intakeSpeed = 0.6
-//        })
-//
-//        Arm.isClamping = true
-//        delay(400)
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
@@ -350,14 +326,14 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
 }
 
 val centerAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
-    val auto = autonomi.getAutoOrCancel("Center Switch")
+    val auto = autonomi["Center Switch"]
     auto.isMirrored = false
     val switchSide = when (Game.switchSide) {
         Side.LEFT -> "Left"
         Side.RIGHT -> "Right"
         else -> throw InvalidStateException("Invalid Switch Side")
     }
-    var path = auto.getPathOrCancel("$switchSide Switch")
+    var path = auto["$switchSide Switch"]
 
     try {
         parallel({
@@ -371,14 +347,14 @@ val centerAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
 
         auto.isMirrored = Game.switchSide == Side.LEFT
 
-        Drivetrain.driveAlongPath(auto.getPathOrCancel("Back From Right Switch"))
+        Drivetrain.driveAlongPath(auto["Back From Right Switch"])
         Arm.intakeSpeed = 0.0
 
         parallel({
             Carriage.animateToPose(Pose.INTAKE)
             Arm.intakeSpeed = 0.6
         }, {
-            Drivetrain.driveAlongPath(auto.getPathOrCancel("Back To Cube"))
+            Drivetrain.driveAlongPath(auto["Back To Cube"])
         })
         Arm.isClamping = true
         delay(350)
@@ -386,7 +362,7 @@ val centerAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
 
         if (!SmartDashboard.getBoolean("Safe Center Auto", false)) {
             auto.isMirrored = Game.scaleSide == Side.LEFT
-            path = auto.getPathOrCancel("Cube To Scale")
+            path = auto["Cube To Scale"]
             parallel({
                 Drivetrain.driveAlongPath(path)
             }, {
@@ -398,18 +374,18 @@ val centerAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
             Carriage.animateToPose(Pose.INTAKE)
         } else {
             parallel({
-                Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube1 Backup"))
+                Drivetrain.driveAlongPath(auto["Cube1 Backup"])
             }, {
                 Carriage.animateToPose(Pose.SWITCH)
             })
-            Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube1 To Switch"))
+            Drivetrain.driveAlongPath(auto["Cube1 To Switch"])
             Arm.intakeSpeed = -0.6
 
-            Drivetrain.driveAlongPath(auto.getPathOrCancel("Switch To Cube2"))
+            Drivetrain.driveAlongPath(auto["Switch To Cube2"])
 
             Arm.intakeSpeed = 0.0
             parallel({
-                Drivetrain.driveAlongPath(auto.getPathOrCancel("To Cube2"))
+                Drivetrain.driveAlongPath(auto["To Cube2"])
             }, {
                 Arm.isClamping = false
                 Carriage.animateToPose(Pose.INTAKE_RAISED)
@@ -422,14 +398,13 @@ val centerAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
     } finally {
         Arm.intakeSpeed = 0.0
     }
-
 }
 
 val allFarScaleMeanMachine = Command("All Far Scale Platform", Drivetrain, Carriage, Arm) {
-    val auto = autonomi.getAutoOrCancel("All Far Scale Mean Machine")
+    val auto = autonomi["All Far Scale Mean Machine"]
     auto.isMirrored = false
     try {
-        var path = auto.getPathOrCancel("Start To Far Platform")
+        var path = auto["Start To Far Platform"]
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
@@ -438,7 +413,7 @@ val allFarScaleMeanMachine = Command("All Far Scale Platform", Drivetrain, Carri
             Arm.isClamping = false
         })
         parallel({
-            Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Platform To Cube1"))
+            Drivetrain.driveAlongPath(auto["Far Platform To Cube1"])
         }, {
             Carriage.animateToPose(Pose.INTAKE)
             Arm.isClamping = false
@@ -448,9 +423,9 @@ val allFarScaleMeanMachine = Command("All Far Scale Platform", Drivetrain, Carri
             Arm.isClamping = true
         })
         Arm.isClamping = true
-        path = auto.getPathOrCancel("Cube1 To Far Platform")
+        path = auto["Cube1 To Far Platform"]
         parallel({
-            Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube1 To Far Platform"))
+            Drivetrain.driveAlongPath(auto["Cube1 To Far Platform"])
         }, {
             delaySeconds(path.durationWithSpeed - 1.0)
             Carriage.animateToPose(Pose.SCALE_HIGH, 6.0)
@@ -461,25 +436,6 @@ val allFarScaleMeanMachine = Command("All Far Scale Platform", Drivetrain, Carri
         delay(200)
         Arm.isClamping = false
         delay(300)
-/*        parallel({
-            Drivetrain.driveAlongPath(auto.getPathOrCancel("Far Platform To Cube2"))
-        }, {
-            Carriage.animateToPose(Pose.INTAKE)
-            Arm.isClamping = false
-            Arm.intakeSpeed = 0.5
-        })
-        delay(200)
-        Arm.isClamping = true
-        Arm.intakeSpeed = 0.2
-        delay(200)
-        parallel({
-            Drivetrain.driveAlongPath(auto.getPathOrCancel("Cube2 To Far Platform"))
-        }, {
-            delaySeconds(path.durationWithSpeed - 1.0)
-            Carriage.animateToPose(Pose.SCALE_HIGH, 6.0)
-        })
-        Arm.isClamping = false
-        Carriage.animateToPose(Pose.INTAKE)*/
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
@@ -487,12 +443,62 @@ val allFarScaleMeanMachine = Command("All Far Scale Platform", Drivetrain, Carri
 }
 
 val driveStraightAuto = Command("Drive Straight",  Drivetrain) {
-    val auto = autonomi.getAutoOrCancel("Tests")
+    val auto = autonomi["Tests"]
     auto.isMirrored = false
     try {
-        Drivetrain.driveAlongPath(auto.getPathOrCancel("8 Foot Straight"))
+        Drivetrain.driveAlongPath(auto["8 Foot Straight"])
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
     }
 }
+
+fun testMotor(motorNumber: Int, encoderNumber: Int) {
+    val motor = TalonSRX(motorNumber)
+    val encoderMotor = TalonSRX(encoderNumber)
+    var sampleCount = 0
+    var velocityAcc = 0.0
+    var currentAcc = 0.0
+    try {
+        motor.set(ControlMode.PercentOutput, 1.0)
+        val timer = Timer()
+        timer.start()
+        while (timer.get() < 3.0) {
+            velocityAcc += encoderMotor.getSelectedSensorVelocity(0)
+            currentAcc += motor.outputCurrent
+            sampleCount++
+        }
+    } finally {
+        var velocityFinal = velocityAcc/sampleCount
+        var currentFinal = currentAcc/sampleCount
+        println("Motor $motorNumber Velocity: $velocityFinal")
+        println("Motor $motorNumber Current: $currentFinal")
+        motor.set(ControlMode.PercentOutput, 0.0)
+        if (velocityFinal<700.0 || currentFinal>15.0) {
+            println("Potentialy Bad Motor ****************************************************************************")
+        }
+    }
+}
+
+val preMatchTest = Command("Pre Match Test", Drivetrain, Arm) {
+    testMotor(0, 0)
+    testMotor(14,15)
+    testMotor(1,0)
+    testMotor(15,15)
+    testMotor(2,0)
+    testMotor(13,15)
+}
+
+
+
+//        parallel({
+//            left1.set(ControlMode.PercentOutput, 0.5)
+//            delaySeconds(3.0)
+//            motorsRunning = false
+//        }, {
+//            while(motorsRunning) {
+//                velocityAcc += left1.getSelectedSensorVelocity(0)
+//                currentAcc += left1.outputCurrent
+//                sampleCount++
+//            }
+//        })

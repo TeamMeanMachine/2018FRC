@@ -1,16 +1,11 @@
 package org.team2471.frc.powerup.carriage
 
-import org.team2471.frc.powerup.IS_COMP_BOT
-
 enum class Pose(val lifterHeight: Double, val armAngle: Double) {
     INTAKE(5.5, 0.0),
     CRITICAL_JUNCTION(24.0, 110.0),
-    SCALE_LOW(22.5, if (IS_COMP_BOT) 195.0 else 180.0),
-    SCALE_MED(29.0, if (IS_COMP_BOT) 195.0 else 180.0),
-    SCALE_HIGH(37.0, if (IS_COMP_BOT) 195.0 else 180.0),
-    /*    SCALE_LOW(25.5, 190.0),
-        SCALE_MED(36.0, 185.0),
-        SCALE_HIGH(45.0, 185.0),*/
+    SCALE_LOW(22.5, 195.0),
+    SCALE_MED(29.0, 195.0),
+    SCALE_HIGH(37.0, 195.0),
     SCALE_FRONT(56.0, 18.0),
     CARRY(10.0, 0.0),
     SWITCH(26.0, 20.0),
@@ -21,5 +16,4 @@ enum class Pose(val lifterHeight: Double, val armAngle: Double) {
     INTAKE_RAISED(17.0, 0.0);
 
     val isScale get() = this == SCALE_LOW || this == SCALE_MED || this == SCALE_HIGH || this == SCALE_FRONT
-    val isFlipped get() = this == SCALE_LOW || this == SCALE_MED || this == SCALE_HIGH
 }

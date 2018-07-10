@@ -3,7 +3,6 @@ package org.team2471.frc.powerup
 import edu.wpi.first.wpilibj.IterativeRobot
 import edu.wpi.first.wpilibj.livewindow.LiveWindow
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import javafx.scene.Camera
 import kotlinx.coroutines.experimental.runBlocking
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.EventMapper
@@ -18,8 +17,7 @@ class Robot : IterativeRobot() {
     private var hasRunAuto = false
 
     override fun robotInit() {
-        System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "1") // use 1 thread in CommonPool
-        CameraStream.isEnabled = true
+        //CameraStream.isEnabled = true
         Game.updateGameData()
 
         println("${if (IS_COMP_BOT) "Competition" else "Practice"} mode")
@@ -36,6 +34,16 @@ class Robot : IterativeRobot() {
         SmartDashboard.putNumber("Test Throttle", 1.0)
         SmartDashboard.putBoolean("Callibrate Gyro", false)
         LiveWindow.disableAllTelemetry()
+    }
+
+    override fun robotPeriodic() {
+        val eventMapperTime = measureTimeFPGA {
+            EventMapper.tick()
+        }
+
+        SmartDashboard.putNumber("Event Mapper Time", eventMapperTime)
+        Telemetry.tick()
+        SmartDashboard.putNumber("Match Time", (Game.matchTime - 3.0).coerceAtLeast(-1.0))
     }
 
     override fun autonomousInit() {
@@ -55,16 +63,6 @@ class Robot : IterativeRobot() {
         LEDController.state = FireState
         Drivetrain.zeroEncoders()
         CommandSystem.initDefaultCommands()
-    }
-
-    override fun robotPeriodic() {
-        val eventMapperTime = measureTimeFPGA {
-            EventMapper.tick()
-        }
-
-        SmartDashboard.putNumber("Event Mapper Time", eventMapperTime)
-        Telemetry.tick()
-        SmartDashboard.putNumber("Match Time", (Game.matchTime - 3.0).coerceAtLeast(-1.0))
     }
 
     override fun disabledInit() {

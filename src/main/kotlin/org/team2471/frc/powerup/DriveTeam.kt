@@ -62,7 +62,6 @@ object Driver {
         driverSpit.runWhile { controller.getBumper(GenericHID.Hand.kLeft) }
         newClimbCommand.runWhen { controller.startButton }
         toggleCubeSensor.runWhen { controller.bButton }
-        driveTest.runWhen { controller.getStickButton(GenericHID.Hand.kLeft) }
     }
 }
 

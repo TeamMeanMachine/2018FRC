@@ -4,7 +4,6 @@ import edu.wpi.first.wpilibj.Compressor
 import edu.wpi.first.wpilibj.PowerDistributionPanel
 
 object RobotMap {
-
     val pdp = PowerDistributionPanel()
     val compressor = Compressor()
 
@@ -15,7 +14,6 @@ object RobotMap {
         const val LEFT_DRIVE_MOTOR_1 = 0
         const val LEFT_DRIVE_MOTOR_2 = 1
         const val LEFT_DRIVE_MOTOR_3 = 2
-
 
         const val ELEVATOR_MOTOR_1 = 6
         const val ELEVATOR_MOTOR_2 = 4
@@ -29,19 +27,9 @@ object RobotMap {
 
     object Solenoids {
         const val WINGS = 0
-
         const val CLIMBING_GUIDE = 7
-
-        const val BRAKE = 3 // good
-
-        const val CARRIAGE_SHIFT = 6 // good
-
-        const val TENSION = 1
-
+        const val BRAKE = 3
+        const val CARRIAGE_SHIFT = 6
         const val INTAKE_CLAW = 2
-    }
-
-    object DIO {
-        const val CLIMB_BUTTON = 0
     }
 }
