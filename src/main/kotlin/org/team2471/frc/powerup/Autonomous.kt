@@ -1,6 +1,7 @@
 package org.team2471.frc.powerup
 
 import com.ctre.phoenix.motorcontrol.ControlMode
+import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import edu.wpi.first.networktables.EntryListenerFlags
 import edu.wpi.first.networktables.NetworkTableInstance
@@ -453,9 +454,7 @@ val driveStraightAuto = Command("Drive Straight",  Drivetrain) {
     }
 }
 
-fun testMotor(motorNumber: Int, encoderNumber: Int) {
-    val motor = TalonSRX(motorNumber)
-    val encoderMotor = TalonSRX(encoderNumber)
+suspend fun testMotor(motor: TalonSRX, encoderMotor: TalonSRX) {
     var sampleCount = 0
     var velocityAcc = 0.0
     var currentAcc = 0.0
@@ -467,12 +466,13 @@ fun testMotor(motorNumber: Int, encoderNumber: Int) {
             velocityAcc += encoderMotor.getSelectedSensorVelocity(0)
             currentAcc += motor.outputCurrent
             sampleCount++
+            delay(20)
         }
     } finally {
-        var velocityFinal = velocityAcc/sampleCount
-        var currentFinal = currentAcc/sampleCount
-        println("Motor $motorNumber Velocity: $velocityFinal")
-        println("Motor $motorNumber Current: $currentFinal")
+        val velocityFinal = velocityAcc/sampleCount
+        val currentFinal = currentAcc/sampleCount
+        println("Motor ${motor.deviceID} Velocity: $velocityFinal")
+        println("Motor ${motor.deviceID} Current: $currentFinal")
         motor.set(ControlMode.PercentOutput, 0.0)
         if (velocityFinal<700.0 || currentFinal>15.0) {
             println("Potentialy Bad Motor ****************************************************************************")
@@ -481,12 +481,24 @@ fun testMotor(motorNumber: Int, encoderNumber: Int) {
 }
 
 val preMatchTest = Command("Pre Match Test", Drivetrain, Arm) {
-    testMotor(0, 0)
-    testMotor(14,15)
-    testMotor(1,0)
-    testMotor(15,15)
-    testMotor(2,0)
-    testMotor(13,15)
+    val motor0 = TalonSRX(0)
+    val motor1 = TalonSRX(1)
+    val motor2 = TalonSRX(2)
+    val motor13 = TalonSRX(13)
+    val motor14 = TalonSRX(14)
+    val motor15 = TalonSRX(15)
+    motor0.setNeutralMode(NeutralMode.Coast)
+    motor1.setNeutralMode(NeutralMode.Coast)
+    motor2.setNeutralMode(NeutralMode.Coast)
+    motor13.setNeutralMode(NeutralMode.Coast)
+    motor14.setNeutralMode(NeutralMode.Coast)
+    motor15.setNeutralMode(NeutralMode.Coast)
+    testMotor(motor0, motor0)
+    testMotor(motor14,motor15)
+    testMotor(motor1,motor0)
+    testMotor(motor15,motor15)
+    testMotor(motor2,motor0)
+    testMotor(motor13,motor15)
 }
 
 

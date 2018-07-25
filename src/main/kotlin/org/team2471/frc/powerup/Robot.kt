@@ -1,5 +1,6 @@
 package org.team2471.frc.powerup
 
+import com.ctre.phoenix.motorcontrol.NeutralMode
 import edu.wpi.first.wpilibj.IterativeRobot
 import edu.wpi.first.wpilibj.livewindow.LiveWindow
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -48,6 +49,7 @@ class Robot : IterativeRobot() {
 
     override fun autonomousInit() {
         CameraStream.isEnabled = false
+        Drivetrain.setNeutralMode(NeutralMode.Brake)
         hasRunAuto = true
         Game.updateGameData()
         LEDController.alliance = Game.alliance
@@ -57,6 +59,7 @@ class Robot : IterativeRobot() {
 
     override fun teleopInit() {
         CameraStream.isEnabled = true
+        Drivetrain.setNeutralMode(NeutralMode.Brake)
         if (!hasRunAuto) runBlocking {
             Carriage.animateToPose(Pose.INTAKE)
         }
@@ -68,6 +71,7 @@ class Robot : IterativeRobot() {
     override fun disabledInit() {
         CameraStream.isEnabled = true
         LEDController.state = IdleState
+        Drivetrain.setNeutralMode(NeutralMode.Coast)
     }
 
     override fun disabledPeriodic() {

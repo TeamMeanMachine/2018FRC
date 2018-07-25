@@ -1503,7 +1503,7 @@
 								},
 								"m_prevSlopeMethod": "SLOPE_FLAT",
 								"m_prevTangent": {
-									"x": 0.0,
+									"x": 0.8333333333333333,
 									"y": 0.0
 								},
 								"m_timeAndValue": {
@@ -1513,7 +1513,7 @@
 							},
 							"m_nextSlopeMethod": "SLOPE_FLAT",
 							"m_nextTangent": {
-								"x": 0.0,
+								"x": 1.6666666666666665,
 								"y": 0.0
 							},
 							"m_prevAngleAndMagnitude": {
@@ -1550,11 +1550,11 @@
 								"m_nextSlopeMethod": "SLOPE_SMOOTH",
 								"m_nextTangent": {
 									"x": 0.0,
-									"y": 0.0
+									"y": 19.0
 								},
 								"m_position": {
 									"x": 0.0,
-									"y": 8.0
+									"y": 20.0
 								},
 								"m_prevAngleAndMagnitude": {
 									"x": 0.0,
@@ -1563,13 +1563,13 @@
 								"m_prevSlopeMethod": "SLOPE_SMOOTH",
 								"m_prevTangent": {
 									"x": 0.0,
-									"y": 0.0
+									"y": 19.0
 								}
 							},
 							"m_nextSlopeMethod": "SLOPE_SMOOTH",
 							"m_nextTangent": {
 								"x": 0.0,
-								"y": 0.0
+								"y": 19.0
 							},
 							"m_position": {
 								"x": 0.0,
@@ -1582,7 +1582,7 @@
 							"m_prevSlopeMethod": "SLOPE_SMOOTH",
 							"m_prevTangent": {
 								"x": 0.0,
-								"y": 0.0
+								"y": 19.0
 							}
 						}
 					},
@@ -1618,7 +1618,7 @@
 								},
 								"m_prevSlopeMethod": "SLOPE_FLAT",
 								"m_prevTangent": {
-									"x": 0.0,
+									"x": 1.3333333333333333,
 									"y": 0.0
 								},
 								"m_timeAndValue": {
@@ -1628,7 +1628,7 @@
 							},
 							"m_nextSlopeMethod": "SLOPE_FLAT",
 							"m_nextTangent": {
-								"x": 0.0,
+								"x": 2.6666666666666665,
 								"y": 0.0
 							},
 							"m_prevAngleAndMagnitude": {
@@ -1805,7 +1805,7 @@
 								},
 								"m_prevSlopeMethod": "SLOPE_FLAT",
 								"m_prevTangent": {
-									"x": 0.0,
+									"x": 0.6666666666666666,
 									"y": 0.0
 								},
 								"m_timeAndValue": {
@@ -1815,7 +1815,7 @@
 							},
 							"m_nextSlopeMethod": "SLOPE_FLAT",
 							"m_nextTangent": {
-								"x": 0.0,
+								"x": 1.3333333333333333,
 								"y": 0.0
 							},
 							"m_prevAngleAndMagnitude": {
@@ -1992,7 +1992,7 @@
 								},
 								"m_prevSlopeMethod": "SLOPE_FLAT",
 								"m_prevTangent": {
-									"x": 0.0,
+									"x": 0.3333333333333333,
 									"y": 0.0
 								},
 								"m_timeAndValue": {
@@ -2002,7 +2002,7 @@
 							},
 							"m_nextSlopeMethod": "SLOPE_FLAT",
 							"m_nextTangent": {
-								"x": 0.0,
+								"x": 0.6666666666666666,
 								"y": 0.0
 							},
 							"m_prevAngleAndMagnitude": {
@@ -3255,7 +3255,7 @@
 									},
 									"m_nextSlopeMethod": "SLOPE_MANUAL",
 									"m_nextTangent": {
-										"x": 4.666666666666667,
+										"x": 0.0,
 										"y": 0.0
 									},
 									"m_prevAngleAndMagnitude": {
@@ -3264,7 +3264,7 @@
 									},
 									"m_prevSlopeMethod": "SLOPE_MANUAL",
 									"m_prevTangent": {
-										"x": 4.666666666666667,
+										"x": 0.0,
 										"y": 0.0
 									},
 									"m_timeAndValue": {
@@ -3274,8 +3274,8 @@
 								},
 								"m_nextSlopeMethod": "SLOPE_MANUAL",
 								"m_nextTangent": {
-									"x": 2.3107974089067707,
-									"y": 0.3235116372469478
+									"x": 0.0,
+									"y": 0.0
 								},
 								"m_prevAngleAndMagnitude": {
 									"x": 0.1390959414820713,
@@ -3283,8 +3283,8 @@
 								},
 								"m_prevSlopeMethod": "SLOPE_MANUAL",
 								"m_prevTangent": {
-									"x": 2.3107974089067707,
-									"y": 0.3235116372469478
+									"x": 0.0,
+									"y": 0.0
 								},
 								"m_timeAndValue": {
 									"x": 2.8,
@@ -3293,7 +3293,7 @@
 							},
 							"m_nextSlopeMethod": "SLOPE_MANUAL",
 							"m_nextTangent": {
-								"x": 2.3333333333333335,
+								"x": 0.0,
 								"y": 0.0
 							},
 							"m_prevAngleAndMagnitude": {
@@ -3302,7 +3302,7 @@
 							},
 							"m_prevSlopeMethod": "SLOPE_MANUAL",
 							"m_prevTangent": {
-								"x": 2.3333333333333335,
+								"x": 0.0,
 								"y": 0.0
 							},
 							"m_timeAndValue": {
