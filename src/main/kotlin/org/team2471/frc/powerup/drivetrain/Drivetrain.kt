@@ -11,7 +11,6 @@ import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import kotlinx.coroutines.experimental.CancellationException
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import org.team2471.frc.lib.control.experimental.Command
@@ -32,10 +31,9 @@ import org.team2471.frc.powerup.carriage.Pose
 import java.lang.Math.*
 
 object Drivetrain {
-    private val leftMotors = TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_1).apply {
-        configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10)
+    private val leftMaster = TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_1).apply {
         configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 1, 10)
-        setNeutralMode(NeutralMode.Brake)
+        setNeutralMode(NeutralMode.Coast)
         configPeakCurrentLimit(DrivetrainConstants.PEAK_CURRENT_LIMIT, 10)
         configContinuousCurrentLimit(DrivetrainConstants.CONTINUOUS_CURRENT_LIMIT, 10)
         configPeakCurrentDuration(DrivetrainConstants.PEAK_CURRENT_DURATION, 10)
@@ -43,32 +41,26 @@ object Drivetrain {
         configClosedloopRamp(0.1, 10)
         configOpenloopRamp(0.0, 10)
         inverted = true
-        configOpenloopRamp(0.25, 10)
-        configMotionProfileTrajectoryPeriod(0, 10)
 
-//        configNominalOutputForward(DrivetrainConstants.MINIMUM_OUTPUT, 10)
-//        configNominalOutputReverse(-DrivetrainConstants.MINIMUM_OUTPUT, 10)
-//        configAllowableClosedloopError(0, feetToTicks(0.2).roundToInt(), 10)
-        configNominalOutputForward(0.0, 10)
-        configNominalOutputReverse(0.0, 10)
-        configAllowableClosedloopError(0, 0, 10)
-
-        // distance
         config_kP(0, DrivetrainConstants.DISTANCE_P, 10)
         config_kD(0, DrivetrainConstants.DISTANCE_D, 10)
         config_kF(0, 0.0, 10)
 
         selectProfileSlot(0, 0)
         Telemetry.registerMotor("Drive Left Master",this)
-    } + TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_2).apply {
-        setNeutralMode(NeutralMode.Brake)
+    }
+    private val leftSlave1 = TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_2).apply {
+        set(ControlMode.Follower, leftMaster.deviceID.toDouble())
+        setNeutralMode(NeutralMode.Coast)
         configPeakCurrentLimit(DrivetrainConstants.PEAK_CURRENT_LIMIT, 10)
         configContinuousCurrentLimit(DrivetrainConstants.CONTINUOUS_CURRENT_LIMIT, 10)
         configPeakCurrentDuration(DrivetrainConstants.PEAK_CURRENT_DURATION, 10)
         enableCurrentLimit(true)
         inverted = true
         Telemetry.registerMotor("Drive Left Slave 1", this)
-    } + TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_3).apply {
+    }
+    private val leftSlave2 = TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_3).apply {
+        set(ControlMode.Follower, leftMaster.deviceID.toDouble())
         setNeutralMode(NeutralMode.Brake)
         configPeakCurrentLimit(DrivetrainConstants.PEAK_CURRENT_LIMIT, 10)
         configContinuousCurrentLimit(DrivetrainConstants.CONTINUOUS_CURRENT_LIMIT, 10)
@@ -78,40 +70,35 @@ object Drivetrain {
         Telemetry.registerMotor("Drive Left Slave 2", this)
     }
 
-    private val rightMotors = TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_1).apply {
-        configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10)
-        setNeutralMode(NeutralMode.Brake)
+    private val rightMaster = TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_1).apply {
+        configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 1, 10)
+        setNeutralMode(NeutralMode.Coast)
         configPeakCurrentLimit(DrivetrainConstants.PEAK_CURRENT_LIMIT, 10)
         configContinuousCurrentLimit(DrivetrainConstants.CONTINUOUS_CURRENT_LIMIT, 10)
         configPeakCurrentDuration(DrivetrainConstants.PEAK_CURRENT_DURATION, 10)
         enableCurrentLimit(true)
         configClosedloopRamp(0.1, 10)
         configOpenloopRamp(0.0, 10)
-        configMotionProfileTrajectoryPeriod(0, 10)
 
-//        configNominalOutputForward(DrivetrainConstants.MINIMUM_OUTPUT, 10)
-//        configNominalOutputReverse(-DrivetrainConstants.MINIMUM_OUTPUT, 10)
-//        configAllowableClosedloopError(0, feetToTicks(0.2).roundToInt(), 10)
-        configNominalOutputForward(0.0, 10)
-        configNominalOutputReverse(0.0, 10)
-        configAllowableClosedloopError(0, 0, 10)
-
-        // distance
         config_kP(0, DrivetrainConstants.DISTANCE_P, 10)
         config_kD(0, DrivetrainConstants.DISTANCE_D, 10)
         config_kF(0, 0.0, 10)
 
         selectProfileSlot(0, 0)
-        Telemetry.registerMotor("Drive Right Master", this)
-    } + TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_2).apply {
-        setNeutralMode(NeutralMode.Brake)
+        Telemetry.registerMotor("Drive Right Master",this)
+    }
+    private val rightSlave1 = TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_2).apply {
+        setNeutralMode(NeutralMode.Coast)
+        set(ControlMode.Follower, rightMaster.deviceID.toDouble())
         configPeakCurrentLimit(DrivetrainConstants.PEAK_CURRENT_LIMIT, 10)
         configContinuousCurrentLimit(DrivetrainConstants.CONTINUOUS_CURRENT_LIMIT, 10)
         configPeakCurrentDuration(DrivetrainConstants.PEAK_CURRENT_DURATION, 10)
         enableCurrentLimit(true)
         Telemetry.registerMotor("Drive Right Slave 1", this)
-    } + TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_3).apply {
+    }
+    private val rightSlave2 = TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_3).apply {
         setNeutralMode(NeutralMode.Brake)
+        set(ControlMode.Follower, rightMaster.deviceID.toDouble())
         configPeakCurrentLimit(DrivetrainConstants.PEAK_CURRENT_LIMIT, 10)
         configContinuousCurrentLimit(DrivetrainConstants.CONTINUOUS_CURRENT_LIMIT, 10)
         configPeakCurrentDuration(DrivetrainConstants.PEAK_CURRENT_DURATION, 10)
@@ -119,23 +106,24 @@ object Drivetrain {
         Telemetry.registerMotor("Drive Right Slave 2", this)
     }
 
+
     private val gyro = ADIS16448_IMU(ADIS16448_IMU.Axis.kZ)
 
-    val table = NetworkTableInstance.getDefault().getTable("Drivetrain")
+    private val table = NetworkTableInstance.getDefault().getTable("Drivetrain")
 
     private fun ticksToFeet(ticks: Int) = ticks.toDouble() / DrivetrainConstants.TICKS_PER_REV * DrivetrainConstants.WHEEL_DIAMETER_INCHES * Math.PI / 12.0
     private fun feetToTicks(feet: Double) = feet * 12.0 / Math.PI / DrivetrainConstants.WHEEL_DIAMETER_INCHES * DrivetrainConstants.TICKS_PER_REV
 
+    var gyroAngleOffset = 0.0
+
     private val gyroAngle: Double
         get() = gyro.angleZ + gyroAngleOffset
 
-    var gyroAngleOffset = 0.0
-
     private val leftVelocity: Double
-        get() = ticksToFeet(leftMotors.getSelectedSensorVelocity(1) * 10)
+        get() = ticksToFeet(leftMaster.getSelectedSensorVelocity(1) * 10)
 
     private val rightVelocity: Double
-        get() = ticksToFeet(rightMotors.getSelectedSensorVelocity(1) * 10)
+        get() = ticksToFeet(rightMaster.getSelectedSensorVelocity(1) * 10)
 
     private val heightMultiplierCurve = MotionCurve().apply {
         storeValue(0.0, 1.0)
@@ -149,10 +137,10 @@ object Drivetrain {
     }
 
     private val leftDistance: Double
-        get() = ticksToFeet(leftMotors.getSelectedSensorPosition(0))
+        get() = ticksToFeet(leftMaster.getSelectedSensorPosition(0))
 
     private val rightDistance: Double
-        get() = ticksToFeet(rightMotors.getSelectedSensorPosition(0))
+        get() = ticksToFeet(rightMaster.getSelectedSensorPosition(0))
 
     private val throttleEntry = table.getEntry("Applied throttles")
 
@@ -176,8 +164,10 @@ object Drivetrain {
             rightPower /= maxPower
         }
 
-        leftMotors.set(ControlMode.PercentOutput, leftPower)
-        rightMotors.set(ControlMode.PercentOutput, rightPower)
+        leftMaster.set(ControlMode.PercentOutput, leftPower)
+        rightMaster.set(ControlMode.PercentOutput, rightPower)
+        println("LEFT POWER: $leftPower")
+        println("RIGHT POWER: $rightPower")
 
         var rampRate = rampRateCurve.getValue(Lifter.height)
 
@@ -185,22 +175,21 @@ object Drivetrain {
             rampRate *= 0.6
         }
 
-        leftMotors.configOpenloopRamp(rampRate, 0)
-        rightMotors.configOpenloopRamp(rampRate, 0)
+        leftMaster.configOpenloopRamp(rampRate, 0)
+        rightMaster.configOpenloopRamp(rampRate, 0)
 
 
         throttleEntry.setDoubleArray(doubleArrayOf(leftPower, rightPower))
     }
 
     fun driveRaw(leftSpeed: Double, rightSpeed: Double) {
-        leftMotors.set(ControlMode.PercentOutput, leftSpeed)
-        rightMotors.set(ControlMode.PercentOutput, rightSpeed)
+        leftMaster.set(ControlMode.PercentOutput, leftSpeed)
+        rightMaster.set(ControlMode.PercentOutput, rightSpeed)
     }
 
-
     suspend fun driveDistance(distance: Double, time: Double, suspend: Boolean = true) {
-        leftMotors.selectProfileSlot(0, 0)
-        rightMotors.selectProfileSlot(0, 0)
+        leftMaster.selectProfileSlot(0, 0)
+        rightMaster.selectProfileSlot(0, 0)
         val curve = MotionCurve()
         curve.storeValue(0.0, 0.0)
         curve.storeValue(time, distance)
@@ -211,15 +200,15 @@ object Drivetrain {
             periodic(condition = { timer.get() <= time }) {
                 val t = timer.get()
                 val v = curve.getValue(t)
-                leftMotors.set(ControlMode.Position, feetToTicks(v))
-                rightMotors.set(ControlMode.Position, feetToTicks(v))
+                leftMaster.set(ControlMode.Position, feetToTicks(v))
+                rightMaster.set(ControlMode.Position, feetToTicks(v))
             }
 
             if (suspend)
                 suspendUntil { Math.abs(leftDistance - distance) < 0.1 && Math.abs(rightDistance - distance) < 0.1 }
         } finally {
-            leftMotors.neutralOutput()
-            rightMotors.neutralOutput()
+            leftMaster.neutralOutput()
+            rightMaster.neutralOutput()
         }
     }
 
@@ -236,24 +225,25 @@ object Drivetrain {
             periodic(condition = { timer.get() <= time }) {
                 val t = timer.get()
                 val v = curve.getValue(t)
-                leftMotors.set(ControlMode.Position, feetToTicks(-v))
-                rightMotors.set(ControlMode.Position, feetToTicks(v))
+                leftMaster.set(ControlMode.Position, feetToTicks(-v))
+                rightMaster.set(ControlMode.Position, feetToTicks(v))
             }
         } finally {
-            leftMotors.neutralOutput()
-            rightMotors.neutralOutput()
+            leftMaster.neutralOutput()
+            rightMaster.neutralOutput()
         }
     }
 
-    fun setDistance(distance: Double) {
-        leftMotors.set(ControlMode.Position, feetToTicks(distance))
-        rightMotors.set(ControlMode.Position, feetToTicks(distance))
+    fun zeroDistance() {
+        leftMaster.sensorCollection.setQuadraturePosition(0, 0)
+        rightMaster.sensorCollection.setQuadraturePosition(0, 0)
     }
 
-    fun zeroDistance() {
-        leftMotors.sensorCollection.setQuadraturePosition(0, 0)
-        rightMotors.sensorCollection.setQuadraturePosition(0, 0)
+    fun setNeutralMode(mode: NeutralMode) {
+        leftSlave2.setNeutralMode(mode)
+        rightSlave2.setNeutralMode(mode)
     }
+
 
     @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
     suspend fun driveAlongPath(path: Path2D, extraTime: Double = 0.0) {
@@ -314,8 +304,8 @@ object Drivetrain {
                 gyroAngleEntry.setDouble(gyroAngle)
                 pathAngleEntry.setDouble(pathAngle)
                 angleErrorEntry.setDouble(angleError)
-                leftPositionError.setDouble(ticksToFeet(leftMotors.getClosedLoopError(0)))
-                rightPositionError.setDouble(ticksToFeet(rightMotors.getClosedLoopError(0)))
+                leftPositionError.setDouble(ticksToFeet(leftMaster.getClosedLoopError(0)))
+                rightPositionError.setDouble(ticksToFeet(rightMaster.getClosedLoopError(0)))
                 leftVelocityErrorEntry.setDouble(leftVelocityError)
                 rightVelocityErrorEntry.setDouble(rightVelocityError)
 
@@ -328,31 +318,20 @@ object Drivetrain {
                 val rightFeedForward = rightVelocity * DrivetrainConstants.RIGHT_FEED_FORWARD_COEFFICIENT +
                         (DrivetrainConstants.RIGHT_FEED_FORWARD_OFFSET * signum(rightVelocity)) -
                         velocityDeltaTimesCoefficient
-                leftMotors.set(ControlMode.Position, feetToTicks(leftDistance),
+
+                leftMaster.set(ControlMode.Position, feetToTicks(leftDistance),
                         DemandType.ArbitraryFeedForward, leftFeedForward)
-                rightMotors.set(ControlMode.Position, feetToTicks(rightDistance),
+                rightMaster.set(ControlMode.Position, feetToTicks(rightDistance),
                         DemandType.ArbitraryFeedForward, rightFeedForward)
-//                leftMotors.set(ControlMode.PercentOutput, 0.0, DemandType.ArbitraryFeedForward, leftFeedForward)
-//                rightMotors.set(ControlMode.PercentOutput, 0.0, DemandType.ArbitraryFeedForward, rightFeedForward)
 
-                val leftDistanceError = ticksToFeet(leftMotors.getClosedLoopError(0))
-                val rightDistanceError = ticksToFeet(rightMotors.getClosedLoopError(0))
-                // give up if the error is too large
-//                if (abs(leftDistanceError) > DrivetrainConstants.MAX_PATH_ERROR ||
-//                        abs(rightDistanceError) > DrivetrainConstants.MAX_PATH_ERROR) {
-//                    throw CancellationException("Path following error too high")
-//                }
-
-
-                if (leftMotors.motorOutputPercent > 0.95) {
+                if (leftMaster.motorOutputPercent > 0.95) {
                     DriverStation.reportWarning("Left motor is saturated", false)
                 }
-                if (rightMotors.motorOutputPercent > 0.95) {
+                if (rightMaster.motorOutputPercent > 0.95) {
                     DriverStation.reportWarning("Right motor is saturated", false)
                 }
 
                 finished = t >= path.durationWithSpeed + extraTime
-//                        && abs(angleError) < 3.5
 
                 prevTime = t
                 prevLeftDistance = leftDistance
@@ -361,14 +340,14 @@ object Drivetrain {
                 prevRightVelocity = rightVelocity
             }
         } finally {
-            leftMotors.neutralOutput()
-            rightMotors.neutralOutput()
+            leftMaster.neutralOutput()
+            rightMaster.neutralOutput()
         }
     }
 
     fun zeroEncoders() {
-        leftMotors.sensorCollection.setQuadraturePosition(0, 0)
-        rightMotors.sensorCollection.setQuadraturePosition(0, 0)
+        leftMaster.sensorCollection.setQuadraturePosition(0, 0)
+        rightMaster.sensorCollection.setQuadraturePosition(0, 0)
     }
 
     fun calibrateGyro() {
@@ -389,12 +368,12 @@ object Drivetrain {
         dEntry.setDouble(Double.NaN)
 
         pEntry.addListener({ event ->
-            leftMotors.config_kP(0, event.value.double, 0)
-            rightMotors.config_kP(0, event.value.double, 0)
+            leftMaster.config_kP(0, event.value.double, 0)
+            rightMaster.config_kP(0, event.value.double, 0)
         }, EntryListenerFlags.kUpdate)
         dEntry.addListener({ event ->
-            leftMotors.config_kD(0, event.value.double, 0)
-            rightMotors.config_kD(0, event.value.double, 0)
+            leftMaster.config_kD(0, event.value.double, 0)
+            rightMaster.config_kD(0, event.value.double, 0)
         }, EntryListenerFlags.kUpdate)
 
         SmartDashboard.putBoolean("Use Gyro", true)
@@ -411,17 +390,22 @@ object Drivetrain {
                 leftVelocityEntry.setDouble(leftVelocity)
                 rightVelocityEntry.setDouble(rightVelocity)
 
-                outputsEntry.setDoubleArray(doubleArrayOf(leftMotors.motorOutputPercent, rightMotors.motorOutputPercent))
+                outputsEntry.setDoubleArray(doubleArrayOf(leftMaster.motorOutputPercent, rightMaster.motorOutputPercent))
 
                 SmartDashboard.putNumberArray("Encoder Distances",
-                        arrayOf(ticksToFeet(leftMotors.getSelectedSensorPosition(0)),
-                                ticksToFeet(rightMotors.getSelectedSensorPosition(0))))
+                        arrayOf(ticksToFeet(leftMaster.getSelectedSensorPosition(0)),
+                                ticksToFeet(rightMaster.getSelectedSensorPosition(0))))
             }
         }
 
         CommandSystem.registerDefaultCommand(this, Command("Drivetrain Default", this) {
             periodic {
                 drive(Driver.throttle, Driver.softTurn, Driver.hardTurn)
+
+//                println("Left Output: ${leftMaster.motorOutputPercent}")
+//                println("Left Current: ${leftMaster.outputCurrent}")
+//                println("Right Output: ${rightMaster.motorOutputPercent}")
+//                println("Right Current: ${rightMaster.outputCurrent}")
             }
         })
     }

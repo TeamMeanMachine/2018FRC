@@ -6,7 +6,6 @@ import com.ctre.phoenix.motorcontrol.FeedbackDevice
 import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import edu.wpi.first.wpilibj.AnalogInput
-import edu.wpi.first.wpilibj.RobotState
 import edu.wpi.first.wpilibj.Solenoid
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -35,7 +34,7 @@ object Arm {
         setNeutralMode(NeutralMode.Brake)
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(0, 10)
-        configPeakCurrentDuration(100, 10)
+        configPeakCurrentDuration(0, 10)
         enableCurrentLimit(true)
         setSensorPhase(false)
         inverted = true

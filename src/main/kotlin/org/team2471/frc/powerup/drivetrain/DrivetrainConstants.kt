@@ -2,8 +2,8 @@ package org.team2471.frc.powerup.drivetrain
 
 object DrivetrainConstants {
     // motor configuration
-    const val PEAK_CURRENT_LIMIT = 20
-    const val CONTINUOUS_CURRENT_LIMIT = 15
+    const val PEAK_CURRENT_LIMIT = 0
+    const val CONTINUOUS_CURRENT_LIMIT = 40
     const val PEAK_CURRENT_DURATION = 100
 
 
