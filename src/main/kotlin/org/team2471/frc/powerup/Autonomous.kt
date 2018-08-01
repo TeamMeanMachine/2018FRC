@@ -6,7 +6,7 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import edu.wpi.first.networktables.EntryListenerFlags
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.Talon
+import edu.wpi.first.wpilibj.Solenoid
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -16,10 +16,7 @@ import org.team2471.frc.lib.control.experimental.delaySeconds
 import org.team2471.frc.lib.control.experimental.parallel
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.util.measureTimeFPGA
-import org.team2471.frc.powerup.carriage.Arm
-import org.team2471.frc.powerup.carriage.Carriage
-import org.team2471.frc.powerup.carriage.Lifter
-import org.team2471.frc.powerup.carriage.Pose
+import org.team2471.frc.powerup.carriage.*
 import org.team2471.frc.powerup.drivetrain.Drivetrain
 import sun.plugin.dom.exception.InvalidStateException
 import java.io.File
@@ -49,27 +46,23 @@ object AutoChooser {
     private val nearSwitchNearScaleChooser = SendableChooser<Command>().apply {
         addDefault(nearScaleAuto.name, nearScaleAuto)
         addObject(driveStraightAuto.name, driveStraightAuto)
-        addObject(preMatchTest.name, preMatchTest)
     }
 
     private val nearSwitchFarScaleChooser = SendableChooser<Command>().apply {
         addDefault(farScaleAuto.name, farScaleAuto)
         addObject(allFarScaleMeanMachine.name, allFarScaleMeanMachine)
         addObject(driveStraightAuto.name, driveStraightAuto)
-        addObject(preMatchTest.name, preMatchTest)
     }
 
     private val farSwitchNearScaleChooser = SendableChooser<Command>().apply {
         addDefault(nearScaleAuto.name, nearScaleAuto)
         addObject(driveStraightAuto.name, driveStraightAuto)
-        addObject(preMatchTest.name, preMatchTest)
     }
 
     private val farSwitchFarScaleChooser = SendableChooser<Command>().apply {
         addDefault(farScaleAuto.name, farScaleAuto)
         addObject(allFarScaleMeanMachine.name, allFarScaleMeanMachine)
         addObject(driveStraightAuto.name, driveStraightAuto)
-        addObject(preMatchTest.name, preMatchTest)
     }
 
     private val scaleSideChooser = SendableChooser<Side?>().apply {
@@ -454,15 +447,15 @@ val driveStraightAuto = Command("Drive Straight",  Drivetrain) {
     }
 }
 
-suspend fun testMotor(motor: TalonSRX, encoderMotor: TalonSRX) {
+suspend fun testMotorTime(motor: TalonSRX, encoderMotor: TalonSRX, time: Double, power: Double) {
     var sampleCount = 0
     var velocityAcc = 0.0
     var currentAcc = 0.0
     try {
-        motor.set(ControlMode.PercentOutput, 1.0)
+        motor.set(ControlMode.PercentOutput, power)
         val timer = Timer()
         timer.start()
-        while (timer.get() < 3.0) {
+        while (timer.get() < time) {
             velocityAcc += encoderMotor.getSelectedSensorVelocity(0)
             currentAcc += motor.outputCurrent
             sampleCount++
@@ -474,8 +467,45 @@ suspend fun testMotor(motor: TalonSRX, encoderMotor: TalonSRX) {
         println("Motor ${motor.deviceID} Velocity: $velocityFinal")
         println("Motor ${motor.deviceID} Current: $currentFinal")
         motor.set(ControlMode.PercentOutput, 0.0)
-        if (velocityFinal<700.0 || currentFinal>15.0) {
-            println("Potentialy Bad Motor ****************************************************************************")
+        if (velocityFinal<580.0 || currentFinal>23.0) {
+            println("Potentiall" +
+                    "y Bad Motor ****************************************************************************")
+        }
+    }
+}
+
+suspend fun testMotorDistance(motor: TalonSRX, encoderMotor: TalonSRX, distance: Double, power: Double) {
+    var sampleCount = 0
+    var velocityAcc = 0.0
+    var currentAcc = 0.0
+    try {
+        motor.set(ControlMode.PercentOutput, power)
+        encoderMotor.setSelectedSensorPosition(0,0,5)
+        while (encoderMotor.getSelectedSensorPosition(0)/ CarriageConstants.LIFTER_TICKS_PER_INCH < distance) {
+            RobotMap.Solenoids.discBrake.set(true)
+            RobotMap.Solenoids.shifter.set(true) // low gear
+            velocityAcc += encoderMotor.getSelectedSensorVelocity(0)
+            currentAcc += motor.outputCurrent
+            sampleCount++
+            delay(20)
+        }
+        motor.set(ControlMode.PercentOutput, -power)
+        while (encoderMotor.getSelectedSensorPosition(0)/ CarriageConstants.LIFTER_TICKS_PER_INCH > 0.0) {
+            RobotMap.Solenoids.discBrake.set(true)
+            RobotMap.Solenoids.shifter.set(true) // low gear
+            velocityAcc += -encoderMotor.getSelectedSensorVelocity(0)
+            currentAcc += motor.outputCurrent
+            sampleCount++
+            delay(20)
+        }
+    } finally {
+        val velocityFinal = velocityAcc/sampleCount
+        val currentFinal = currentAcc/sampleCount
+        println("Motor ${motor.deviceID} Velocity: $velocityFinal")
+        println("Motor ${motor.deviceID} Current: $currentFinal")
+        motor.set(ControlMode.PercentOutput, 0.0)
+        if (velocityFinal<580.0 || currentFinal>23.0) {
+            println("Potentially Bad Motor ****************************************************************************")
         }
     }
 }
@@ -487,30 +517,66 @@ val preMatchTest = Command("Pre Match Test", Drivetrain, Arm) {
     val motor13 = TalonSRX(13)
     val motor14 = TalonSRX(14)
     val motor15 = TalonSRX(15)
-    motor0.setNeutralMode(NeutralMode.Coast)
-    motor1.setNeutralMode(NeutralMode.Coast)
-    motor2.setNeutralMode(NeutralMode.Coast)
-    motor13.setNeutralMode(NeutralMode.Coast)
-    motor14.setNeutralMode(NeutralMode.Coast)
-    motor15.setNeutralMode(NeutralMode.Coast)
-    testMotor(motor0, motor0)
-    testMotor(motor14,motor15)
-    testMotor(motor1,motor0)
-    testMotor(motor15,motor15)
-    testMotor(motor2,motor0)
-    testMotor(motor13,motor15)
+
+    val elevatorMotor1 = RobotMap.Talons.elevatorMotor1
+    val elevatorMotor2 = RobotMap.Talons.elevatorMotor2
+    val elevatorMotor3 = RobotMap.Talons.elevatorMotor3
+    val elevatorMotor4 = RobotMap.Talons.elevatorMotor4
+
+    try {
+        motor0.setNeutralMode(NeutralMode.Coast)
+        motor1.setNeutralMode(NeutralMode.Coast)
+        motor2.setNeutralMode(NeutralMode.Coast)
+        motor13.setNeutralMode(NeutralMode.Coast)
+        motor14.setNeutralMode(NeutralMode.Coast)
+        motor15.setNeutralMode(NeutralMode.Coast)
+
+        motor0.set(ControlMode.PercentOutput, 0.0)
+        motor1.set(ControlMode.PercentOutput, 0.0)
+        motor2.set(ControlMode.PercentOutput, 0.0)
+        motor13.set(ControlMode.PercentOutput, 0.0)
+        motor14.set(ControlMode.PercentOutput, 0.0)
+        motor15.set(ControlMode.PercentOutput, 0.0)
+/*
+        testMotorTime(motor0, motor0, 1.0, 1.0)
+        testMotorTime(motor14,motor15,1.0, 1.0)
+        testMotorTime(motor1,motor0, 1.0, 1.0)
+        testMotorTime(motor15,motor15, 1.0, 1.0)
+        testMotorTime(motor2,motor0, 1.0, 1.0)
+        testMotorTime(motor13,motor15, 1.0, 1.0)
+*/
+        elevatorMotor1.setNeutralMode(NeutralMode.Coast)
+        elevatorMotor2.setNeutralMode(NeutralMode.Coast)
+        elevatorMotor3.setNeutralMode(NeutralMode.Coast)
+        elevatorMotor4.setNeutralMode(NeutralMode.Coast)
+
+        elevatorMotor1.set(ControlMode.PercentOutput, 0.0)
+        elevatorMotor2.set(ControlMode.PercentOutput, 0.0)
+        elevatorMotor3.set(ControlMode.PercentOutput, 0.0)
+        elevatorMotor4.set(ControlMode.PercentOutput, 0.0)
+
+        println(1)
+        println(2)
+        testMotorDistance(elevatorMotor1, elevatorMotor1, 18.0, 1.0)
+        println(3)
+        testMotorDistance(elevatorMotor2, elevatorMotor1, 18.0, 1.0)
+        println(4)
+        testMotorDistance(elevatorMotor3, elevatorMotor1, 18.0, 1.0)
+        println(5)
+        testMotorDistance(elevatorMotor4, elevatorMotor1, 18.0, 1.0)
+        println(6)
+    }
+    finally {
+        motor1.set(ControlMode.Follower, 0.0)
+        motor2.set(ControlMode.Follower, 0.0)
+        motor0.neutralOutput()
+        motor13.set(ControlMode.Follower, 15.0)
+        motor14.set(ControlMode.Follower, 15.0)
+        motor15.neutralOutput()
+
+        elevatorMotor4.set(ControlMode.Follower, 6.0)
+        elevatorMotor2.set(ControlMode.Follower, 6.0)
+        elevatorMotor3.set(ControlMode.Follower, 6.0)
+        elevatorMotor1.neutralOutput()
+    }
 }
-
-
-
-//        parallel({
-//            left1.set(ControlMode.PercentOutput, 0.5)
-//            delaySeconds(3.0)
-//            motorsRunning = false
-//        }, {
-//            while(motorsRunning) {
-//                velocityAcc += left1.getSelectedSensorVelocity(0)
-//                currentAcc += left1.outputCurrent
-//                sampleCount++
-//            }
-//        })

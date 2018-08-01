@@ -82,6 +82,6 @@ class Robot : IterativeRobot() {
     }
 
     override fun testInit() {
-        Drivetrain.calibrateGyro()
+        preMatchTest.launch()
     }
 }

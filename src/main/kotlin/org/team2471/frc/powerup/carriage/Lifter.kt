@@ -16,7 +16,7 @@ import org.team2471.frc.powerup.Telemetry
 import kotlin.math.min
 
 object Lifter {
-    private val motors = TalonSRX(RobotMap.Talons.ELEVATOR_MOTOR_1).apply {
+    private val motors = RobotMap.Talons.elevatorMotor1.apply {
         configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10)
         setSelectedSensorPosition(0, 0, 10)
         configContinuousCurrentLimit(25, 10)
@@ -35,7 +35,7 @@ object Lifter {
         inverted = true
         setSensorPhase(true)
         Telemetry.registerMotor("Lifter Master", this)
-    } + TalonSRX(RobotMap.Talons.ELEVATOR_MOTOR_2).apply {
+    } + RobotMap.Talons.elevatorMotor2.apply {
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(0, 10)
         configPeakCurrentDuration(0, 10)
@@ -43,7 +43,7 @@ object Lifter {
         setNeutralMode(NeutralMode.Brake)
         inverted = true
         Telemetry.registerMotor("Lifter Slave 1", this)
-    } + TalonSRX(RobotMap.Talons.ELEVATOR_MOTOR_3).apply {
+    } + RobotMap.Talons.elevatorMotor3.apply {
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(0, 10)
         configPeakCurrentDuration(0, 10)
@@ -51,7 +51,7 @@ object Lifter {
         setNeutralMode(NeutralMode.Brake)
         inverted = true
         Telemetry.registerMotor("Lifter Slave 2", this)
-    } + TalonSRX(RobotMap.Talons.ELEVATOR_MOTOR_4).apply {
+    } + RobotMap.Talons.elevatorMotor4.apply {
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(0, 10)
         configPeakCurrentDuration(0, 10)
@@ -61,9 +61,9 @@ object Lifter {
         Telemetry.registerMotor("Lifter Slave 3", this)
     }
 
-    private val discBrake = Solenoid(RobotMap.Solenoids.BRAKE)
+    private val discBrake = RobotMap.Solenoids.discBrake
 
-    private val shifter = Solenoid(RobotMap.Solenoids.CARRIAGE_SHIFT)
+    private val shifter = RobotMap.Solenoids.shifter
 
     private val table = Carriage.table.getSubTable("Lifter")
 
@@ -102,7 +102,10 @@ object Lifter {
 
     var isBraking: Boolean
         get() = !discBrake.get()
-        set(value) = discBrake.set(!value)
+        set(value) {
+            println("Setting brake to $value")
+            discBrake.set(!value)
+        }
 
     val amperages: DoubleArray
         get() = doubleArrayOf(RobotMap.pdp.getCurrent(RobotMap.Talons.ELEVATOR_MOTOR_1),

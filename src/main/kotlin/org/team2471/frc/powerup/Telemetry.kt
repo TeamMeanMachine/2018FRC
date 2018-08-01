@@ -64,5 +64,12 @@ object Telemetry {
             DriverStation.reportWarning("Jitter Detected, Count: $jitterCount", false)
             jitterCountEntry.setNumber(jitterCount)
         }
+
+        if (RobotMap.Solenoids.discBrake.pcmSolenoidVoltageFault) {
+            println("Disk brake faults")
+        }
+        if (RobotMap.Solenoids.shifter.pcmSolenoidVoltageFault) {
+            println("Lifter shift voltage fault")
+        }
     }
 }

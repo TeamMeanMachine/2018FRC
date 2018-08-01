@@ -166,8 +166,6 @@ object Drivetrain {
 
         leftMaster.set(ControlMode.PercentOutput, leftPower)
         rightMaster.set(ControlMode.PercentOutput, rightPower)
-        println("LEFT POWER: $leftPower")
-        println("RIGHT POWER: $rightPower")
 
         var rampRate = rampRateCurve.getValue(Lifter.height)
 
