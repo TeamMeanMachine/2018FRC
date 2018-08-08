@@ -15,6 +15,7 @@ import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.delaySeconds
 import org.team2471.frc.lib.control.experimental.parallel
 import org.team2471.frc.lib.motion_profiling.Autonomi
+import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.util.measureTimeFPGA
 import org.team2471.frc.powerup.carriage.Arm
 import org.team2471.frc.powerup.carriage.Carriage
@@ -501,16 +502,21 @@ val preMatchTest = Command("Pre Match Test", Drivetrain, Arm) {
     testMotor(motor13,motor15)
 }
 
+val backUpOneCube = Path2D().apply {
+    setPathDefaults()
+    robotDirection = Path2D.RobotDirection.BACKWARD
+    isMirrored = false
+    addPointAndTangent(0.0, 0.0, 0.0, 0.5)
+    addPointAndTangent(0.0, 1.0, 0.0, 0.5)
+    addEasePoint(0.0, 0.0)
+    addEasePoint(1.0, 1.0)
+}
 
-
-//        parallel({
-//            left1.set(ControlMode.PercentOutput, 0.5)
-//            delaySeconds(3.0)
-//            motorsRunning = false
-//        }, {
-//            while(motorsRunning) {
-//                velocityAcc += left1.getSelectedSensorVelocity(0)
-//                currentAcc += left1.outputCurrent
-//                sampleCount++
-//            }
-//        })
+val backUpOneCubeAndRollCubeOut = Command("Drive Straight",  Drivetrain) {
+    try {
+        Drivetrain.driveAlongPath(backUpOneCube)
+    } finally {
+        Arm.intakeSpeed = 0.0
+        Arm.isClamping = true
+    }
+}

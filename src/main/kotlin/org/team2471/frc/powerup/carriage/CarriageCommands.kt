@@ -8,6 +8,7 @@ import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.powerup.CoDriver
 import org.team2471.frc.powerup.Driver
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 
 val zero = Command("Carriage Zero", Carriage) {
     try {
@@ -147,7 +148,9 @@ val tuneArmPID = Command("Tune Arm Pid", Carriage) {
 }
 
 val toggleCubeSensor = Command("Toggle Cube Sensor") {
-    val entry = Arm.table.getEntry("Use Cube Sensor")
-    entry.setBoolean(!entry.getBoolean(true))
+    //val entry = Arm.table.getEntry("Use Cube Sensor")
+    val useIntake = SmartDashboard.getBoolean("Using Intake Sensor", true)
+//    entry.setBoolean(!entry.getBoolean(true))
+    SmartDashboard.putBoolean("Using Intake Sensor", !useIntake)
 
 }

@@ -103,10 +103,11 @@ object CoDriver {
         SmartDashboard.putBoolean("Tune Arm PID", false)
         zero.toggleWhen { controller.backButton }
         goToSwitch.runWhen { controller.getStickButton(GenericHID.Hand.kRight) }
+        backUpOneCubeAndRollCubeOut.runWhen {controller.getBumper(GenericHID.Hand.kRight)}
         goToScaleLowPreset.runWhen { controller.aButton }
         goToScaleMediumPreset.runWhen { controller.xButton }
         goToScaleHighPreset.runWhen { controller.yButton }
-        goToFrontScalePreset.runWhen { controller.getBumper(GenericHID.Hand.kRight) }
+        goToFrontScalePreset.runWhen { controller.getStickButton(GenericHID.Hand.kLeft) }
         goToIntakePreset.runWhen { controller.bButton }
         incrementScaleStackHeight.runWhen { controller.pov == 0 }
         decrementScaleStackHeight.runWhen { controller.pov == 180 }
