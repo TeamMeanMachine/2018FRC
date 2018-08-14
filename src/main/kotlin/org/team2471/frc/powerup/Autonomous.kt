@@ -524,9 +524,35 @@ val preMatchTest = Command("Pre Match Test", Drivetrain, Arm) {
     val elevatorMotor2 = RobotMap.Talons.elevatorMotor2
     val elevatorMotor3 = RobotMap.Talons.elevatorMotor3
     val elevatorMotor4 = RobotMap.Talons.elevatorMotor4
+    try {
+        println(1)
+        println(2)
+        testMotorDistance(elevatorMotor1, elevatorMotor1, 18.0, 1.0)
+        println(3)
+        testMotorDistance(elevatorMotor2, elevatorMotor1, 18.0, 1.0)
+        println(4)
+        testMotorDistance(elevatorMotor3, elevatorMotor1, 18.0, 1.0)
+        println(5)
+        testMotorDistance(elevatorMotor4, elevatorMotor1, 18.0, 1.0)
+        println(6)
+    } finally {
+        motor1.set(ControlMode.Follower, 0.0)
+        motor2.set(ControlMode.Follower, 0.0)
+        motor0.neutralOutput()
+        motor13.set(ControlMode.Follower, 15.0)
+        motor14.set(ControlMode.Follower, 15.0)
+        motor15.neutralOutput()
+
+        elevatorMotor4.set(ControlMode.Follower, 6.0)
+        elevatorMotor2.set(ControlMode.Follower, 6.0)
+        elevatorMotor3.set(ControlMode.Follower, 6.0)
+        elevatorMotor1.neutralOutput()
+    }
+}
 
 val backUpOneCubeAndRollCubeOut = Command("Drive Straight",  Drivetrain, Carriage) {
     val timer = Timer()
+    try {
         parallel({
             Drivetrain.driveDistance(1.2, 1.0)
         }, {
@@ -541,31 +567,9 @@ val backUpOneCubeAndRollCubeOut = Command("Drive Straight",  Drivetrain, Carriag
             }
         })
     } finally {
-        timer.stop()
-        Arm.intakeSpeed = 0.0
-        Arm.isClamping = true
-        println(1)
-        println(2)
-        testMotorDistance(elevatorMotor1, elevatorMotor1, 18.0, 1.0)
-        println(3)
-        testMotorDistance(elevatorMotor2, elevatorMotor1, 18.0, 1.0)
-        println(4)
-        testMotorDistance(elevatorMotor3, elevatorMotor1, 18.0, 1.0)
-        println(5)
-        testMotorDistance(elevatorMotor4, elevatorMotor1, 18.0, 1.0)
-        println(6)
-    }
-    finally {
-        motor1.set(ControlMode.Follower, 0.0)
-        motor2.set(ControlMode.Follower, 0.0)
-        motor0.neutralOutput()
-        motor13.set(ControlMode.Follower, 15.0)
-        motor14.set(ControlMode.Follower, 15.0)
-        motor15.neutralOutput()
+    timer.stop()
+    Arm.intakeSpeed = 0.0
+    Arm.isClamping = true
+}
 
-        elevatorMotor4.set(ControlMode.Follower, 6.0)
-        elevatorMotor2.set(ControlMode.Follower, 6.0)
-        elevatorMotor3.set(ControlMode.Follower, 6.0)
-        elevatorMotor1.neutralOutput()
-    }
 }
