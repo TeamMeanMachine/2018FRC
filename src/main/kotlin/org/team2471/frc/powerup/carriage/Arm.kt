@@ -70,7 +70,7 @@ object Arm {
 
     private val cubeSensor = AnalogInput(1)
 
-    val detectingCube: Boolean
+    var detectingCube: Boolean = false
         get() = Carriage.targetPose == Pose.INTAKE && Carriage.isAnimationCompleted &&
                 if (usingIntakeSensor) cubeSensor.voltage < 0.15
                 else isClamping && minAmperage > 20
@@ -83,16 +83,18 @@ object Arm {
             val sensorVoltageEntry = table.getEntry("Sensor Voltage")
             val intakeAmperagesEntry = table.getEntry("Intake Amperage")
 
-            val useCubeSensorEntry = table.getEntry("Use Cube Sensor")
-            useCubeSensorEntry.setPersistent()
+//            val useCubeSensorEntry = table.getEntry("Use Cube Sensor")
+//            useCubeSensorEntry.setPersistent()
 
+//
+//
+//            SmartDashboard.putBoolean("Using Intake Sensor" , true)
+//            SmartDashboard.setPersistent("Using Intake Sensor")
             val cubeTimer = Timer()
             cubeTimer.start()
             periodic {
-                usingIntakeSensor = useCubeSensorEntry.getBoolean(true)
-                SmartDashboard.putBoolean("Using Intake Sensor" ,usingIntakeSensor)
 
-
+                usingIntakeSensor = SmartDashboard.getBoolean("Using Intake Sensor", true)
 
                 if (!detectingCube) {
                     cubeTimer.reset()

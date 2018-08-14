@@ -31,7 +31,7 @@ import org.team2471.frc.powerup.carriage.Pose
 import java.lang.Math.*
 
 object Drivetrain {
-    private val leftMaster = TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_1).apply {
+    val leftMaster = TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_1).apply {
         configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 1, 10)
         setNeutralMode(NeutralMode.Coast)
         configPeakCurrentLimit(DrivetrainConstants.PEAK_CURRENT_LIMIT, 10)
@@ -70,7 +70,7 @@ object Drivetrain {
         Telemetry.registerMotor("Drive Left Slave 2", this)
     }
 
-    private val rightMaster = TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_1).apply {
+    val rightMaster = TalonSRX(RobotMap.Talons.RIGHT_DRIVE_MOTOR_1).apply {
         configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 1, 10)
         setNeutralMode(NeutralMode.Coast)
         configPeakCurrentLimit(DrivetrainConstants.PEAK_CURRENT_LIMIT, 10)

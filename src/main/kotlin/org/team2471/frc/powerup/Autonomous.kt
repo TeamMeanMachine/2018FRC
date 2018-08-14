@@ -15,11 +15,13 @@ import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.delaySeconds
 import org.team2471.frc.lib.control.experimental.parallel
 import org.team2471.frc.lib.motion_profiling.Autonomi
+import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.util.measureTimeFPGA
 import org.team2471.frc.powerup.carriage.*
 import org.team2471.frc.powerup.drivetrain.Drivetrain
 import sun.plugin.dom.exception.InvalidStateException
 import java.io.File
+import kotlin.concurrent.timer
 
 private lateinit var autonomi: Autonomi
 
@@ -523,38 +525,25 @@ val preMatchTest = Command("Pre Match Test", Drivetrain, Arm) {
     val elevatorMotor3 = RobotMap.Talons.elevatorMotor3
     val elevatorMotor4 = RobotMap.Talons.elevatorMotor4
 
-    try {
-        motor0.setNeutralMode(NeutralMode.Coast)
-        motor1.setNeutralMode(NeutralMode.Coast)
-        motor2.setNeutralMode(NeutralMode.Coast)
-        motor13.setNeutralMode(NeutralMode.Coast)
-        motor14.setNeutralMode(NeutralMode.Coast)
-        motor15.setNeutralMode(NeutralMode.Coast)
-
-        motor0.set(ControlMode.PercentOutput, 0.0)
-        motor1.set(ControlMode.PercentOutput, 0.0)
-        motor2.set(ControlMode.PercentOutput, 0.0)
-        motor13.set(ControlMode.PercentOutput, 0.0)
-        motor14.set(ControlMode.PercentOutput, 0.0)
-        motor15.set(ControlMode.PercentOutput, 0.0)
-/*
-        testMotorTime(motor0, motor0, 1.0, 1.0)
-        testMotorTime(motor14,motor15,1.0, 1.0)
-        testMotorTime(motor1,motor0, 1.0, 1.0)
-        testMotorTime(motor15,motor15, 1.0, 1.0)
-        testMotorTime(motor2,motor0, 1.0, 1.0)
-        testMotorTime(motor13,motor15, 1.0, 1.0)
-*/
-        elevatorMotor1.setNeutralMode(NeutralMode.Coast)
-        elevatorMotor2.setNeutralMode(NeutralMode.Coast)
-        elevatorMotor3.setNeutralMode(NeutralMode.Coast)
-        elevatorMotor4.setNeutralMode(NeutralMode.Coast)
-
-        elevatorMotor1.set(ControlMode.PercentOutput, 0.0)
-        elevatorMotor2.set(ControlMode.PercentOutput, 0.0)
-        elevatorMotor3.set(ControlMode.PercentOutput, 0.0)
-        elevatorMotor4.set(ControlMode.PercentOutput, 0.0)
-
+val backUpOneCubeAndRollCubeOut = Command("Drive Straight",  Drivetrain, Carriage) {
+    val timer = Timer()
+        parallel({
+            Drivetrain.driveDistance(1.2, 1.0)
+        }, {
+            timer.start()
+            while (timer.get() < 1.0) {
+                println("Time: ${timer.get()}")
+                var driveVoltage = Drivetrain.rightMaster.motorOutputVoltage
+                println("Drive Voltage: $driveVoltage")
+                val scalingFactor = -0.14
+                Arm.intakeSpeed = driveVoltage * scalingFactor
+                delay(20)
+            }
+        })
+    } finally {
+        timer.stop()
+        Arm.intakeSpeed = 0.0
+        Arm.isClamping = true
         println(1)
         println(2)
         testMotorDistance(elevatorMotor1, elevatorMotor1, 18.0, 1.0)
