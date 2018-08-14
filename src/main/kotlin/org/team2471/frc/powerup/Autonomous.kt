@@ -24,6 +24,7 @@ import org.team2471.frc.powerup.carriage.Pose
 import org.team2471.frc.powerup.drivetrain.Drivetrain
 import sun.plugin.dom.exception.InvalidStateException
 import java.io.File
+import kotlin.concurrent.timer
 
 private lateinit var autonomi: Autonomi
 
@@ -502,20 +503,25 @@ val preMatchTest = Command("Pre Match Test", Drivetrain, Arm) {
     testMotor(motor13,motor15)
 }
 
-val backUpOneCube = Path2D().apply {
-    setPathDefaults()
-    robotDirection = Path2D.RobotDirection.BACKWARD
-    isMirrored = false
-    addPointAndTangent(0.0, 0.0, 0.0, 0.5)
-    addPointAndTangent(0.0, 1.0, 0.0, 0.5)
-    addEasePoint(0.0, 0.0)
-    addEasePoint(1.0, 1.0)
-}
 
-val backUpOneCubeAndRollCubeOut = Command("Drive Straight",  Drivetrain) {
+val backUpOneCubeAndRollCubeOut = Command("Drive Straight",  Drivetrain, Carriage) {
+    val timer = Timer()
     try {
-        Drivetrain.driveAlongPath(backUpOneCube)
+        parallel({
+            Drivetrain.driveDistance(1.2, 1.0)
+        }, {
+            timer.start()
+            while (timer.get() < 1.0) {
+                println("Time: ${timer.get()}")
+                var driveVoltage = Drivetrain.rightMaster.motorOutputVoltage
+                println("Drive Voltage: $driveVoltage")
+                val scalingFactor = -0.14
+                Arm.intakeSpeed = driveVoltage * scalingFactor
+                delay(20)
+            }
+        })
     } finally {
+        timer.stop()
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
     }
