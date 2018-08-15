@@ -45,7 +45,7 @@ object Arm {
 
     private val intakeMotorLeft = TalonSRX(RobotMap.Talons.INTAKE_MOTOR_LEFT).apply {
         inverted = IS_COMP_BOT
-        configOpenloopRamp(0.2, 10)
+        configOpenloopRamp(0.65, 10)
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(0, 10)
         configPeakCurrentDuration(0, 10)
@@ -56,7 +56,7 @@ object Arm {
 
     private val intakeMotorRight = TalonSRX(RobotMap.Talons.INTAKE_MOTOR_RIGHT).apply {
         inverted = !IS_COMP_BOT
-        configOpenloopRamp(0.2, 10)
+        configOpenloopRamp(0.65, 10)
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(0, 10)
         configPeakCurrentDuration(0, 10)

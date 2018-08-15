@@ -92,11 +92,13 @@ object CoDriver {
                 .squareWithSign()
 
     val spitSpeed: Double
-        get() = (controller.getTriggerAxis(GenericHID.Hand.kRight) * 0.55 +
-                controller.getTriggerAxis(GenericHID.Hand.kLeft) * 0.4).deadband(0.15)
+        get() = (controller.getTriggerAxis(GenericHID.Hand.kLeft) * 0.55).deadband(0.15)
 
     val release: Boolean
         get() = controller.getBumper(GenericHID.Hand.kLeft)
+
+    val rightTrigger: Double
+        get() = controller.getTriggerAxis(GenericHID.Hand.kRight)
 
     init {
         println("Initialized")
@@ -114,6 +116,8 @@ object CoDriver {
 
         tuneArmPID.runWhen { SmartDashboard.getBoolean("Tune Arm PID", false) }
         commandReset.runWhen { controller.startButton }
+        backUpAndSpit.runWhen { rightTrigger>0.1 }
+
     }
 }
 

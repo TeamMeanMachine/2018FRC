@@ -491,8 +491,11 @@ suspend fun testMotorDistance(motor: TalonSRX, encoderMotor: TalonSRX, distance:
             sampleCount++
             delay(20)
         }
+        motor.set(ControlMode.PercentOutput, 0.0)
+        delay(250)
+
         motor.set(ControlMode.PercentOutput, -power)
-        while (encoderMotor.getSelectedSensorPosition(0)/ CarriageConstants.LIFTER_TICKS_PER_INCH > 0.0) {
+        while (encoderMotor.getSelectedSensorPosition(0)/ CarriageConstants.LIFTER_TICKS_PER_INCH > 2.0) {
             RobotMap.Solenoids.discBrake.set(true)
             RobotMap.Solenoids.shifter.set(true) // low gear
             velocityAcc += -encoderMotor.getSelectedSensorVelocity(0)
@@ -506,9 +509,10 @@ suspend fun testMotorDistance(motor: TalonSRX, encoderMotor: TalonSRX, distance:
         println("Motor ${motor.deviceID} Velocity: $velocityFinal")
         println("Motor ${motor.deviceID} Current: $currentFinal")
         motor.set(ControlMode.PercentOutput, 0.0)
-        if (velocityFinal<580.0 || currentFinal>23.0) {
+        if (velocityFinal<180.0 || currentFinal>20.0) {
             println("Potentially Bad Motor ****************************************************************************")
         }
+        delay(250)
     }
 }
 
@@ -550,26 +554,59 @@ val preMatchTest = Command("Pre Match Test", Drivetrain, Arm) {
     }
 }
 
-val backUpOneCubeAndRollCubeOut = Command("Drive Straight",  Drivetrain, Carriage) {
+val backUpOneCubeAndRollCubeOut = Command("Back up and Roll Cube",  Drivetrain, Carriage) {
     val timer = Timer()
     try {
-        parallel({
-            Drivetrain.driveDistance(1.2, 1.0)
-        }, {
-            timer.start()
-            while (timer.get() < 1.0) {
-                println("Time: ${timer.get()}")
-                var driveVoltage = Drivetrain.rightMaster.motorOutputVoltage
-                println("Drive Voltage: $driveVoltage")
-                val scalingFactor = -0.14
-                Arm.intakeSpeed = driveVoltage * scalingFactor
-                delay(20)
-            }
-        })
+        val scalingFactor = -0.14
+        if (Arm.angle > 90 ) {
+            parallel({
+                Drivetrain.driveDistance(1.2, 1.0)
+            }, {
+                timer.start()
+                while (timer.get() < 1.0) {
+                    println("Time: ${timer.get()}")
+                    var driveVoltage = Drivetrain.rightMaster.motorOutputVoltage
+                    println("Drive Voltage: $driveVoltage")
+                    Arm.intakeSpeed = driveVoltage * scalingFactor
+                    delay(20)
+                }
+            })
+        } else {
+            parallel({
+                Drivetrain.driveDistance(-1.2, 1.0)
+            }, {
+                timer.start()
+                while (timer.get() < 1.0) {
+                    println("Time: ${timer.get()}")
+                    var driveVoltage = Drivetrain.rightMaster.motorOutputVoltage
+                    println("Drive Voltage: $driveVoltage")
+                    Arm.intakeSpeed = driveVoltage * -scalingFactor
+                    delay(20)
+                }
+            })
+        }
     } finally {
-    timer.stop()
-    Arm.intakeSpeed = 0.0
-    Arm.isClamping = true
+        timer.stop()
+        Arm.intakeSpeed = 0.0
+        Arm.isClamping = true
+    }
 }
 
+val backUpAndSpit = Command("Back up and Spit",  Drivetrain, Carriage) {
+    try {
+        val scalingFactor = -0.3
+        val friction = -0.15
+        while (CoDriver.rightTrigger>0.1) {
+            if (Arm.angle > 90) {
+                Drivetrain.drive(CoDriver.rightTrigger * 0.5, 0.0, 0.0)
+                Arm.intakeSpeed = CoDriver.rightTrigger * scalingFactor + -friction
+            } else {
+                Drivetrain.drive(CoDriver.rightTrigger * -0.5, 0.0, 0.0)
+                Arm.intakeSpeed = CoDriver.rightTrigger * scalingFactor + friction
+            }
+        }
+    } finally {
+        Arm.intakeSpeed = 0.0
+        Arm.isClamping = true
+    }
 }
