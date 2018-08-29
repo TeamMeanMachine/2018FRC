@@ -45,7 +45,7 @@ object Arm {
 
     private val intakeMotorLeft = TalonSRX(RobotMap.Talons.INTAKE_MOTOR_LEFT).apply {
         inverted = IS_COMP_BOT
-        configOpenloopRamp(0.65, 10)
+        configOpenloopRamp(0.0, 10)
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(0, 10)
         configPeakCurrentDuration(0, 10)
@@ -56,7 +56,7 @@ object Arm {
 
     private val intakeMotorRight = TalonSRX(RobotMap.Talons.INTAKE_MOTOR_RIGHT).apply {
         inverted = !IS_COMP_BOT
-        configOpenloopRamp(0.65, 10)
+        configOpenloopRamp(0.0, 10)
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(0, 10)
         configPeakCurrentDuration(0, 10)
@@ -133,7 +133,11 @@ object Arm {
         set(value) = clawSolenoid.set(!value)
 
     val angle: Double
-        get() = ticksToDegrees(motor.getSelectedSensorPosition(0))
+        get() {
+           val angle = ticksToDegrees(motor.getSelectedSensorPosition(0))
+            SmartDashboard.putNumber("Arm Angle", angle)
+            return angle
+        }
 
     val velocity: Double
         get() = (motor.getSelectedSensorVelocity(0) * 10) / CarriageConstants.ARM_TICKS_PER_DEGREE

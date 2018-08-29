@@ -73,7 +73,7 @@ object Lifter {
             val outputEntry = table.getEntry("Output")
             periodic(100) {
                 // don't run the compressor when the carriage exceeds 3V
-                RobotMap.compressor.closedLoopControl = !RobotState.isAutonomous() && motors.motorOutputPercent < 0.1
+                RobotMap.compressor.closedLoopControl = !RobotState.isAutonomous() && Math.abs(motors.motorOutputPercent) < 0.2
                 heightEntry.setDouble(height)
 
                 if (RobotState.isEnabled())
@@ -102,10 +102,7 @@ object Lifter {
 
     var isBraking: Boolean
         get() = !discBrake.get()
-        set(value) {
-            println("Setting brake to $value")
-            discBrake.set(!value)
-        }
+        set(value) = discBrake.set(!value)
 
     val amperages: DoubleArray
         get() = doubleArrayOf(RobotMap.pdp.getCurrent(RobotMap.Talons.ELEVATOR_MOTOR_1),

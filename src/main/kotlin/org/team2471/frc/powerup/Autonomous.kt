@@ -1,12 +1,10 @@
 package org.team2471.frc.powerup
 
 import com.ctre.phoenix.motorcontrol.ControlMode
-import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import edu.wpi.first.networktables.EntryListenerFlags
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.Solenoid
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -15,13 +13,11 @@ import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.delaySeconds
 import org.team2471.frc.lib.control.experimental.parallel
 import org.team2471.frc.lib.motion_profiling.Autonomi
-import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.util.measureTimeFPGA
 import org.team2471.frc.powerup.carriage.*
 import org.team2471.frc.powerup.drivetrain.Drivetrain
 import sun.plugin.dom.exception.InvalidStateException
 import java.io.File
-import kotlin.concurrent.timer
 
 private lateinit var autonomi: Autonomi
 
@@ -38,6 +34,7 @@ object AutoChooser {
 
     private val testAutoChooser = SendableChooser<String?>().apply {
         addDefault("None", null)
+        addObject("20 Foot Test", "20 Foot Straight")
         addObject("Drive Straight", "8 Foot Straight")
         addObject("2 Foot Circle", "2 Foot Circle")
         addObject("4 Foot Circle", "4 Foot Circle")
@@ -82,15 +79,16 @@ object AutoChooser {
         val farSide = !nearSide
 
         // adjust gyro for starting position
-        Drivetrain.gyroAngleOffset = if (nearSide == Side.CENTER) 0.0 else 180.0
         Lifter.zero()
         val testPath = if (!Game.isFMSAttached) testAutoChooser.selected else null
         if (testPath != null) {
+            Drivetrain.gyroAngleOffset = 0.0
             val testAutonomous = autonomi["Tests"]
             Drivetrain.driveAlongPath(testAutonomous[testPath])
             delay(Long.MAX_VALUE)
             return@Command
         }
+        Drivetrain.gyroAngleOffset = if (nearSide == Side.CENTER) 0.0 else 180.0
 
         val scaleSide = scaleSideChooser.selected ?: Game.scaleSide
 
@@ -154,6 +152,8 @@ object AutoChooser {
 }
 
 const val RELEASE_DELAY = 500L
+const val INTAKE_DELAY = 0.4
+const val PRE_RELEASE = 0.2
 
 val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
     val auto = autonomi["All Near Scale"]
@@ -168,7 +168,9 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Pose.SCALE_MED, -1.0, -30.0)
-            Arm.intakeSpeed = -0.525
+        }, {
+            delaySeconds(path.durationWithSpeed - PRE_RELEASE)
+            Arm.intakeSpeed = -0.7
         })
 
         path = auto["Near Scale To Cube1"]
@@ -190,10 +192,12 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Pose.SCALE_LOW, -3.0, -30.0)
-            Arm.intakeSpeed = -0.55
+
         }, {
-            delay(400)
+            delaySeconds(INTAKE_DELAY)
             Arm.intakeSpeed = 0.4
+            delaySeconds(path.durationWithSpeed - INTAKE_DELAY - PRE_RELEASE)
+            Arm.intakeSpeed = -1.0 // 0.7
         })
 
         path = auto["Near Scale To Cube2"]
@@ -215,16 +219,17 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Pose.SCALE_LOW, -6.0, angleOffset = -30.0)
-            Arm.intakeSpeed = -0.45
         }, {
-            delay(400)
+            delaySeconds(INTAKE_DELAY)
             Arm.intakeSpeed = 0.4
+            delaySeconds(path.durationWithSpeed - INTAKE_DELAY - PRE_RELEASE)
+            Arm.intakeSpeed = -1.0 // -0.6
         })
         delay(250)
         path = auto["Near Scale To Cube3"]
         parallel({
             Drivetrain.driveAlongPath(path)
-        },  {
+        }, {
             Carriage.animateToPose(Pose.INTAKE)
         }, {
             delay(RELEASE_DELAY)
@@ -240,12 +245,13 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Pose.SCALE_LOW)
-            Arm.intakeSpeed = -0.4
         }, {
-            delay(400)
+            delaySeconds(INTAKE_DELAY)
             Arm.intakeSpeed = 0.4
+            delaySeconds(path.durationWithSpeed - INTAKE_DELAY - PRE_RELEASE)
+            Arm.intakeSpeed = -0.55
         })
-       delay(250)
+        delay(250)
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
@@ -271,7 +277,7 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
             Drivetrain.driveAlongPath(auto["Far Scale To Cube1"])
         }, {
             Carriage.animateToPose(Pose.INTAKE)
-        },  {
+        }, {
             delay(300)
             Arm.isClamping = false
             Arm.intakeSpeed = 0.6
@@ -438,7 +444,7 @@ val allFarScaleMeanMachine = Command("All Far Scale Platform", Drivetrain, Carri
     }
 }
 
-val driveStraightAuto = Command("Drive Straight",  Drivetrain) {
+val driveStraightAuto = Command("Drive Straight", Drivetrain) {
     val auto = autonomi["Tests"]
     auto.isMirrored = false
     try {
@@ -464,12 +470,12 @@ suspend fun testMotorTime(motor: TalonSRX, encoderMotor: TalonSRX, time: Double,
             delay(20)
         }
     } finally {
-        val velocityFinal = velocityAcc/sampleCount
-        val currentFinal = currentAcc/sampleCount
+        val velocityFinal = velocityAcc / sampleCount
+        val currentFinal = currentAcc / sampleCount
         println("Motor ${motor.deviceID} Velocity: $velocityFinal")
         println("Motor ${motor.deviceID} Current: $currentFinal")
         motor.set(ControlMode.PercentOutput, 0.0)
-        if (velocityFinal<580.0 || currentFinal>23.0) {
+        if (velocityFinal < 580.0 || currentFinal > 23.0) {
             println("Potentiall" +
                     "y Bad Motor ****************************************************************************")
         }
@@ -482,8 +488,8 @@ suspend fun testMotorDistance(motor: TalonSRX, encoderMotor: TalonSRX, distance:
     var currentAcc = 0.0
     try {
         motor.set(ControlMode.PercentOutput, power)
-        encoderMotor.setSelectedSensorPosition(0,0,5)
-        while (encoderMotor.getSelectedSensorPosition(0)/ CarriageConstants.LIFTER_TICKS_PER_INCH < distance) {
+        encoderMotor.setSelectedSensorPosition(0, 0, 5)
+        while (encoderMotor.getSelectedSensorPosition(0) / CarriageConstants.LIFTER_TICKS_PER_INCH < distance) {
             RobotMap.Solenoids.discBrake.set(true)
             RobotMap.Solenoids.shifter.set(true) // low gear
             velocityAcc += encoderMotor.getSelectedSensorVelocity(0)
@@ -495,7 +501,7 @@ suspend fun testMotorDistance(motor: TalonSRX, encoderMotor: TalonSRX, distance:
         delay(250)
 
         motor.set(ControlMode.PercentOutput, -power)
-        while (encoderMotor.getSelectedSensorPosition(0)/ CarriageConstants.LIFTER_TICKS_PER_INCH > 2.0) {
+        while (encoderMotor.getSelectedSensorPosition(0) / CarriageConstants.LIFTER_TICKS_PER_INCH > 2.0) {
             RobotMap.Solenoids.discBrake.set(true)
             RobotMap.Solenoids.shifter.set(true) // low gear
             velocityAcc += -encoderMotor.getSelectedSensorVelocity(0)
@@ -504,12 +510,12 @@ suspend fun testMotorDistance(motor: TalonSRX, encoderMotor: TalonSRX, distance:
             delay(20)
         }
     } finally {
-        val velocityFinal = velocityAcc/sampleCount
-        val currentFinal = currentAcc/sampleCount
+        val velocityFinal = velocityAcc / sampleCount
+        val currentFinal = currentAcc / sampleCount
         println("Motor ${motor.deviceID} Velocity: $velocityFinal")
         println("Motor ${motor.deviceID} Current: $currentFinal")
         motor.set(ControlMode.PercentOutput, 0.0)
-        if (velocityFinal<180.0 || currentFinal>20.0) {
+        if (velocityFinal < 180.0 || currentFinal > 20.0) {
             println("Potentially Bad Motor ****************************************************************************")
         }
         delay(250)
@@ -554,11 +560,11 @@ val preMatchTest = Command("Pre Match Test", Drivetrain, Arm) {
     }
 }
 
-val backUpOneCubeAndRollCubeOut = Command("Back up and Roll Cube",  Drivetrain, Carriage) {
+val backUpOneCubeAndRollCubeOut = Command("Back up and Roll Cube", Drivetrain, Carriage) {
     val timer = Timer()
     try {
         val scalingFactor = -0.14
-        if (Arm.angle > 90 ) {
+        if (Arm.angle > 90) {
             parallel({
                 Drivetrain.driveDistance(1.2, 1.0)
             }, {
@@ -592,11 +598,11 @@ val backUpOneCubeAndRollCubeOut = Command("Back up and Roll Cube",  Drivetrain, 
     }
 }
 
-val backUpAndSpit = Command("Back up and Spit",  Drivetrain, Carriage) {
+val backUpAndSpit = Command("Back up and Spit", Drivetrain, Carriage) {
     try {
         val scalingFactor = -0.3
         val friction = -0.15
-        while (CoDriver.rightTrigger>0.1) {
+        while (CoDriver.rightTrigger > 0.1) {
             if (Arm.angle > 90) {
                 Drivetrain.drive(CoDriver.rightTrigger * 0.5, 0.0, 0.0)
                 Arm.intakeSpeed = CoDriver.rightTrigger * scalingFactor + -friction

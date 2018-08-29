@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 
 val zero = Command("Carriage Zero", Carriage) {
     try {
-        Arm.setpoint = 115.0
+        Arm.setpoint = 90.0
         Lifter.isBraking = false
         Lifter.isLowGear = false
         periodic {

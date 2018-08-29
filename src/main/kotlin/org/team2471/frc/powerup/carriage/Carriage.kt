@@ -96,6 +96,7 @@ object Carriage {
             previousTime = t
             SmartDashboard.putNumber("Arm Amperage", RobotMap.pdp.getCurrent(RobotMap.Talons.ARM_MOTOR_1))
         }
+        println("Animation took ${timer.get()} seconds")
     }
 
     init {
