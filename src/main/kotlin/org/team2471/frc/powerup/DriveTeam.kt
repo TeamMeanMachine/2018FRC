@@ -12,9 +12,7 @@ import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.powerup.carriage.*
 import org.team2471.frc.powerup.drivetrain.Drivetrain
-import org.team2471.frc.powerup.drivetrain.driveTest
 import org.team2471.frc.powerup.endgame.Wings
-import org.team2471.frc.powerup.endgame.climbCommand
 import org.team2471.frc.powerup.endgame.newClimbCommand
 import java.lang.Double.max
 
@@ -105,7 +103,7 @@ object CoDriver {
         SmartDashboard.putBoolean("Tune Arm PID", false)
         zero.toggleWhen { controller.backButton }
         goToSwitch.runWhen { controller.getStickButton(GenericHID.Hand.kRight) }
-        backUpOneCubeAndRollCubeOut.runWhen {controller.getBumper(GenericHID.Hand.kRight)}
+        smartSpit.runWhen {controller.getBumper(GenericHID.Hand.kRight)}
         goToScaleLowPreset.runWhen { controller.aButton }
         goToScaleMediumPreset.runWhen { controller.xButton }
         goToScaleHighPreset.runWhen { controller.yButton }
@@ -116,7 +114,6 @@ object CoDriver {
 
         tuneArmPID.runWhen { SmartDashboard.getBoolean("Tune Arm PID", false) }
         commandReset.runWhen { controller.startButton }
-        backUpAndSpit.runWhen { rightTrigger>0.1 }
 
     }
 }

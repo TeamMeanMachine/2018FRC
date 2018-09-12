@@ -1,7 +1,5 @@
 package org.team2471.frc.powerup
 
-import com.ctre.phoenix.motorcontrol.ControlMode
-import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import edu.wpi.first.networktables.EntryListenerFlags
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
@@ -14,7 +12,10 @@ import org.team2471.frc.lib.control.experimental.delaySeconds
 import org.team2471.frc.lib.control.experimental.parallel
 import org.team2471.frc.lib.motion_profiling.Autonomi
 import org.team2471.frc.lib.util.measureTimeFPGA
-import org.team2471.frc.powerup.carriage.*
+import org.team2471.frc.powerup.carriage.Arm
+import org.team2471.frc.powerup.carriage.Carriage
+import org.team2471.frc.powerup.carriage.Lifter
+import org.team2471.frc.powerup.carriage.Pose
 import org.team2471.frc.powerup.drivetrain.Drivetrain
 import sun.plugin.dom.exception.InvalidStateException
 import java.io.File
@@ -455,164 +456,3 @@ val driveStraightAuto = Command("Drive Straight", Drivetrain) {
     }
 }
 
-suspend fun testMotorTime(motor: TalonSRX, encoderMotor: TalonSRX, time: Double, power: Double) {
-    var sampleCount = 0
-    var velocityAcc = 0.0
-    var currentAcc = 0.0
-    try {
-        motor.set(ControlMode.PercentOutput, power)
-        val timer = Timer()
-        timer.start()
-        while (timer.get() < time) {
-            velocityAcc += encoderMotor.getSelectedSensorVelocity(0)
-            currentAcc += motor.outputCurrent
-            sampleCount++
-            delay(20)
-        }
-    } finally {
-        val velocityFinal = velocityAcc / sampleCount
-        val currentFinal = currentAcc / sampleCount
-        println("Motor ${motor.deviceID} Velocity: $velocityFinal")
-        println("Motor ${motor.deviceID} Current: $currentFinal")
-        motor.set(ControlMode.PercentOutput, 0.0)
-        if (velocityFinal < 580.0 || currentFinal > 23.0) {
-            println("Potentiall" +
-                    "y Bad Motor ****************************************************************************")
-        }
-    }
-}
-
-suspend fun testMotorDistance(motor: TalonSRX, encoderMotor: TalonSRX, distance: Double, power: Double) {
-    var sampleCount = 0
-    var velocityAcc = 0.0
-    var currentAcc = 0.0
-    try {
-        motor.set(ControlMode.PercentOutput, power)
-        encoderMotor.setSelectedSensorPosition(0, 0, 5)
-        while (encoderMotor.getSelectedSensorPosition(0) / CarriageConstants.LIFTER_TICKS_PER_INCH < distance) {
-            RobotMap.Solenoids.discBrake.set(true)
-            RobotMap.Solenoids.shifter.set(true) // low gear
-            velocityAcc += encoderMotor.getSelectedSensorVelocity(0)
-            currentAcc += motor.outputCurrent
-            sampleCount++
-            delay(20)
-        }
-        motor.set(ControlMode.PercentOutput, 0.0)
-        delay(250)
-
-        motor.set(ControlMode.PercentOutput, -power)
-        while (encoderMotor.getSelectedSensorPosition(0) / CarriageConstants.LIFTER_TICKS_PER_INCH > 2.0) {
-            RobotMap.Solenoids.discBrake.set(true)
-            RobotMap.Solenoids.shifter.set(true) // low gear
-            velocityAcc += -encoderMotor.getSelectedSensorVelocity(0)
-            currentAcc += motor.outputCurrent
-            sampleCount++
-            delay(20)
-        }
-    } finally {
-        val velocityFinal = velocityAcc / sampleCount
-        val currentFinal = currentAcc / sampleCount
-        println("Motor ${motor.deviceID} Velocity: $velocityFinal")
-        println("Motor ${motor.deviceID} Current: $currentFinal")
-        motor.set(ControlMode.PercentOutput, 0.0)
-        if (velocityFinal < 180.0 || currentFinal > 20.0) {
-            println("Potentially Bad Motor ****************************************************************************")
-        }
-        delay(250)
-    }
-}
-
-val preMatchTest = Command("Pre Match Test", Drivetrain, Arm) {
-    val motor0 = TalonSRX(0)
-    val motor1 = TalonSRX(1)
-    val motor2 = TalonSRX(2)
-    val motor13 = TalonSRX(13)
-    val motor14 = TalonSRX(14)
-    val motor15 = TalonSRX(15)
-
-    val elevatorMotor1 = RobotMap.Talons.elevatorMotor1
-    val elevatorMotor2 = RobotMap.Talons.elevatorMotor2
-    val elevatorMotor3 = RobotMap.Talons.elevatorMotor3
-    val elevatorMotor4 = RobotMap.Talons.elevatorMotor4
-    try {
-        println(1)
-        println(2)
-        testMotorDistance(elevatorMotor1, elevatorMotor1, 18.0, 1.0)
-        println(3)
-        testMotorDistance(elevatorMotor2, elevatorMotor1, 18.0, 1.0)
-        println(4)
-        testMotorDistance(elevatorMotor3, elevatorMotor1, 18.0, 1.0)
-        println(5)
-        testMotorDistance(elevatorMotor4, elevatorMotor1, 18.0, 1.0)
-        println(6)
-    } finally {
-        motor1.set(ControlMode.Follower, 0.0)
-        motor2.set(ControlMode.Follower, 0.0)
-        motor0.neutralOutput()
-        motor13.set(ControlMode.Follower, 15.0)
-        motor14.set(ControlMode.Follower, 15.0)
-        motor15.neutralOutput()
-
-        elevatorMotor4.set(ControlMode.Follower, 6.0)
-        elevatorMotor2.set(ControlMode.Follower, 6.0)
-        elevatorMotor3.set(ControlMode.Follower, 6.0)
-        elevatorMotor1.neutralOutput()
-    }
-}
-
-val backUpOneCubeAndRollCubeOut = Command("Back up and Roll Cube", Drivetrain, Carriage) {
-    val timer = Timer()
-    try {
-        val scalingFactor = -0.14
-        if (Arm.angle > 90) {
-            parallel({
-                Drivetrain.driveDistance(1.2, 1.0)
-            }, {
-                timer.start()
-                while (timer.get() < 1.0) {
-                    println("Time: ${timer.get()}")
-                    var driveVoltage = Drivetrain.rightMaster.motorOutputVoltage
-                    println("Drive Voltage: $driveVoltage")
-                    Arm.intakeSpeed = driveVoltage * scalingFactor
-                    delay(20)
-                }
-            })
-        } else {
-            parallel({
-                Drivetrain.driveDistance(-1.2, 1.0)
-            }, {
-                timer.start()
-                while (timer.get() < 1.0) {
-                    println("Time: ${timer.get()}")
-                    var driveVoltage = Drivetrain.rightMaster.motorOutputVoltage
-                    println("Drive Voltage: $driveVoltage")
-                    Arm.intakeSpeed = driveVoltage * -scalingFactor
-                    delay(20)
-                }
-            })
-        }
-    } finally {
-        timer.stop()
-        Arm.intakeSpeed = 0.0
-        Arm.isClamping = true
-    }
-}
-
-val backUpAndSpit = Command("Back up and Spit", Drivetrain, Carriage) {
-    try {
-        val scalingFactor = -0.3
-        val friction = -0.15
-        while (CoDriver.rightTrigger > 0.1) {
-            if (Arm.angle > 90) {
-                Drivetrain.drive(CoDriver.rightTrigger * 0.5, 0.0, 0.0)
-                Arm.intakeSpeed = CoDriver.rightTrigger * scalingFactor + -friction
-            } else {
-                Drivetrain.drive(CoDriver.rightTrigger * -0.5, 0.0, 0.0)
-                Arm.intakeSpeed = CoDriver.rightTrigger * scalingFactor + friction
-            }
-        }
-    } finally {
-        Arm.intakeSpeed = 0.0
-        Arm.isClamping = true
-    }
-}
