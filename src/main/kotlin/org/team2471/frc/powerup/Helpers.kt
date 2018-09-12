@@ -6,6 +6,7 @@ import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.parallel
 import org.team2471.frc.powerup.carriage.Arm
 import org.team2471.frc.powerup.carriage.Carriage
+import org.team2471.frc.powerup.carriage.Pose
 import org.team2471.frc.powerup.drivetrain.Drivetrain
 
 
@@ -40,6 +41,7 @@ val smartSpit = Command("Back up and Roll Cube", Drivetrain, Carriage) {
                 }
             })
         }
+        Carriage.animateToPose(Pose.INTAKE)
     } finally {
         timer.stop()
         Arm.intakeSpeed = 0.0
