@@ -9,6 +9,7 @@ import org.team2471.frc.lib.control.experimental.suspendUntil
 import org.team2471.frc.powerup.CoDriver
 import org.team2471.frc.powerup.Driver
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import kotlin.math.min
 
 val zero = Command("Carriage Zero", Carriage) {
     try {
@@ -26,9 +27,11 @@ val zero = Command("Carriage Zero", Carriage) {
     }
 }
 
+private const val FIXED_SCALE_OFFSET = 10.0
+
 var scaleOffset = 0.0
     set(value) {
-        field = value.coerceIn(0.0, 66.0) //33.0
+        field = value.coerceIn(-12.0, CarriageConstants.LIFTER_MAX_HEIGHT - Carriage.targetPose.lifterHeight)
     }
 
 var switchOffset = 0.0
@@ -41,18 +44,22 @@ val goToSwitch = Command("Switch Preset", Carriage) {
 }
 
 val goToScaleLowPreset = Command("Scale Low Preset", Carriage) {
+    scaleOffset = scaleOffset.coerceAtLeast(0.0) + FIXED_SCALE_OFFSET
     Carriage.animateToPose(Pose.SCALE_LOW, heightOffset = scaleOffset)
 }
 
 val goToScaleMediumPreset = Command("Scale Medium Preset", Carriage) {
+    scaleOffset = scaleOffset.coerceAtLeast(0.0) + FIXED_SCALE_OFFSET
     Carriage.animateToPose(Pose.SCALE_MED, heightOffset = scaleOffset)
 }
 
 val goToScaleHighPreset = Command("Scale High Preset", Carriage) {
+    scaleOffset = scaleOffset.coerceAtLeast(0.0) + FIXED_SCALE_OFFSET
     Carriage.animateToPose(Pose.SCALE_HIGH, heightOffset = scaleOffset)
 }
 
 val goToFrontScalePreset = Command("Scale Front Preset", Carriage) {
+    scaleOffset = scaleOffset.coerceAtLeast(0.0) + FIXED_SCALE_OFFSET
     Carriage.animateToPose(Pose.SCALE_FRONT, heightOffset = scaleOffset)
 }
 

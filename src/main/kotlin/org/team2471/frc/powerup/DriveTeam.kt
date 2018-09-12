@@ -13,7 +13,7 @@ import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.powerup.carriage.*
 import org.team2471.frc.powerup.drivetrain.Drivetrain
 import org.team2471.frc.powerup.endgame.Wings
-import org.team2471.frc.powerup.endgame.newClimbCommand
+import org.team2471.frc.powerup.endgame.climbCommand
 import java.lang.Double.max
 
 object Driver {
@@ -58,7 +58,7 @@ object Driver {
     init {
         driverIntake.runWhen { intaking }
         driverSpit.runWhile { controller.getBumper(GenericHID.Hand.kLeft) }
-        newClimbCommand.runWhen { controller.startButton }
+        climbCommand.runWhen { controller.startButton }
         toggleCubeSensor.runWhen { controller.bButton }
     }
 }

@@ -1,9 +1,10 @@
+package org.team2471.frc.powerup
+
 import com.ctre.phoenix.motorcontrol.ControlMode
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import edu.wpi.first.wpilibj.Timer
 import kotlinx.coroutines.experimental.delay
 import org.team2471.frc.lib.control.experimental.Command
-import org.team2471.frc.powerup.RobotMap
 import org.team2471.frc.powerup.carriage.Arm
 import org.team2471.frc.powerup.carriage.CarriageConstants
 import org.team2471.frc.powerup.drivetrain.Drivetrain

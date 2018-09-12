@@ -8,7 +8,7 @@ enum class Pose(val lifterHeight: Double, val armAngle: Double) {
     SCALE_FRONT(52.0, 18.0),
     CARRY(6.0, 0.0),
     SWITCH(22.0, 20.0),
-    CLIMB(56.0, 0.0),
+    CLIMB(60.0, 0.0),
     CLIMB_ACQUIRE_RUNG(30.0, 90.0),
     FACE_THE_BOSS(0.5, 90.0),
     STARTING_POSITION(0.0, 90.0),

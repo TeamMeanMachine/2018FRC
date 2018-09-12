@@ -36,8 +36,6 @@ val carriageDefaultCommand = Command("Carriage Default", Carriage) {
             }
             prevReleasing = releasing
 
-            val leftStick = CoDriver.leftStickUpDown
-
             val currentTime = Timer.getFPGATimestamp()
             val deltaTime = currentTime - previousTime
             previousTime = currentTime
@@ -59,7 +57,7 @@ val carriageDefaultCommand = Command("Carriage Default", Carriage) {
                 SmartDashboard.putNumber("Scale Offset", scaleOffset)
             }
 
-            Carriage.adjustAnimationTime(deltaTime * leftStick)
+            Carriage.adjustAnimationTime(deltaTime)
 
             SmartDashboard.putNumberArray("Lifter Amperages", Lifter.amperages)
             Lifter.isLowGear = false
