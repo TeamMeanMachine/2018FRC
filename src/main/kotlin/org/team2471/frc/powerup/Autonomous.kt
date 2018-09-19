@@ -154,6 +154,7 @@ object AutoChooser {
 
 const val RELEASE_DELAY = 500L
 const val INTAKE_DELAY = 0.4
+const val CLAMP_TIME = 0.2
 const val PRE_RELEASE = 0.45
 
 val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
@@ -162,6 +163,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
 
     try {
         Arm.intakeSpeed = 0.4
+        Arm.isClamping = true
         var path = auto["Start To Near Scale"]
 
         parallel({
@@ -173,9 +175,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             delaySeconds(path.durationWithSpeed - PRE_RELEASE)
             Arm.intakeSpeed = -0.6
         })
-        delay(500)
-        Carriage.animateToPose(Pose.STARTING_POSITION)
-/*
+
         path = auto["Near Scale To Cube1"]
         parallel({
             Drivetrain.driveAlongPath(path)
@@ -185,7 +185,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             delay(RELEASE_DELAY)
             Arm.isClamping = false
             Arm.intakeSpeed = 0.8
-            delaySeconds(path.durationWithSpeed - 0.1 - (RELEASE_DELAY / 1000.0))
+            delaySeconds(path.durationWithSpeed - CLAMP_TIME - (RELEASE_DELAY / 1000.0))
             Arm.isClamping = true
         })
 
@@ -195,12 +195,11 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Pose.SCALE_LOW, -3.0, -30.0)
-
         }, {
             delaySeconds(INTAKE_DELAY)
             Arm.intakeSpeed = 0.4
             delaySeconds(path.durationWithSpeed - INTAKE_DELAY - PRE_RELEASE)
-            Arm.intakeSpeed = -1.0 // 0.7
+            Arm.intakeSpeed = -0.45
         })
 
         path = auto["Near Scale To Cube2"]
@@ -212,7 +211,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             delay(RELEASE_DELAY)
             Arm.isClamping = false
             Arm.intakeSpeed = 0.68
-            delaySeconds(path.durationWithSpeed - 0.1 - (RELEASE_DELAY / 1000.0))
+            delaySeconds(path.durationWithSpeed - CLAMP_TIME - (RELEASE_DELAY / 1000.0))
             Arm.isClamping = true
         })
 
@@ -221,14 +220,14 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             Drivetrain.driveAlongPath(path)
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
-            Carriage.animateToPose(Pose.SCALE_LOW, -6.0, angleOffset = -30.0)
+            Carriage.animateToPose(Pose.SCALE_LOW, -3.0, angleOffset = -30.0)
         }, {
             delaySeconds(INTAKE_DELAY)
             Arm.intakeSpeed = 0.4
             delaySeconds(path.durationWithSpeed - INTAKE_DELAY - PRE_RELEASE)
-            Arm.intakeSpeed = -1.0 // -0.6
+            Arm.intakeSpeed = -0.45
         })
-        delay(250)
+
         path = auto["Near Scale To Cube3"]
         parallel({
             Drivetrain.driveAlongPath(path)
@@ -246,7 +245,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
-            delaySeconds(path.durationWithSpeed - 1.5)
+            delaySeconds(path.durationWithSpeed - 1.7)
             Carriage.animateToPose(Pose.SCALE_LOW)
         }, {
             delaySeconds(INTAKE_DELAY)
@@ -254,7 +253,11 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             delaySeconds(path.durationWithSpeed - INTAKE_DELAY - PRE_RELEASE)
             Arm.intakeSpeed = -0.55
         })
-        delay(250)*/
+
+        delay(500)
+        Carriage.animateToPose(Pose.SWITCH)
+        Carriage.animateToPose(Pose.STARTING_POSITION)
+
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
