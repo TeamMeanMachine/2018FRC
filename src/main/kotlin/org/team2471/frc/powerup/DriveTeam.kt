@@ -34,8 +34,7 @@ object Driver {
 
     val softTurn: Double
         get() = controller.getX(GenericHID.Hand.kRight)
-                .deadband(0.2)
-                .squareWithSign() * 0.6
+                .deadband(0.2) * 0.4 //TODO: Decrease and tune so that it makes a 4 ft circle when you gun it
 
     val hardTurn: Double
         get() = (-controller.getTriggerAxis(GenericHID.Hand.kLeft) + controller.getTriggerAxis(GenericHID.Hand.kRight)) * 0.5

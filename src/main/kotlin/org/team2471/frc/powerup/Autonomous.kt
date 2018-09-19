@@ -154,7 +154,7 @@ object AutoChooser {
 
 const val RELEASE_DELAY = 500L
 const val INTAKE_DELAY = 0.4
-const val PRE_RELEASE = 0.2
+const val PRE_RELEASE = 0.45
 
 val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
     val auto = autonomi["All Near Scale"]
@@ -168,12 +168,14 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             Drivetrain.driveAlongPath(path)
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
-            Carriage.animateToPose(Pose.SCALE_MED, -1.0, -30.0)
+            Carriage.animateToPose(Pose.SCALE_LOW, 5.0, -30.0)
         }, {
             delaySeconds(path.durationWithSpeed - PRE_RELEASE)
-            Arm.intakeSpeed = -0.7
+            Arm.intakeSpeed = -0.6
         })
-
+        delay(500)
+        Carriage.animateToPose(Pose.STARTING_POSITION)
+/*
         path = auto["Near Scale To Cube1"]
         parallel({
             Drivetrain.driveAlongPath(path)
@@ -252,7 +254,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             delaySeconds(path.durationWithSpeed - INTAKE_DELAY - PRE_RELEASE)
             Arm.intakeSpeed = -0.55
         })
-        delay(250)
+        delay(250)*/
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true

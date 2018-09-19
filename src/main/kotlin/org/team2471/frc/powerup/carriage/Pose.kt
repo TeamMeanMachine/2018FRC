@@ -2,9 +2,9 @@ package org.team2471.frc.powerup.carriage
 
 enum class Pose(val lifterHeight: Double, val armAngle: Double) {
     INTAKE(1.5, 0.0),
-    SCALE_LOW(25.5, 195.0),
-    SCALE_MED(34.0, 195.0),
-    SCALE_HIGH(42.0, 195.0),
+    SCALE_LOW(24.0, 195.0), //25.5
+    SCALE_MED(40.0, 195.0), //34.0
+    SCALE_HIGH(53.0, 195.0), //42.0
     SCALE_FRONT(52.0, 18.0),
     CARRY(6.0, 0.0),
     SWITCH(22.0, 20.0),
