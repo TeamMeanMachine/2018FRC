@@ -17,7 +17,6 @@ import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.control.experimental.suspendUntil
-import org.team2471.frc.lib.control.plus
 import org.team2471.frc.lib.math.windRelativeAngles
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.Path2D
@@ -108,6 +107,7 @@ object Drivetrain {
 
 
     private val gyro = ADIS16448_IMU(ADIS16448_IMU.Axis.kZ)
+//    private val gyro = edu.wpi.first.wpilibj.ADXRS450_Gyro()
 
     private val table = NetworkTableInstance.getDefault().getTable("Drivetrain")
 
@@ -255,13 +255,12 @@ object Drivetrain {
         var prevRightVelocity = 0.0
         var prevTime = 0.0
 
-        val gyroAngleEntry = table.getEntry("Gyro Angle")
         val pathAngleEntry = table.getEntry("Path Angle")
         val angleErrorEntry = table.getEntry("Angle Error")
         val gyroCorrectionEntry = table.getEntry("Gyro Correction")
 
-        val leftPositionError = table.getEntry("Left Position Error")
-        val rightPositionError = table.getEntry("Right Position Error")
+        val leftPositionErrorEntry = table.getEntry("Left Position Error")
+        val rightPositionErrorEntry = table.getEntry("Right Position Error")
 
         val leftVelocityErrorEntry = table.getEntry("Left Velocity Error")
         val rightVelocityErrorEntry = table.getEntry("Right Velocity Error")
@@ -299,11 +298,10 @@ object Drivetrain {
 
                 val velocityDeltaTimesCoefficient = (leftVelocity - rightVelocity) * DrivetrainConstants.TURNING_FEED_FORWARD
 
-                gyroAngleEntry.setDouble(gyroAngle)
                 pathAngleEntry.setDouble(pathAngle)
                 angleErrorEntry.setDouble(angleError)
-                leftPositionError.setDouble(ticksToFeet(leftMaster.getClosedLoopError(0)))
-                rightPositionError.setDouble(ticksToFeet(rightMaster.getClosedLoopError(0)))
+                leftPositionErrorEntry.setDouble(ticksToFeet(leftMaster.getClosedLoopError(0)))
+                rightPositionErrorEntry.setDouble(ticksToFeet(rightMaster.getClosedLoopError(0)))
                 leftVelocityErrorEntry.setDouble(leftVelocityError)
                 rightVelocityErrorEntry.setDouble(rightVelocityError)
 
@@ -377,16 +375,23 @@ object Drivetrain {
         SmartDashboard.putBoolean("Use Gyro", true)
 
         launch {
+            val leftPositionEntry = table.getEntry("Left Position")
+            val rightPositionEntry = table.getEntry("Right Position")
+
             val leftVelocityEntry = table.getEntry("Left Velocity")
             val rightVelocityEntry = table.getEntry("Right Velocity")
+            val gyroAngleEntry = table.getEntry("Gyro Angle")
             SmartDashboard.putData("Gyro", gyro)
 
             val outputsEntry = table.getEntry("Outputs")
 
             periodic {
-                compassEntry.setDouble(gyro.magZ)
+                gyroAngleEntry.setDouble(gyroAngle)
                 leftVelocityEntry.setDouble(leftVelocity)
                 rightVelocityEntry.setDouble(rightVelocity)
+
+                leftPositionEntry.setDouble(leftDistance)
+                rightPositionEntry.setDouble(rightDistance)
 
                 outputsEntry.setDoubleArray(doubleArrayOf(leftMaster.motorOutputPercent, rightMaster.motorOutputPercent))
 
