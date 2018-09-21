@@ -11,6 +11,7 @@ import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.delaySeconds
 import org.team2471.frc.lib.control.experimental.parallel
 import org.team2471.frc.lib.motion_profiling.Autonomi
+import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.util.measureTimeFPGA
 import org.team2471.frc.powerup.carriage.Arm
 import org.team2471.frc.powerup.carriage.Carriage
@@ -35,7 +36,7 @@ object AutoChooser {
 
     private val testAutoChooser = SendableChooser<String?>().apply {
         addDefault("None", null)
-        addObject("20 Foot Test", "20 Foot Straight")
+        addObject("20 Foot Test", "20 Foot Test")
         addObject("Drive Straight", "8 Foot Straight")
         addObject("2 Foot Circle", "2 Foot Circle")
         addObject("4 Foot Circle", "4 Foot Circle")
@@ -83,9 +84,15 @@ object AutoChooser {
         Lifter.zero()
         val testPath = if (!Game.isFMSAttached) testAutoChooser.selected else null
         if (testPath != null) {
-            Drivetrain.gyroAngleOffset = 0.0
             val testAutonomous = autonomi["Tests"]
-            Drivetrain.driveAlongPath(testAutonomous[testPath])
+            val path = testAutonomous[testPath]
+
+            Drivetrain.gyroAngleOffset = if (path.robotDirection == Path2D.RobotDirection.FORWARD)
+                0.0
+            else
+                180.0
+
+            Drivetrain.driveAlongPath(path)
             delay(Long.MAX_VALUE)
             return@Command
         }
