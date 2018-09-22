@@ -282,9 +282,10 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
             Drivetrain.driveAlongPath(path)
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
-            Carriage.animateToPose(Pose.SCALE_HIGH, -6.0, -30.0)
-            Arm.intakeSpeed = -0.5
+            Carriage.animateToPose(Pose.SCALE_LOW, 11.0, -30.0)
+            Arm.intakeSpeed = -0.55
         })
+
 
         parallel({
             Drivetrain.driveAlongPath(auto["Far Scale To Cube1"])
@@ -298,13 +299,19 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
 
         Arm.isClamping = true
 
+        delay(500)
+        Carriage.animateToPose(Pose.SWITCH)
+        Carriage.animateToPose(Pose.STARTING_POSITION)
+        /*
+
+
         path = auto["Cube1 To Far Scale"]
 
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
             delaySeconds(path.durationWithSpeed - 1.6)
-            Carriage.animateToPose(Pose.SCALE_MED, -6.0, -30.0)
+            Carriage.animateToPose(Pose.SCALE_LOW, 5.0, -30.0)
             Arm.intakeSpeed = -0.5
         }, {
             delay(400)
@@ -328,12 +335,13 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
             Drivetrain.driveAlongPath(path)
         }, {
             delaySeconds(path.durationWithSpeed - 1.6)
-            Carriage.animateToPose(Pose.SCALE_MED, -6.0, -15.0)
+            Carriage.animateToPose(Pose.SCALE_MED, -3.0, -15.0)
             Arm.intakeSpeed = -0.4
         }, {
             delay(400)
             Arm.intakeSpeed = 0.3
         })
+        */
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
