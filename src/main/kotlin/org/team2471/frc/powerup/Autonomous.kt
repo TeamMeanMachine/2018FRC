@@ -434,10 +434,10 @@ val allFarScaleMeanMachine = Command("All Far Scale Platform", Drivetrain, Carri
         }, {
             Carriage.animateToPose(Pose.INTAKE)
             delaySeconds(path.durationWithSpeed - 1.9)
-            Carriage.animateToPose(Pose.SCALE_LOW, 12.0)
+            Carriage.animateToPose(Pose.SCALE_LOW, 14.0)
         }, {
-            delaySeconds(path.durationWithSpeed - 0.25)
-            Arm.intakeSpeed = -1.0
+            delaySeconds(path.durationWithSpeed - 0.0)
+            Arm.intakeSpeed = -0.3
         })
         delay(500)
         Carriage.animateToPose(Pose.SWITCH)
