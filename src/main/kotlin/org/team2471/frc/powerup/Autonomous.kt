@@ -47,23 +47,27 @@ object AutoChooser {
     private val nearSwitchNearScaleChooser = SendableChooser<Command>().apply {
         addDefault(nearScaleAuto.name, nearScaleAuto)
         addObject(driveStraightAuto.name, driveStraightAuto)
+        addObject(yeetAuto.name, yeetAuto)
     }
 
     private val nearSwitchFarScaleChooser = SendableChooser<Command>().apply {
         addDefault(farScaleAuto.name, farScaleAuto)
         addObject(allFarScaleMeanMachine.name, allFarScaleMeanMachine)
         addObject(driveStraightAuto.name, driveStraightAuto)
+        addObject(yeetAuto.name, yeetAuto)
     }
 
     private val farSwitchNearScaleChooser = SendableChooser<Command>().apply {
         addDefault(nearScaleAuto.name, nearScaleAuto)
         addObject(driveStraightAuto.name, driveStraightAuto)
+        addObject(yeetAuto.name, yeetAuto)
     }
 
     private val farSwitchFarScaleChooser = SendableChooser<Command>().apply {
         addDefault(farScaleAuto.name, farScaleAuto)
         addObject(allFarScaleMeanMachine.name, allFarScaleMeanMachine)
         addObject(driveStraightAuto.name, driveStraightAuto)
+        addObject(yeetAuto.name, yeetAuto)
     }
 
     private val scaleSideChooser = SendableChooser<Side?>().apply {
@@ -336,11 +340,7 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
             delay(400)
             Arm.intakeSpeed = 0.3
         })
-        delay(500)
-        Carriage.animateToPose(Pose.SWITCH)
-        Carriage.animateToPose(Pose.STARTING_POSITION)
-        /*
-        */
+
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
@@ -410,7 +410,7 @@ val centerAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
                 Drivetrain.driveAlongPath(auto["To Cube2"])
             }, {
                 Arm.isClamping = false
-                Carriage.animateToPose(Pose.INTAKE_RAISED)
+                Carriage.animateToPose(Pose.INTAKE_RAISED, -3.0)
                 Arm.intakeSpeed = 0.5
             })
             Arm.isClamping = true
@@ -427,13 +427,22 @@ val allFarScaleMeanMachine = Command("All Far Scale Platform", Drivetrain, Carri
     auto.isMirrored = false
     try {
         var path = auto["Start To Far Platform"]
+        Arm.isClamping = true
+        Arm.intakeSpeed = 0.0
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
-            delaySeconds(path.durationWithSpeed - 1.5)
-            Carriage.animateToPose(Pose.SCALE_HIGH, 6.0)
-            Arm.isClamping = false
+            Carriage.animateToPose(Pose.INTAKE)
+            delaySeconds(path.durationWithSpeed - 1.9)
+            Carriage.animateToPose(Pose.SCALE_LOW, 12.0)
+        }, {
+            delaySeconds(path.durationWithSpeed - 0.25)
+            Arm.intakeSpeed = -1.0
         })
+        delay(500)
+        Carriage.animateToPose(Pose.SWITCH)
+        Carriage.animateToPose(Pose.STARTING_POSITION)
+        /**
         parallel({
             Drivetrain.driveAlongPath(auto["Far Platform To Cube1"])
         }, {
@@ -458,6 +467,7 @@ val allFarScaleMeanMachine = Command("All Far Scale Platform", Drivetrain, Carri
         delay(200)
         Arm.isClamping = false
         delay(300)
+        **/
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
@@ -475,3 +485,22 @@ val driveStraightAuto = Command("Drive Straight", Drivetrain) {
     }
 }
 
+val yeetAuto = Command("Yeet Auto", Drivetrain, Arm) {
+    val auto = autonomi["Tests"]
+    try{
+        Arm.isClamping = true
+        Carriage.animateToPose(Pose.INTAKE)
+        parallel({
+            Carriage.animateToPose(Pose.SCALE_LOW, 6.0)
+            Carriage.animateToPose(Pose.SWITCH)
+            Carriage.animateToPose(Pose.STARTING_POSITION)
+        }, {
+            Drivetrain.driveDistance(-6.0, 2.0)
+        }, {
+            delay(700)
+            Arm.intakeSpeed = -1.0
+        })
+    } finally {
+        Arm.intakeSpeed = 0.0
+    }
+}
