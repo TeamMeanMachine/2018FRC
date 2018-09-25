@@ -432,17 +432,13 @@ val allFarScaleMeanMachine = Command("All Far Scale Platform", Drivetrain, Carri
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
-            Carriage.animateToPose(Pose.INTAKE)
-            delaySeconds(path.durationWithSpeed - 1.9)
-            Carriage.animateToPose(Pose.SCALE_LOW, 14.0)
+            delaySeconds(path.durationWithSpeed - 1.0)
+            Carriage.animateToPose(Pose.SCALE_LOW, 20.0)
         }, {
             delaySeconds(path.durationWithSpeed - 0.0)
             Arm.intakeSpeed = -0.3
         })
-        delay(500)
-        Carriage.animateToPose(Pose.SWITCH)
-        Carriage.animateToPose(Pose.STARTING_POSITION)
-        /**
+
         parallel({
             Drivetrain.driveAlongPath(auto["Far Platform To Cube1"])
         }, {
@@ -454,6 +450,12 @@ val allFarScaleMeanMachine = Command("All Far Scale Platform", Drivetrain, Carri
             Arm.isClamping = true
         })
         Arm.isClamping = true
+        path = auto["Cube1 To Wall"]
+        Drivetrain.driveAlongPath(path)
+        delay(500)
+        Carriage.animateToPose(Pose.SWITCH)
+        Carriage.animateToPose(Pose.STARTING_POSITION)
+        /**
         path = auto["Cube1 To Far Platform"]
         parallel({
             Drivetrain.driveAlongPath(auto["Cube1 To Far Platform"])
