@@ -66,6 +66,7 @@ val climbCommand = Command("Climb", Drivetrain, Carriage, Wings) {
                 Lifter.stop()
             } else {
                 Lifter.isBraking = false
+                println(input)
                 Carriage.adjustAnimationTime((time - previousTime) * input)
             }
 

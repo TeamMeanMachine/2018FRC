@@ -28,7 +28,7 @@ object RobotMap {
         val elevatorMotor3 = TalonSRX(ELEVATOR_MOTOR_3)
         val elevatorMotor4 = TalonSRX(ELEVATOR_MOTOR_4)
 
-        const val ARM_MOTOR_1 = 11
+        const val ARM_MOTOR_1 = 12
         const val INTAKE_MOTOR_LEFT = 10
         const val INTAKE_MOTOR_RIGHT = 9
     }

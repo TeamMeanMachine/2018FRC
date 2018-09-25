@@ -109,6 +109,7 @@ object Arm {
                 }
                 CoDriver.passiveRumble = if (hasCube) .12 else 0.0
                 outputEntry.setNumber(motor.motorOutputPercent)
+                val angle = angle
                 angleEntry.setDouble(angle)
 
                 sensorVoltageEntry.setDouble(cubeSensor.voltage)
