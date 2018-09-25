@@ -2,7 +2,7 @@ package org.team2471.frc.powerup.carriage
 
 object CarriageConstants {
     const val STANDARD_INTAKE_SPEED = 0.85
-    const val LIFTER_MAX_HEIGHT = 61.5
+    const val LIFTER_MAX_HEIGHT = 65.5
 
     const val ARM_VELOCITY_FEED_FORWARD = 0.004 / 2.0
 

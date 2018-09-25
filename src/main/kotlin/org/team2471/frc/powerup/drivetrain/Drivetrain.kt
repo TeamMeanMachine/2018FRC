@@ -17,6 +17,7 @@ import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.periodic
 import org.team2471.frc.lib.control.experimental.suspendUntil
+import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.windRelativeAngles
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.Path2D
@@ -30,6 +31,8 @@ import org.team2471.frc.powerup.carriage.Pose
 import java.lang.Math.*
 
 object Drivetrain {
+    private const val TURNING_KP = 0.001
+
     val leftMaster = TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_1).apply {
         configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 1, 10)
         setNeutralMode(NeutralMode.Coast)
@@ -105,6 +108,8 @@ object Drivetrain {
         Telemetry.registerMotor("Drive Right Slave 2", this)
     }
 
+    //private val leftSpeedController = SpeedControllerGroup(leftMaster)
+    //private val differentialDrive = DifferentialDrive(leftMaster, rightMaster)
 
     private val gyro = ADIS16448_IMU(ADIS16448_IMU.Axis.kZ)
 //    private val gyro = edu.wpi.first.wpilibj.ADXRS450_Gyro()
@@ -147,8 +152,16 @@ object Drivetrain {
     fun zeroGyro() = gyro.reset()
 
     fun drive(throttle: Double, softTurn: Double, hardTurn: Double) {
-        var leftPower = throttle + (softTurn * Math.abs(throttle)) + hardTurn
-        var rightPower = throttle - (softTurn * Math.abs(throttle)) - hardTurn
+        val totalTurn = (softTurn * Math.abs(throttle)) + hardTurn
+        val velocitySetpoint = totalTurn * 250.0
+        val velocityError = velocitySetpoint - gyro.rateZ
+
+        val turnAdjust = (velocityError * TURNING_KP).deadband(0.05)
+
+        var leftPower = throttle + totalTurn + turnAdjust
+        var rightPower = throttle - totalTurn - turnAdjust
+
+        SmartDashboard.putNumber("Gyro Rate", gyro.rateZ)
 
         val heightMultiplier = if(Carriage.targetPose == Pose.CLIMB_ACQUIRE_RUNG) 0.8 else heightMultiplierCurve.getValue(Lifter.height)
         leftPower *= heightMultiplier

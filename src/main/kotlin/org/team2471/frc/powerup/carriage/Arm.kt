@@ -41,7 +41,8 @@ object Arm {
         Telemetry.registerMotor("Arm", this)
     }
 
-    val table = Carriage.table.getSubTable("Arm")
+    private val table = Carriage.table.getSubTable("Arm")
+    private val setpointEntry = table.getEntry("Setpoint")
 
     private val intakeMotorLeft = TalonSRX(RobotMap.Talons.INTAKE_MOTOR_LEFT).apply {
         inverted = IS_COMP_BOT
@@ -145,8 +146,8 @@ object Arm {
     var setpoint: Double = angle
         set(value) {
             motor.set(ControlMode.Position, degreesToTicks(value))
+            setpointEntry.setDouble(value)
             field = value
-            SmartDashboard.putNumber("Angle Setpoint", value)
         }
 
     fun set(position: Double, velocity: Double) = motor.set(ControlMode.Position, degreesToTicks(position),

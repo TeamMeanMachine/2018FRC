@@ -36,11 +36,6 @@ object Carriage {
         }
 
         Lifter.set(lifterSetpoint, 0.0)
-//        Lifter.set(lifterSetpoint, if (lifterSetpoint - Lifter.height >= 0) {
-//            CarriageConstants.LIFTER_UPWARD_FEED_FORWARD
-//        } else {
-//            CarriageConstants.LIFTER_DOWNWARD_FEED_FORWARD
-//        })
         Arm.set(armSetpoint, armVelocity)
     }
 

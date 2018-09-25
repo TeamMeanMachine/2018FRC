@@ -16,7 +16,7 @@ val zero = Command("Carriage Zero", Carriage) {
         Lifter.isBraking = false
         Lifter.isLowGear = false
         periodic {
-            Lifter.heightRawSpeed = CoDriver.leftStickUpDown * 0.4
+            Lifter.heightRawSpeed = CoDriver.leftStickUpDown * 0.3
         }
     } finally {
         Carriage.setAnimation(Pose.STARTING_POSITION)

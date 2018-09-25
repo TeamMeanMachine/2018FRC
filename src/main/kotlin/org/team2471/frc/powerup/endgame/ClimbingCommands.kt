@@ -15,8 +15,7 @@ import org.team2471.frc.powerup.carriage.Pose
 import org.team2471.frc.powerup.drivetrain.Drivetrain
 import kotlin.math.max
 
-
-val climbCommand = Command("New Climb", Drivetrain, Carriage, Wings) {
+val climbCommand = Command("Climb", Drivetrain, Carriage, Wings) {
     try {
         val soloClimb = SmartDashboard.getBoolean("Solo Climb", false)
         Wings.climbingGuideDeployed = !soloClimb
@@ -61,7 +60,7 @@ val climbCommand = Command("New Climb", Drivetrain, Carriage, Wings) {
             Wings.wingsDeployed = deploy
 
             val time = timer.get()
-            val input = CoDriver.leftStickUpDown
+            val input = Driver.rightStickUpDown
             if (input == 0.0) {
                 Lifter.isBraking = true
                 Lifter.stop()

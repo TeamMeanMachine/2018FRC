@@ -69,6 +69,8 @@ object Lifter {
 
     private val table = Carriage.table.getSubTable("Lifter")
 
+    private val setpointEntry = table.getEntry("Setpoint")
+
     init {
         launch {
             val heightEntry = table.getEntry("Height")
@@ -127,15 +129,16 @@ object Lifter {
     }
 
     fun set(setpoint: Double, feedForward: Double) {
-
         val min = when {
             Arm.angle > 150.0 -> min(height, Pose.SCALE_LOW.lifterHeight)
             Arm.angle < 50.0 -> min(height, Pose.INTAKE.lifterHeight)
             else -> 0.0
         }
 
-        motors.set(ControlMode.Position, inchesToTicks(setpoint.coerceIn(min, CarriageConstants.LIFTER_MAX_HEIGHT)) ,
+        val limitedSetpoint = setpoint.coerceIn(min, CarriageConstants.LIFTER_MAX_HEIGHT)
+        motors.set(ControlMode.Position, inchesToTicks(limitedSetpoint) ,
                 DemandType.ArbitraryFeedForward, feedForward)
+        setpointEntry.setDouble(limitedSetpoint)
     }
 
 
