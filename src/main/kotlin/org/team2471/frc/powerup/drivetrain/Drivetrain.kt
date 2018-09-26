@@ -154,14 +154,15 @@ object Drivetrain {
     fun drive(throttle: Double, softTurn: Double, hardTurn: Double) {
         val totalTurn = (softTurn * Math.abs(throttle)) + hardTurn
         val velocitySetpoint = totalTurn * 250.0
-        val velocityError = velocitySetpoint - gyro.rateZ
+        val gyroRate = gyro.rateZ
+        val velocityError = velocitySetpoint - gyroRate
 
-        val turnAdjust = (velocityError * TURNING_KP).deadband(0.05)
+        val turnAdjust = velocityError * TURNING_KP
 
         var leftPower = throttle + totalTurn + turnAdjust
         var rightPower = throttle - totalTurn - turnAdjust
 
-        SmartDashboard.putNumber("Gyro Rate", gyro.rateZ)
+        SmartDashboard.putNumber("Gyro Rate", gyroRate)
 
         val heightMultiplier = if(Carriage.targetPose == Pose.CLIMB_ACQUIRE_RUNG) 0.8 else heightMultiplierCurve.getValue(Lifter.height)
         leftPower *= heightMultiplier

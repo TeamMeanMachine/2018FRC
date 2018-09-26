@@ -22,7 +22,7 @@ val carriageDefaultCommand = Command("Carriage Default", Carriage) {
             }
 
             Arm.isClamping = !releaseClamp
-            val spit = max(if (releaseClamp) 0.2 else 0.0, CoDriver.spitSpeed)
+            val spit = max(if (releaseClamp) 0.2 else 0.0, CoDriver.spitSpeed + CoDriver.rightTrigger)
 
             Arm.intakeSpeed = if (spit == 0.0 && Arm.hasCube) 0.2 else -spit
 

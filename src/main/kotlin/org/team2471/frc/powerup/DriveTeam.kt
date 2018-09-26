@@ -99,7 +99,7 @@ object CoDriver {
         get() = controller.getBumper(GenericHID.Hand.kLeft)
 
     val rightTrigger: Double
-        get() = controller.getTriggerAxis(GenericHID.Hand.kRight)
+        get() = (controller.getTriggerAxis(GenericHID.Hand.kRight) * 0.38).deadband(0.15)
 
     init {
         println("Initialized")

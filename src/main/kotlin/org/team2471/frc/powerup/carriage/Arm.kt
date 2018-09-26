@@ -1,5 +1,6 @@
 package org.team2471.frc.powerup.carriage
 
+import com.ctre.phoenix.ParamEnum
 import com.ctre.phoenix.motorcontrol.ControlMode
 import com.ctre.phoenix.motorcontrol.DemandType
 import com.ctre.phoenix.motorcontrol.FeedbackDevice
@@ -35,6 +36,7 @@ object Arm {
         configContinuousCurrentLimit(25, 10)
         configPeakCurrentLimit(0, 10)
         configPeakCurrentDuration(0, 10)
+        configSetParameter(ParamEnum.eFeedbackNotContinuous, 1.0, 0, 0, 10)
         enableCurrentLimit(true)
         setSensorPhase(false)
         inverted = true
@@ -97,11 +99,11 @@ object Arm {
 
                 usingIntakeSensor = SmartDashboard.getBoolean("Using Intake Sensor", true)
 
+                SmartDashboard.putNumber("Arm current", motor.outputCurrent)
                 if (!detectingCube) {
                     cubeTimer.reset()
                 }
 
-//                if (cubeTimer.get() > 0.15) {
                 if (detectingCube && Carriage.targetPose == Pose.INTAKE) {
                     hasCube = true
                 } else if ((!isClamping && !detectingCube) || intakeMotorLeft.motorOutputPercent < -0.1) {
