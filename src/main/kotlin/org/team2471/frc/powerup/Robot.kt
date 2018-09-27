@@ -49,7 +49,7 @@ class Robot : IterativeRobot() {
 
     override fun autonomousInit() {
         CameraStream.isEnabled = false
-        Drivetrain.setNeutralMode(NeutralMode.Brake)
+        Drivetrain.isBraking = true
         hasRunAuto = true
         Game.updateGameData()
         LEDController.alliance = Game.alliance
@@ -59,7 +59,7 @@ class Robot : IterativeRobot() {
 
     override fun teleopInit() {
         CameraStream.isEnabled = true
-        Drivetrain.setNeutralMode(NeutralMode.Brake)
+        Drivetrain.isBraking = true
         if (!hasRunAuto) runBlocking {
             Carriage.animateToPose(Pose.INTAKE)
         }
@@ -71,13 +71,17 @@ class Robot : IterativeRobot() {
     override fun disabledInit() {
         CameraStream.isEnabled = true
         LEDController.state = IdleState
-        Drivetrain.setNeutralMode(NeutralMode.Coast)
     }
 
     override fun disabledPeriodic() {
         if (SmartDashboard.getBoolean("Callibrate Gyro", false)) {
             Drivetrain.calibrateGyro()
             SmartDashboard.putBoolean("Callibrate Gyro", false)
+        }
+
+        // start coasting once motion stops
+        if (Drivetrain.isBraking && Drivetrain.leftVelocity == 0.0 && Drivetrain.rightVelocity == 0.0) {
+            Drivetrain.isBraking = false
         }
     }
 

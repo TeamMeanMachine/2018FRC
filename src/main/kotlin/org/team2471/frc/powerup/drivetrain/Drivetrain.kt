@@ -121,13 +121,21 @@ object Drivetrain {
 
     var gyroAngleOffset = 0.0
 
+    var isBraking = true
+        set(value) {
+            val neutralMode = if (value) NeutralMode.Brake else NeutralMode.Coast
+            leftSlave2.setNeutralMode(neutralMode)
+            rightSlave2.setNeutralMode(neutralMode)
+            field = value
+        }
+
     private val gyroAngle: Double
         get() = gyro.angleZ + gyroAngleOffset
 
-    private val leftVelocity: Double
+    val leftVelocity: Double
         get() = ticksToFeet(leftMaster.getSelectedSensorVelocity(1) * 10)
 
-    private val rightVelocity: Double
+    val rightVelocity: Double
         get() = ticksToFeet(rightMaster.getSelectedSensorVelocity(1) * 10)
 
     private val heightMultiplierCurve = MotionCurve().apply {
@@ -157,7 +165,7 @@ object Drivetrain {
         val gyroRate = gyro.rateZ
         val velocityError = velocitySetpoint - gyroRate
 
-        val turnAdjust = velocityError * TURNING_KP
+        val turnAdjust = (velocityError * TURNING_KP).deadband( 1.0e-2)
 
         var leftPower = throttle + totalTurn + turnAdjust
         var rightPower = throttle - totalTurn - turnAdjust
@@ -250,12 +258,6 @@ object Drivetrain {
         leftMaster.sensorCollection.setQuadraturePosition(0, 0)
         rightMaster.sensorCollection.setQuadraturePosition(0, 0)
     }
-
-    fun setNeutralMode(mode: NeutralMode) {
-        leftSlave2.setNeutralMode(mode)
-        rightSlave2.setNeutralMode(mode)
-    }
-
 
     @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
     suspend fun driveAlongPath(path: Path2D, extraTime: Double = 0.0) {
