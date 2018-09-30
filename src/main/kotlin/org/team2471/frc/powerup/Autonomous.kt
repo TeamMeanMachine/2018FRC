@@ -61,6 +61,7 @@ object AutoChooser {
         addDefault(nearScaleAuto.name, nearScaleAuto)
         addObject(driveStraightAuto.name, driveStraightAuto)
         addObject(yeetAuto.name, yeetAuto)
+        addObject(coopAuto.name, coopAuto)
     }
 
     private val farSwitchFarScaleChooser = SendableChooser<Command>().apply {
@@ -68,6 +69,7 @@ object AutoChooser {
         addObject(allFarScaleMeanMachine.name, allFarScaleMeanMachine)
         addObject(driveStraightAuto.name, driveStraightAuto)
         addObject(yeetAuto.name, yeetAuto)
+        addObject(coopAuto.name, coopAuto)
     }
 
     private val scaleSideChooser = SendableChooser<Side?>().apply {
@@ -166,14 +168,14 @@ object AutoChooser {
 const val RELEASE_DELAY = 500L
 const val INTAKE_DELAY = 0.4
 const val CLAMP_TIME = 0.2
-const val PRE_RELEASE = 0.45
+const val PRE_RELEASE = 0.35
 
 val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
     val auto = autonomi["All Near Scale"]
     auto.isMirrored = startingSide == Side.LEFT
 
     try {
-        Arm.intakeSpeed = 0.4
+        Arm.intakeSpeed = 0.2
         Arm.isClamping = true
         var path = auto["Start To Near Scale"]
 
@@ -184,7 +186,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             Carriage.animateToPose(Pose.SCALE_LOW, 5.0, -30.0)
         }, {
             delaySeconds(path.durationWithSpeed - PRE_RELEASE)
-            Arm.intakeSpeed = -0.6
+            Arm.intakeSpeed = -0.5
         })
 
         path = auto["Near Scale To Cube1"]
@@ -208,7 +210,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             Carriage.animateToPose(Pose.SCALE_LOW, -3.0, -30.0)
         }, {
             delaySeconds(INTAKE_DELAY)
-            Arm.intakeSpeed = 0.4
+            Arm.intakeSpeed = 0.2
             delaySeconds(path.durationWithSpeed - INTAKE_DELAY - PRE_RELEASE)
             Arm.intakeSpeed = -0.45
         })
@@ -236,7 +238,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             delaySeconds(INTAKE_DELAY)
             Arm.intakeSpeed = 0.4
             delaySeconds(path.durationWithSpeed - INTAKE_DELAY - PRE_RELEASE)
-            Arm.intakeSpeed = -0.45
+            Arm.intakeSpeed = -0.35
         })
 
         path = auto["Near Scale To Cube3"]
@@ -302,7 +304,6 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
         })
 
         Arm.isClamping = true
-
 
         path = auto["Cube1 To Far Scale"]
 
@@ -502,6 +503,19 @@ val yeetAuto = Command("Yeet Auto", Drivetrain, Arm) {
             delay(700)
             Arm.intakeSpeed = -1.0
         })
+    } finally {
+        Arm.intakeSpeed = 0.0
+    }
+}
+
+val coopAuto = Command("Coop Auto", Drivetrain, Arm) {
+    val auto = autonomi["Far Scale Compatible"]
+    try {
+        Arm.isClamping = true
+        Drivetrain.driveAlongPath(auto["Start To Far Scale"])
+        Carriage.animateToPose(Pose.SCALE_MED)
+        Arm.intakeSpeed = -0.4
+        delay(500)
     } finally {
         Arm.intakeSpeed = 0.0
     }

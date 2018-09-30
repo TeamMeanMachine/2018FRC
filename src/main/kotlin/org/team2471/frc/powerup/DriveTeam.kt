@@ -37,7 +37,7 @@ object Driver {
                 .deadband(0.2) * 0.5
 
     val hardTurn: Double
-        get() = (-controller.getTriggerAxis(GenericHID.Hand.kLeft) + controller.getTriggerAxis(GenericHID.Hand.kRight)) * 0.7
+        get() = (-controller.getTriggerAxis(GenericHID.Hand.kLeft) + controller.getTriggerAxis(GenericHID.Hand.kRight)) * 0.6
 
     val intaking: Boolean
         get() = controller.getBumper(GenericHID.Hand.kRight)
