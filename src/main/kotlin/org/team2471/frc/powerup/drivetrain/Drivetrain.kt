@@ -31,7 +31,7 @@ import org.team2471.frc.powerup.carriage.Pose
 import java.lang.Math.*
 
 object Drivetrain {
-    private const val TURNING_KP = 0.001
+    private const val TURNING_KP = 0.002
     private const val DRIVE_COMPENSATOR = 0.9
 
     val leftMaster = TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_1).apply {
