@@ -312,7 +312,7 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
         }, {
             delaySeconds(path.durationWithSpeed - 1.6)
             Carriage.animateToPose(Pose.SCALE_LOW, 5.0, -30.0)
-            Arm.intakeSpeed = -0.37
+            Arm.intakeSpeed = -0.3
         }, {
             delay(400)
             Arm.intakeSpeed = 0.3
@@ -514,7 +514,7 @@ val coopAuto = Command("Coop Auto", Drivetrain, Arm) {
         Arm.isClamping = true
         Drivetrain.driveAlongPath(auto["Start To Far Scale"])
         Carriage.animateToPose(Pose.SCALE_MED)
-        Arm.intakeSpeed = -0.4
+        Arm.intakeSpeed = -0.65
         delay(500)
     } finally {
         Arm.intakeSpeed = 0.0

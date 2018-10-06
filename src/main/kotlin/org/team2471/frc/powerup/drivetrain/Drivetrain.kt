@@ -32,6 +32,7 @@ import java.lang.Math.*
 
 object Drivetrain {
     private const val TURNING_KP = 0.001
+    private const val DRIVE_COMPENSATOR = 0.9
 
     val leftMaster = TalonSRX(RobotMap.Talons.LEFT_DRIVE_MOTOR_1).apply {
         configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 1, 10)
@@ -177,7 +178,7 @@ object Drivetrain {
         rightPower *= heightMultiplier
 
         leftPower = leftPower * (1.0 - DrivetrainConstants.MINIMUM_OUTPUT) + copySign(DrivetrainConstants.MINIMUM_OUTPUT, leftPower)
-        rightPower = rightPower * (1.0 - DrivetrainConstants.MINIMUM_OUTPUT) + copySign(DrivetrainConstants.MINIMUM_OUTPUT, rightPower)
+        rightPower = rightPower * DRIVE_COMPENSATOR *(1.0 - DrivetrainConstants.MINIMUM_OUTPUT) + copySign(DrivetrainConstants.MINIMUM_OUTPUT, rightPower)
 
 
         val maxPower = Math.max(Math.abs(leftPower), Math.abs(rightPower))

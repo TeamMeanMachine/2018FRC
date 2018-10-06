@@ -96,7 +96,6 @@ object Arm {
             val cubeTimer = Timer()
             cubeTimer.start()
             periodic {
-
                 usingIntakeSensor = SmartDashboard.getBoolean("Using Intake Sensor", true)
 
                 SmartDashboard.putNumber("Arm current", motor.outputCurrent)
