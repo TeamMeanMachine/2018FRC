@@ -12,10 +12,8 @@ import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareWithSign
 import org.team2471.frc.powerup.carriage.*
 import org.team2471.frc.powerup.drivetrain.Drivetrain
-import org.team2471.frc.powerup.drivetrain.driveTest
 import org.team2471.frc.powerup.endgame.Wings
 import org.team2471.frc.powerup.endgame.climbCommand
-import org.team2471.frc.powerup.endgame.newClimbCommand
 import java.lang.Double.max
 
 object Driver {
@@ -36,11 +34,10 @@ object Driver {
 
     val softTurn: Double
         get() = controller.getX(GenericHID.Hand.kRight)
-                .deadband(0.2)
-                .squareWithSign() * 0.6
+                .deadband(0.2) * 0.5
 
     val hardTurn: Double
-        get() = (-controller.getTriggerAxis(GenericHID.Hand.kLeft) + controller.getTriggerAxis(GenericHID.Hand.kRight)) * 0.5
+        get() = (-controller.getTriggerAxis(GenericHID.Hand.kLeft) + controller.getTriggerAxis(GenericHID.Hand.kRight)) * 0.6
 
     val intaking: Boolean
         get() = controller.getBumper(GenericHID.Hand.kRight)
@@ -57,10 +54,14 @@ object Driver {
     val rightTrigger: Double
         get() = controller.getTriggerAxis(GenericHID.Hand.kRight)
 
+    val rightStickUpDown: Double
+        get() = -controller.getY(GenericHID.Hand.kRight)
+                .deadband(.2)
+
     init {
         driverIntake.runWhen { intaking }
         driverSpit.runWhile { controller.getBumper(GenericHID.Hand.kLeft) }
-        newClimbCommand.runWhen { controller.startButton }
+        climbCommand.runWhen { controller.startButton }
         toggleCubeSensor.runWhen { controller.bButton }
     }
 }
@@ -98,14 +99,14 @@ object CoDriver {
         get() = controller.getBumper(GenericHID.Hand.kLeft)
 
     val rightTrigger: Double
-        get() = controller.getTriggerAxis(GenericHID.Hand.kRight)
+        get() = (controller.getTriggerAxis(GenericHID.Hand.kRight) * 0.38).deadband(0.15)
 
     init {
         println("Initialized")
         SmartDashboard.putBoolean("Tune Arm PID", false)
         zero.toggleWhen { controller.backButton }
         goToSwitch.runWhen { controller.getStickButton(GenericHID.Hand.kRight) }
-        backUpOneCubeAndRollCubeOut.runWhen {controller.getBumper(GenericHID.Hand.kRight)}
+        smartSpit.runWhen {controller.getBumper(GenericHID.Hand.kRight)}
         goToScaleLowPreset.runWhen { controller.aButton }
         goToScaleMediumPreset.runWhen { controller.xButton }
         goToScaleHighPreset.runWhen { controller.yButton }
@@ -116,7 +117,6 @@ object CoDriver {
 
         tuneArmPID.runWhen { SmartDashboard.getBoolean("Tune Arm PID", false) }
         commandReset.runWhen { controller.startButton }
-        backUpAndSpit.runWhen { rightTrigger>0.1 }
 
     }
 }

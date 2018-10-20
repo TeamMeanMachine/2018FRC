@@ -8,7 +8,7 @@ object DrivetrainConstants {
 
 
     // path following
-    const val DISTANCE_P = 2.0 * 0.75
+    const val DISTANCE_P = 2.0 * 0.40 // 0.75
     const val DISTANCE_D = 0.5
 
 //    const val LEFT_FEED_FORWARD_COEFFICIENT = 0.0863274081239196

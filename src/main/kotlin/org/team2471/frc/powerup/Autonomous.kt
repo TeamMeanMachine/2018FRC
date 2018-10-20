@@ -1,7 +1,5 @@
 package org.team2471.frc.powerup
 
-import com.ctre.phoenix.motorcontrol.ControlMode
-import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import edu.wpi.first.networktables.EntryListenerFlags
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
@@ -13,8 +11,12 @@ import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.delaySeconds
 import org.team2471.frc.lib.control.experimental.parallel
 import org.team2471.frc.lib.motion_profiling.Autonomi
+import org.team2471.frc.lib.motion_profiling.Path2D
 import org.team2471.frc.lib.util.measureTimeFPGA
-import org.team2471.frc.powerup.carriage.*
+import org.team2471.frc.powerup.carriage.Arm
+import org.team2471.frc.powerup.carriage.Carriage
+import org.team2471.frc.powerup.carriage.Lifter
+import org.team2471.frc.powerup.carriage.Pose
 import org.team2471.frc.powerup.drivetrain.Drivetrain
 import sun.plugin.dom.exception.InvalidStateException
 import java.io.File
@@ -34,7 +36,7 @@ object AutoChooser {
 
     private val testAutoChooser = SendableChooser<String?>().apply {
         addDefault("None", null)
-        addObject("20 Foot Test", "20 Foot Straight")
+        addObject("20 Foot Test", "20 Foot Test")
         addObject("Drive Straight", "8 Foot Straight")
         addObject("2 Foot Circle", "2 Foot Circle")
         addObject("4 Foot Circle", "4 Foot Circle")
@@ -45,23 +47,29 @@ object AutoChooser {
     private val nearSwitchNearScaleChooser = SendableChooser<Command>().apply {
         addDefault(nearScaleAuto.name, nearScaleAuto)
         addObject(driveStraightAuto.name, driveStraightAuto)
+        addObject(yeetAuto.name, yeetAuto)
     }
 
     private val nearSwitchFarScaleChooser = SendableChooser<Command>().apply {
         addDefault(farScaleAuto.name, farScaleAuto)
         addObject(allFarScaleMeanMachine.name, allFarScaleMeanMachine)
         addObject(driveStraightAuto.name, driveStraightAuto)
+        addObject(yeetAuto.name, yeetAuto)
     }
 
     private val farSwitchNearScaleChooser = SendableChooser<Command>().apply {
         addDefault(nearScaleAuto.name, nearScaleAuto)
         addObject(driveStraightAuto.name, driveStraightAuto)
+        addObject(yeetAuto.name, yeetAuto)
+        addObject(coopAuto.name, coopAuto)
     }
 
     private val farSwitchFarScaleChooser = SendableChooser<Command>().apply {
         addDefault(farScaleAuto.name, farScaleAuto)
         addObject(allFarScaleMeanMachine.name, allFarScaleMeanMachine)
         addObject(driveStraightAuto.name, driveStraightAuto)
+        addObject(yeetAuto.name, yeetAuto)
+        addObject(coopAuto.name, coopAuto)
     }
 
     private val scaleSideChooser = SendableChooser<Side?>().apply {
@@ -82,9 +90,15 @@ object AutoChooser {
         Lifter.zero()
         val testPath = if (!Game.isFMSAttached) testAutoChooser.selected else null
         if (testPath != null) {
-            Drivetrain.gyroAngleOffset = 0.0
             val testAutonomous = autonomi["Tests"]
-            Drivetrain.driveAlongPath(testAutonomous[testPath])
+            val path = testAutonomous[testPath]
+
+            Drivetrain.gyroAngleOffset = if (path.robotDirection == Path2D.RobotDirection.FORWARD)
+                0.0
+            else
+                180.0
+
+            Drivetrain.driveAlongPath(path)
             delay(Long.MAX_VALUE)
             return@Command
         }
@@ -153,24 +167,26 @@ object AutoChooser {
 
 const val RELEASE_DELAY = 500L
 const val INTAKE_DELAY = 0.4
-const val PRE_RELEASE = 0.2
+const val CLAMP_TIME = 0.2
+const val PRE_RELEASE = 0.35
 
 val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
     val auto = autonomi["All Near Scale"]
     auto.isMirrored = startingSide == Side.LEFT
 
     try {
-        Arm.intakeSpeed = 0.4
+        Arm.intakeSpeed = 0.2
+        Arm.isClamping = true
         var path = auto["Start To Near Scale"]
 
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
-            Carriage.animateToPose(Pose.SCALE_MED, -1.0, -30.0)
+            Carriage.animateToPose(Pose.SCALE_LOW, 5.0, -30.0)
         }, {
             delaySeconds(path.durationWithSpeed - PRE_RELEASE)
-            Arm.intakeSpeed = -0.7
+            Arm.intakeSpeed = -0.5
         })
 
         path = auto["Near Scale To Cube1"]
@@ -182,7 +198,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             delay(RELEASE_DELAY)
             Arm.isClamping = false
             Arm.intakeSpeed = 0.8
-            delaySeconds(path.durationWithSpeed - 0.1 - (RELEASE_DELAY / 1000.0))
+            delaySeconds(path.durationWithSpeed - CLAMP_TIME - (RELEASE_DELAY / 1000.0))
             Arm.isClamping = true
         })
 
@@ -192,12 +208,11 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
             Carriage.animateToPose(Pose.SCALE_LOW, -3.0, -30.0)
-
         }, {
             delaySeconds(INTAKE_DELAY)
-            Arm.intakeSpeed = 0.4
+            Arm.intakeSpeed = 0.2
             delaySeconds(path.durationWithSpeed - INTAKE_DELAY - PRE_RELEASE)
-            Arm.intakeSpeed = -1.0 // 0.7
+            Arm.intakeSpeed = -0.45
         })
 
         path = auto["Near Scale To Cube2"]
@@ -209,7 +224,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             delay(RELEASE_DELAY)
             Arm.isClamping = false
             Arm.intakeSpeed = 0.68
-            delaySeconds(path.durationWithSpeed - 0.1 - (RELEASE_DELAY / 1000.0))
+            delaySeconds(path.durationWithSpeed - CLAMP_TIME - (RELEASE_DELAY / 1000.0))
             Arm.isClamping = true
         })
 
@@ -218,14 +233,14 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             Drivetrain.driveAlongPath(path)
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
-            Carriage.animateToPose(Pose.SCALE_LOW, -6.0, angleOffset = -30.0)
+            Carriage.animateToPose(Pose.SCALE_LOW, -3.0, angleOffset = -30.0)
         }, {
             delaySeconds(INTAKE_DELAY)
             Arm.intakeSpeed = 0.4
             delaySeconds(path.durationWithSpeed - INTAKE_DELAY - PRE_RELEASE)
-            Arm.intakeSpeed = -1.0 // -0.6
+            Arm.intakeSpeed = -0.35
         })
-        delay(250)
+
         path = auto["Near Scale To Cube3"]
         parallel({
             Drivetrain.driveAlongPath(path)
@@ -243,7 +258,7 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
-            delaySeconds(path.durationWithSpeed - 1.5)
+            delaySeconds(path.durationWithSpeed - 1.7)
             Carriage.animateToPose(Pose.SCALE_LOW)
         }, {
             delaySeconds(INTAKE_DELAY)
@@ -251,7 +266,11 @@ val nearScaleAuto = Command("Near Scale", Drivetrain, Carriage) {
             delaySeconds(path.durationWithSpeed - INTAKE_DELAY - PRE_RELEASE)
             Arm.intakeSpeed = -0.55
         })
-        delay(250)
+
+        delay(500)
+        Carriage.animateToPose(Pose.SWITCH)
+        Carriage.animateToPose(Pose.STARTING_POSITION)
+
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
@@ -269,9 +288,10 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
             Drivetrain.driveAlongPath(path)
         }, {
             delaySeconds(path.durationWithSpeed - 1.5)
-            Carriage.animateToPose(Pose.SCALE_HIGH, -6.0, -30.0)
+            Carriage.animateToPose(Pose.SCALE_LOW, 11.0, -30.0)
             Arm.intakeSpeed = -0.5
         })
+
 
         parallel({
             Drivetrain.driveAlongPath(auto["Far Scale To Cube1"])
@@ -291,8 +311,8 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
             Drivetrain.driveAlongPath(path)
         }, {
             delaySeconds(path.durationWithSpeed - 1.6)
-            Carriage.animateToPose(Pose.SCALE_MED, -6.0, -30.0)
-            Arm.intakeSpeed = -0.5
+            Carriage.animateToPose(Pose.SCALE_LOW, 5.0, -30.0)
+            Arm.intakeSpeed = -0.3
         }, {
             delay(400)
             Arm.intakeSpeed = 0.3
@@ -315,12 +335,13 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
             Drivetrain.driveAlongPath(path)
         }, {
             delaySeconds(path.durationWithSpeed - 1.6)
-            Carriage.animateToPose(Pose.SCALE_MED, -6.0, -15.0)
-            Arm.intakeSpeed = -0.4
+            Carriage.animateToPose(Pose.SCALE_LOW, 8.0, -15.0)
+            Arm.intakeSpeed = -0.35
         }, {
             delay(400)
             Arm.intakeSpeed = 0.3
         })
+
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
@@ -390,7 +411,7 @@ val centerAuto = Command("Robonauts Auto", Drivetrain, Carriage) {
                 Drivetrain.driveAlongPath(auto["To Cube2"])
             }, {
                 Arm.isClamping = false
-                Carriage.animateToPose(Pose.INTAKE_RAISED)
+                Carriage.animateToPose(Pose.INTAKE_RAISED, -3.0)
                 Arm.intakeSpeed = 0.5
             })
             Arm.isClamping = true
@@ -407,13 +428,18 @@ val allFarScaleMeanMachine = Command("All Far Scale Platform", Drivetrain, Carri
     auto.isMirrored = false
     try {
         var path = auto["Start To Far Platform"]
+        Arm.isClamping = true
+        Arm.intakeSpeed = 0.0
         parallel({
             Drivetrain.driveAlongPath(path)
         }, {
-            delaySeconds(path.durationWithSpeed - 1.5)
-            Carriage.animateToPose(Pose.SCALE_HIGH, 6.0)
-            Arm.isClamping = false
+            delaySeconds(path.durationWithSpeed - 1.0)
+            Carriage.animateToPose(Pose.SCALE_LOW, 20.0)
+        }, {
+            delaySeconds(path.durationWithSpeed - 0.0)
+            Arm.intakeSpeed = -0.3
         })
+
         parallel({
             Drivetrain.driveAlongPath(auto["Far Platform To Cube1"])
         }, {
@@ -425,6 +451,12 @@ val allFarScaleMeanMachine = Command("All Far Scale Platform", Drivetrain, Carri
             Arm.isClamping = true
         })
         Arm.isClamping = true
+        path = auto["Cube1 To Wall"]
+        Drivetrain.driveAlongPath(path)
+        delay(500)
+        Carriage.animateToPose(Pose.SWITCH)
+        Carriage.animateToPose(Pose.STARTING_POSITION)
+        /**
         path = auto["Cube1 To Far Platform"]
         parallel({
             Drivetrain.driveAlongPath(auto["Cube1 To Far Platform"])
@@ -438,6 +470,7 @@ val allFarScaleMeanMachine = Command("All Far Scale Platform", Drivetrain, Carri
         delay(200)
         Arm.isClamping = false
         delay(300)
+        **/
     } finally {
         Arm.intakeSpeed = 0.0
         Arm.isClamping = true
@@ -455,164 +488,35 @@ val driveStraightAuto = Command("Drive Straight", Drivetrain) {
     }
 }
 
-suspend fun testMotorTime(motor: TalonSRX, encoderMotor: TalonSRX, time: Double, power: Double) {
-    var sampleCount = 0
-    var velocityAcc = 0.0
-    var currentAcc = 0.0
-    try {
-        motor.set(ControlMode.PercentOutput, power)
-        val timer = Timer()
-        timer.start()
-        while (timer.get() < time) {
-            velocityAcc += encoderMotor.getSelectedSensorVelocity(0)
-            currentAcc += motor.outputCurrent
-            sampleCount++
-            delay(20)
-        }
-    } finally {
-        val velocityFinal = velocityAcc / sampleCount
-        val currentFinal = currentAcc / sampleCount
-        println("Motor ${motor.deviceID} Velocity: $velocityFinal")
-        println("Motor ${motor.deviceID} Current: $currentFinal")
-        motor.set(ControlMode.PercentOutput, 0.0)
-        if (velocityFinal < 580.0 || currentFinal > 23.0) {
-            println("Potentiall" +
-                    "y Bad Motor ****************************************************************************")
-        }
-    }
-}
-
-suspend fun testMotorDistance(motor: TalonSRX, encoderMotor: TalonSRX, distance: Double, power: Double) {
-    var sampleCount = 0
-    var velocityAcc = 0.0
-    var currentAcc = 0.0
-    try {
-        motor.set(ControlMode.PercentOutput, power)
-        encoderMotor.setSelectedSensorPosition(0, 0, 5)
-        while (encoderMotor.getSelectedSensorPosition(0) / CarriageConstants.LIFTER_TICKS_PER_INCH < distance) {
-            RobotMap.Solenoids.discBrake.set(true)
-            RobotMap.Solenoids.shifter.set(true) // low gear
-            velocityAcc += encoderMotor.getSelectedSensorVelocity(0)
-            currentAcc += motor.outputCurrent
-            sampleCount++
-            delay(20)
-        }
-        motor.set(ControlMode.PercentOutput, 0.0)
-        delay(250)
-
-        motor.set(ControlMode.PercentOutput, -power)
-        while (encoderMotor.getSelectedSensorPosition(0) / CarriageConstants.LIFTER_TICKS_PER_INCH > 2.0) {
-            RobotMap.Solenoids.discBrake.set(true)
-            RobotMap.Solenoids.shifter.set(true) // low gear
-            velocityAcc += -encoderMotor.getSelectedSensorVelocity(0)
-            currentAcc += motor.outputCurrent
-            sampleCount++
-            delay(20)
-        }
-    } finally {
-        val velocityFinal = velocityAcc / sampleCount
-        val currentFinal = currentAcc / sampleCount
-        println("Motor ${motor.deviceID} Velocity: $velocityFinal")
-        println("Motor ${motor.deviceID} Current: $currentFinal")
-        motor.set(ControlMode.PercentOutput, 0.0)
-        if (velocityFinal < 180.0 || currentFinal > 20.0) {
-            println("Potentially Bad Motor ****************************************************************************")
-        }
-        delay(250)
-    }
-}
-
-val preMatchTest = Command("Pre Match Test", Drivetrain, Arm) {
-    val motor0 = TalonSRX(0)
-    val motor1 = TalonSRX(1)
-    val motor2 = TalonSRX(2)
-    val motor13 = TalonSRX(13)
-    val motor14 = TalonSRX(14)
-    val motor15 = TalonSRX(15)
-
-    val elevatorMotor1 = RobotMap.Talons.elevatorMotor1
-    val elevatorMotor2 = RobotMap.Talons.elevatorMotor2
-    val elevatorMotor3 = RobotMap.Talons.elevatorMotor3
-    val elevatorMotor4 = RobotMap.Talons.elevatorMotor4
-    try {
-        println(1)
-        println(2)
-        testMotorDistance(elevatorMotor1, elevatorMotor1, 18.0, 1.0)
-        println(3)
-        testMotorDistance(elevatorMotor2, elevatorMotor1, 18.0, 1.0)
-        println(4)
-        testMotorDistance(elevatorMotor3, elevatorMotor1, 18.0, 1.0)
-        println(5)
-        testMotorDistance(elevatorMotor4, elevatorMotor1, 18.0, 1.0)
-        println(6)
-    } finally {
-        motor1.set(ControlMode.Follower, 0.0)
-        motor2.set(ControlMode.Follower, 0.0)
-        motor0.neutralOutput()
-        motor13.set(ControlMode.Follower, 15.0)
-        motor14.set(ControlMode.Follower, 15.0)
-        motor15.neutralOutput()
-
-        elevatorMotor4.set(ControlMode.Follower, 6.0)
-        elevatorMotor2.set(ControlMode.Follower, 6.0)
-        elevatorMotor3.set(ControlMode.Follower, 6.0)
-        elevatorMotor1.neutralOutput()
-    }
-}
-
-val backUpOneCubeAndRollCubeOut = Command("Back up and Roll Cube", Drivetrain, Carriage) {
-    val timer = Timer()
-    try {
-        val scalingFactor = -0.14
-        if (Arm.angle > 90) {
-            parallel({
-                Drivetrain.driveDistance(1.2, 1.0)
-            }, {
-                timer.start()
-                while (timer.get() < 1.0) {
-                    println("Time: ${timer.get()}")
-                    var driveVoltage = Drivetrain.rightMaster.motorOutputVoltage
-                    println("Drive Voltage: $driveVoltage")
-                    Arm.intakeSpeed = driveVoltage * scalingFactor
-                    delay(20)
-                }
-            })
-        } else {
-            parallel({
-                Drivetrain.driveDistance(-1.2, 1.0)
-            }, {
-                timer.start()
-                while (timer.get() < 1.0) {
-                    println("Time: ${timer.get()}")
-                    var driveVoltage = Drivetrain.rightMaster.motorOutputVoltage
-                    println("Drive Voltage: $driveVoltage")
-                    Arm.intakeSpeed = driveVoltage * -scalingFactor
-                    delay(20)
-                }
-            })
-        }
-    } finally {
-        timer.stop()
-        Arm.intakeSpeed = 0.0
+val yeetAuto = Command("Yeet Auto", Drivetrain, Arm) {
+    val auto = autonomi["Tests"]
+    try{
         Arm.isClamping = true
-    }
-}
-
-val backUpAndSpit = Command("Back up and Spit", Drivetrain, Carriage) {
-    try {
-        val scalingFactor = -0.3
-        val friction = -0.15
-        while (CoDriver.rightTrigger > 0.1) {
-            if (Arm.angle > 90) {
-                Drivetrain.drive(CoDriver.rightTrigger * 0.5, 0.0, 0.0)
-                Arm.intakeSpeed = CoDriver.rightTrigger * scalingFactor + -friction
-            } else {
-                Drivetrain.drive(CoDriver.rightTrigger * -0.5, 0.0, 0.0)
-                Arm.intakeSpeed = CoDriver.rightTrigger * scalingFactor + friction
-            }
-        }
+        Carriage.animateToPose(Pose.INTAKE)
+        parallel({
+            Carriage.animateToPose(Pose.SCALE_LOW, 6.0)
+            Carriage.animateToPose(Pose.SWITCH)
+            Carriage.animateToPose(Pose.STARTING_POSITION)
+        }, {
+            Drivetrain.driveDistance(-6.0, 2.0)
+        }, {
+            delay(700)
+            Arm.intakeSpeed = -1.0
+        })
     } finally {
         Arm.intakeSpeed = 0.0
+    }
+}
+
+val coopAuto = Command("Coop Auto", Drivetrain, Arm) {
+    val auto = autonomi["Far Scale Compatible"]
+    try {
         Arm.isClamping = true
+        Drivetrain.driveAlongPath(auto["Start To Far Scale"])
+        Carriage.animateToPose(Pose.SCALE_MED)
+        Arm.intakeSpeed = -0.65
+        delay(500)
+    } finally {
+        Arm.intakeSpeed = 0.0
     }
 }

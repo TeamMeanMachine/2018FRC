@@ -1,6 +1,7 @@
 package org.team2471.frc.powerup.carriage
 
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.wpilibj.RobotState
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import org.team2471.frc.lib.control.experimental.CommandSystem
@@ -36,11 +37,6 @@ object Carriage {
         }
 
         Lifter.set(lifterSetpoint, 0.0)
-//        Lifter.set(lifterSetpoint, if (lifterSetpoint - Lifter.height >= 0) {
-//            CarriageConstants.LIFTER_UPWARD_FEED_FORWARD
-//        } else {
-//            CarriageConstants.LIFTER_DOWNWARD_FEED_FORWARD
-//        })
         Arm.set(armSetpoint, armVelocity)
     }
 

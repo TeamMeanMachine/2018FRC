@@ -15,72 +15,7 @@ import org.team2471.frc.powerup.carriage.Pose
 import org.team2471.frc.powerup.drivetrain.Drivetrain
 import kotlin.math.max
 
-
-val climbCommand = Command("Climb", Carriage, Drivetrain, Wings, LEDController) {
-    LEDController.state = ClimbStopState
-    val acquireRung = launch(coroutineContext) {
-        Carriage.animateToPose(Pose.CLIMB)
-        suspendUntil { Driver.acquireRung }
-        launch(this@Command.coroutineContext) {
-            LEDController.state = ClimbGoState
-            periodic {
-                val deploy = SmartDashboard.getBoolean("Deploy Wings", true) &&
-                        Game.isEndGame && Lifter.height > Pose.CLIMB_ACQUIRE_RUNG.lifterHeight - 6.0
-
-                Wings.wingsDeployed = deploy
-
-                if (deploy) {
-                    Drivetrain.driveRaw(-max(0.2, Driver.leftTrigger), -max(0.2, Driver.rightTrigger))
-                    LEDController.state = ClimbGoState
-                } else {
-                    LEDController.state = ClimbStopState
-                }
-            }
-        }
-        Carriage.animateToPose(Pose.CLIMB_ACQUIRE_RUNG)
-    }
-
-
-    try {
-//        Wings.climbingGuideDeployed = true
-        periodic(condition = { acquireRung.isActive }) {
-            Drivetrain.drive(Driver.throttle, Driver.softTurn, Driver.hardTurn)
-        }
-        println("Stage 2")
-        Drivetrain.drive(-0.1, 0.0, 0.0)
-        LEDController.state = ClimbStopState
-        Lifter.isLowGear = true
-
-        Carriage.setAnimation(Pose.FACE_THE_BOSS)
-
-        val timer = Timer()
-        timer.start()
-        var previousTime = 0.0
-        periodic {
-            val time = timer.get()
-            val input = CoDriver.leftStickUpDown
-            if (input == 0.0) {
-                Lifter.isBraking = true
-                Lifter.stop()
-            } else {
-                Lifter.isBraking = false
-                Carriage.adjustAnimationTime((time - previousTime) * input)
-            }
-
-            previousTime = time
-        }
-    } finally {
-        Wings.climbingGuideDeployed = false
-        Lifter.isLowGear = false
-        Lifter.isBraking = false
-        Lifter.heightRawSpeed = 0.0
-        Wings.wingsDeployed = false
-        Drivetrain.drive(0.0, 0.0, 0.0)
-        resetClimbCommand.launch()
-    }
-}
-
-val newClimbCommand = Command("New Climb", Drivetrain, Carriage, Wings) {
+val climbCommand = Command("Climb", Drivetrain, Carriage, Wings) {
     try {
         val soloClimb = SmartDashboard.getBoolean("Solo Climb", false)
         Wings.climbingGuideDeployed = !soloClimb
@@ -95,7 +30,6 @@ val newClimbCommand = Command("New Climb", Drivetrain, Carriage, Wings) {
             suspendUntil { !Driver.climb }
             suspendUntil { Driver.climb }
         }
-
 
         // extra press cancels the climb
         launch(coroutineContext) {
@@ -126,12 +60,13 @@ val newClimbCommand = Command("New Climb", Drivetrain, Carriage, Wings) {
             Wings.wingsDeployed = deploy
 
             val time = timer.get()
-            val input = CoDriver.leftStickUpDown
+            val input = Driver.rightStickUpDown
             if (input == 0.0) {
                 Lifter.isBraking = true
                 Lifter.stop()
             } else {
                 Lifter.isBraking = false
+                println(input)
                 Carriage.adjustAnimationTime((time - previousTime) * input)
             }
 

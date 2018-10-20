@@ -13,6 +13,8 @@ import org.team2471.frc.lib.control.plus
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.powerup.RobotMap
 import org.team2471.frc.powerup.Telemetry
+import org.team2471.frc.powerup.drivetrain.Drivetrain
+import kotlin.math.abs
 import kotlin.math.min
 
 object Lifter {
@@ -67,13 +69,20 @@ object Lifter {
 
     private val table = Carriage.table.getSubTable("Lifter")
 
+    private val setpointEntry = table.getEntry("Setpoint")
+
     init {
         launch {
             val heightEntry = table.getEntry("Height")
             val outputEntry = table.getEntry("Output")
             periodic(100) {
                 // don't run the compressor when the carriage exceeds 3V
-                RobotMap.compressor.closedLoopControl = !RobotState.isAutonomous() && Math.abs(motors.motorOutputPercent) < 0.2
+                RobotMap.compressor.closedLoopControl = if (RobotState.isAutonomous()) {
+                    abs(Drivetrain.leftMaster.motorOutputPercent) < 0.1
+                            && abs(Drivetrain.rightMaster.motorOutputPercent) < 0.1
+                } else {
+                    Math.abs(motors.motorOutputPercent) < 0.2
+                }
                 heightEntry.setDouble(height)
 
                 if (RobotState.isEnabled())
@@ -120,15 +129,16 @@ object Lifter {
     }
 
     fun set(setpoint: Double, feedForward: Double) {
-
         val min = when {
             Arm.angle > 150.0 -> min(height, Pose.SCALE_LOW.lifterHeight)
             Arm.angle < 50.0 -> min(height, Pose.INTAKE.lifterHeight)
             else -> 0.0
         }
 
-        motors.set(ControlMode.Position, inchesToTicks(setpoint.coerceIn(min, CarriageConstants.LIFTER_MAX_HEIGHT)) ,
+        val limitedSetpoint = setpoint.coerceIn(min, CarriageConstants.LIFTER_MAX_HEIGHT)
+        motors.set(ControlMode.Position, inchesToTicks(limitedSetpoint) ,
                 DemandType.ArbitraryFeedForward, feedForward)
+        setpointEntry.setDouble(limitedSetpoint)
     }
 
 

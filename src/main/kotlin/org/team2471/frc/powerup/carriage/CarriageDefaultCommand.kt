@@ -22,7 +22,7 @@ val carriageDefaultCommand = Command("Carriage Default", Carriage) {
             }
 
             Arm.isClamping = !releaseClamp
-            val spit = max(if (releaseClamp) 0.2 else 0.0, CoDriver.spitSpeed)
+            val spit = max(if (releaseClamp) 0.2 else 0.0, CoDriver.spitSpeed + CoDriver.rightTrigger)
 
             Arm.intakeSpeed = if (spit == 0.0 && Arm.hasCube) 0.2 else -spit
 
@@ -35,8 +35,6 @@ val carriageDefaultCommand = Command("Carriage Default", Carriage) {
                 }
             }
             prevReleasing = releasing
-
-            val leftStick = CoDriver.leftStickUpDown
 
             val currentTime = Timer.getFPGATimestamp()
             val deltaTime = currentTime - previousTime
@@ -59,7 +57,7 @@ val carriageDefaultCommand = Command("Carriage Default", Carriage) {
                 SmartDashboard.putNumber("Scale Offset", scaleOffset)
             }
 
-            Carriage.adjustAnimationTime(deltaTime * leftStick)
+            Carriage.adjustAnimationTime(deltaTime)
 
             SmartDashboard.putNumberArray("Lifter Amperages", Lifter.amperages)
             Lifter.isLowGear = false
