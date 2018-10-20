@@ -12,8 +12,10 @@ public class EncoderTest extends TimedRobot {
         driveMotorL1 = new TalonSRX(Talons.LEFT_DRIVE_MOTOR_1);
         driveMotorR1 = new TalonSRX(Talons.RIGHT_DRIVE_MOTOR_1);
 
+        // invert left sensor
         driveMotorL1.setSensorPhase(true);
 
+        // zero distances
         driveMotorL1.setSelectedSensorPosition(0, 0, 10);
         driveMotorR1.setSelectedSensorPosition(0, 0, 10);
     }

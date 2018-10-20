@@ -15,6 +15,7 @@ public class TunePID extends TimedRobot {
     private XboxController xboxController;
     private final int TICKS_PER_FOOT = 600;
 
+    @Override
     public void robotInit() {
         driveMotorL1 = new TalonSRX(Talons.LEFT_DRIVE_MOTOR_1);
         driveMotorR1 = new TalonSRX(Talons.RIGHT_DRIVE_MOTOR_1);
@@ -57,6 +58,7 @@ public class TunePID extends TimedRobot {
         driveMotorR1.setSelectedSensorPosition(0, 0, 10);
     }
 
+    @Override
     public void teleopPeriodic() {
         driveMotorL1.config_kP(0, SmartDashboard.getNumber("Drive Position KP", 1.0), 0);
         driveMotorL1.config_kI(0, SmartDashboard.getNumber("Drive Position KI", 0), 0);

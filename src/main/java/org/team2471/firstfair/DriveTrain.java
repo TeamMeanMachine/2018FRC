@@ -34,15 +34,13 @@ public class DriveTrain extends Subsystem {
 
         driveMotorR1.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 1, 10);
 
-        if (!SmartDashboard.containsKey("Drive Position KP")) {
-            SmartDashboard.putNumber("Drive Position KP", 1.0);
-            SmartDashboard.putNumber("Drive Position KI", 0.0);
-            SmartDashboard.putNumber("Drive Position KD", 0.0);
-        }
-        SmartDashboard.setPersistent("Drive Position KP");
-        SmartDashboard.setPersistent("Drive Position KI");
-        SmartDashboard.setPersistent("Drive Position KD");
+        driveMotorL1.config_kP(0, SmartDashboard.getNumber("Drive Position KP", 1.0), 0);
+        driveMotorL1.config_kI(0, SmartDashboard.getNumber("Drive Position KI", 0), 0);
+        driveMotorL1.config_kD(0, SmartDashboard.getNumber("Drive Position KD", 0), 0);
 
+        driveMotorR1.config_kP(0, SmartDashboard.getNumber("Drive Position KP", 1.0), 0);
+        driveMotorR1.config_kI(0, SmartDashboard.getNumber("Drive Position KI", 0), 0);
+        driveMotorR1.config_kD(0, SmartDashboard.getNumber("Drive Position KD", 0), 0);
     }
 
     public void resetEncoderDistances() {
@@ -51,14 +49,6 @@ public class DriveTrain extends Subsystem {
     }
 
     public void drivePosition(double leftPosition, double rightPosition) {
-        driveMotorL1.config_kP(0, SmartDashboard.getNumber("Drive Position KP", 1.0), 0);
-        driveMotorL1.config_kI(0, SmartDashboard.getNumber("Drive Position KI", 0), 0);
-        driveMotorL1.config_kD(0, SmartDashboard.getNumber("Drive Position KD", 0), 0);
-
-        driveMotorR1.config_kP(0, SmartDashboard.getNumber("Drive Position KP", 1.0), 0);
-        driveMotorR1.config_kI(0, SmartDashboard.getNumber("Drive Position KI", 0), 0);
-        driveMotorR1.config_kD(0, SmartDashboard.getNumber("Drive Position KD", 0), 0);
-
         final int TICKS_PER_FOOT = 600;
 
         driveMotorL1.set(ControlMode.Position, leftPosition * TICKS_PER_FOOT);
