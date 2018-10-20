@@ -19,8 +19,9 @@ plugins {
 
 def TEAM = 2471
 def ROBOT_CLASS = "org.team2471.frc.powerup.Robot"
-//def ROBOT_CLASS = "MotorTest"
-//def ROBOT_CLASS = "LEDTest"
+//def ROBOT_CLASS = "org.team2471.firstfair.EncoderTest"
+//def ROBOT_CLASS = "org.team2471.firstfair.TunePID"
+//def ROBOT_CLASS = "org.team2471.firstfair.PathFollow"
 
 deploy {
     targets {
