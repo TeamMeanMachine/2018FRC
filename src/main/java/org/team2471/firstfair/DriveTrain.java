@@ -59,10 +59,13 @@ public class DriveTrain extends Subsystem {
         driveMotorR1.config_kI(0, SmartDashboard.getNumber("Drive Position KI", 0), 0);
         driveMotorR1.config_kD(0, SmartDashboard.getNumber("Drive Position KD", 0), 0);
 
-        driveMotorL1.set(ControlMode.Position, leftPosition);
-        driveMotorR1.set(ControlMode.Position, rightPosition);
+        final int TICKS_PER_FOOT = 600;
+
+        driveMotorL1.set(ControlMode.Position, leftPosition * TICKS_PER_FOOT);
+        driveMotorR1.set(ControlMode.Position, rightPosition * TICKS_PER_FOOT);
 
         System.out.println("Power: " + driveMotorL1.getMotorOutputPercent() + " " + driveMotorR1.getMotorOutputPercent());
+        System.out.println("Left: " + leftPosition + " Right: " + rightPosition);
     }
 
     @Override

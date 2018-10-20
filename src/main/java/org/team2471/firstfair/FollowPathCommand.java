@@ -23,6 +23,7 @@ public class FollowPathCommand extends Command {
     protected void execute() {
         double time = timer.get();
         PathFollow.drive.drivePosition(path.getLeftDistance(time), path.getRightDistance(time));
+        System.out.println("Time: " + time);
     }
 
     @Override
