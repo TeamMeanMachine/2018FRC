@@ -27,6 +27,7 @@ class Robot : IterativeRobot() {
         Carriage
         Driver
         AutoChooser
+        CameraStream.isEnabled = true
 
         LEDController.state = IdleState
         val gameAlliance = Game.alliance

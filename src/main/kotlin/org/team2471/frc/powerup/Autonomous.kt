@@ -312,7 +312,7 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
         }, {
             delaySeconds(path.durationWithSpeed - 1.6)
             Carriage.animateToPose(Pose.SCALE_LOW, 5.0, -30.0)
-            Arm.intakeSpeed = -0.3
+            Arm.intakeSpeed = -0.25
         }, {
             delay(400)
             Arm.intakeSpeed = 0.3
@@ -336,7 +336,7 @@ val farScaleAuto = Command("Far Scale", Drivetrain, Carriage) {
         }, {
             delaySeconds(path.durationWithSpeed - 1.6)
             Carriage.animateToPose(Pose.SCALE_LOW, 8.0, -15.0)
-            Arm.intakeSpeed = -0.35
+            Arm.intakeSpeed = -0.3
         }, {
             delay(400)
             Arm.intakeSpeed = 0.3

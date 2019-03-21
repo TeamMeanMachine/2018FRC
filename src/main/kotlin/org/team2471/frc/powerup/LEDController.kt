@@ -5,14 +5,14 @@ import edu.wpi.first.wpilibj.SerialPort
 import org.team2471.frc.lib.util.Alliance
 
 object LEDController {
-    private val port: SerialPort? = try {
+    private val port: SerialPort? = null/*try {
         SerialPort(9600, SerialPort.Port.kUSB1).also {
             println("LEDController found")
         }
     } catch (e: Exception) {
         DriverStation.reportError("Failed to connect to LEDController\n${e.message}", false)
         null
-    }
+    }*/
 
     var alliance: Alliance? = null
         @Synchronized set(value) {
