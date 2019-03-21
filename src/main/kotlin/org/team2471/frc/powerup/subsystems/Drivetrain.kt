@@ -1,6 +1,6 @@
 package org.team2471.frc.powerup.subsystems
 
-import com.analog.adis16448.frc.ADIS16448_IMU
+//import com.analog.adis16448.frc.ADIS16448_IMU
 import com.ctre.phoenix.motorcontrol.ControlMode
 import com.ctre.phoenix.motorcontrol.FeedbackDevice
 import com.ctre.phoenix.motorcontrol.NeutralMode
@@ -76,7 +76,7 @@ object Drivetrain {
         enableCurrentLimit(true)
     }
 
-    private val gyro = ADIS16448_IMU()
+//    private val gyro = ADIS16448_IMU()
 
     val table = NetworkTableInstance.getDefault().getTable("Drivetrain")
 
@@ -88,7 +88,8 @@ object Drivetrain {
     fun feetToTicks(feet: Double) = feet * 12.0 / Math.PI / WHEEL_DIAMETER_INCHES * TICKS_PER_REV
 
     val gyroAngle: Double
-        get() = gyro.angleZ
+//        get() = gyro.angleZ
+        get() = 0.0
 
 
     private val heightMultiplierCurve = MotionCurve().apply {
@@ -226,7 +227,7 @@ object Drivetrain {
     }
 
     init {
-        gyro.calibrate()
+//        gyro.calibrate()
 
         val pEntry = table.getEntry("Position P")
         val dEntry = table.getEntry("Position D")
@@ -263,7 +264,7 @@ object Drivetrain {
 
         CommandSystem.registerDefaultCommand(this, Command("Drivetrain Default", this) {
             periodic {
-                SmartDashboard.putNumber("Gyro Angle", gyro.angleZ)
+                SmartDashboard.putNumber("Gyro Angle", gyroAngle)
                 drive(Driver.throttle, Driver.softTurn, Driver.hardTurn)
             }
         })
