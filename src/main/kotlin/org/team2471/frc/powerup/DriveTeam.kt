@@ -4,13 +4,16 @@ import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.RobotState
 import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import org.team2471.frc.lib.control.experimental.Command
 import org.team2471.frc.lib.control.experimental.runWhen
 import org.team2471.frc.lib.control.experimental.runWhile
 import org.team2471.frc.lib.control.experimental.toggleWhen
 import org.team2471.frc.lib.math.deadband
-import org.team2471.frc.lib.math.squareRootWithSign
 import org.team2471.frc.lib.math.squareWithSign
-import org.team2471.frc.powerup.commands.*
+import org.team2471.frc.powerup.carriage.*
+import org.team2471.frc.powerup.drivetrain.Drivetrain
+import org.team2471.frc.powerup.endgame.Wings
+import org.team2471.frc.powerup.endgame.climbCommand
 import java.lang.Double.max
 
 object Driver {
@@ -31,11 +34,10 @@ object Driver {
 
     val softTurn: Double
         get() = controller.getX(GenericHID.Hand.kRight)
-                .deadband(0.2)
-                .squareWithSign() * if (IS_COMP_BOT) 0.8 else 1.0
+                .deadband(0.2) * 0.5
 
     val hardTurn: Double
-        get() = (-controller.getTriggerAxis(GenericHID.Hand.kLeft) + controller.getTriggerAxis(GenericHID.Hand.kRight))
+        get() = (-controller.getTriggerAxis(GenericHID.Hand.kLeft) + controller.getTriggerAxis(GenericHID.Hand.kRight)) * 0.6
 
     val intaking: Boolean
         get() = controller.getBumper(GenericHID.Hand.kRight)
@@ -43,11 +45,24 @@ object Driver {
     val acquireRung: Boolean
         get() = controller.backButton
 
+    val climb: Boolean
+        get() = controller.startButton
+
+    val leftTrigger: Double
+        get() = controller.getTriggerAxis(GenericHID.Hand.kLeft)
+
+    val rightTrigger: Double
+        get() = controller.getTriggerAxis(GenericHID.Hand.kRight)
+
+    val rightStickUpDown: Double
+        get() = -controller.getY(GenericHID.Hand.kRight)
+                .deadband(.2)
+
     init {
-        driveTuner.toggleWhen { controller.getStickButton(GenericHID.Hand.kLeft) }
-        driverIntake.toggleWhen { intaking }
+        driverIntake.runWhen { intaking }
         driverSpit.runWhile { controller.getBumper(GenericHID.Hand.kLeft) }
-        climbCommand.toggleWhen { controller.startButton }
+        climbCommand.runWhen { controller.startButton }
+        toggleCubeSensor.runWhen { controller.bButton }
     }
 }
 
@@ -75,25 +90,37 @@ object CoDriver {
     val microAdjust: Double
         get() = -controller.getY(GenericHID.Hand.kRight)
                 .deadband(.2)
+                .squareWithSign()
 
     val spitSpeed: Double
-        get() = Math.max(controller.getTriggerAxis(GenericHID.Hand.kRight) * 0.8,
-                controller.getTriggerAxis(GenericHID.Hand.kLeft) * 0.4)
+        get() = (controller.getTriggerAxis(GenericHID.Hand.kLeft) * 0.55).deadband(0.15)
 
     val release: Boolean
-        get() = controller.getBumper(GenericHID.Hand.kRight)
+        get() = controller.getBumper(GenericHID.Hand.kLeft)
+
+    val rightTrigger: Double
+        get() = (controller.getTriggerAxis(GenericHID.Hand.kRight) * 0.38).deadband(0.15)
 
     init {
         println("Initialized")
         SmartDashboard.putBoolean("Tune Arm PID", false)
         zero.toggleWhen { controller.backButton }
         goToSwitch.runWhen { controller.getStickButton(GenericHID.Hand.kRight) }
+        smartSpit.runWhen {controller.getBumper(GenericHID.Hand.kRight)}
         goToScaleLowPreset.runWhen { controller.aButton }
         goToScaleMediumPreset.runWhen { controller.xButton }
         goToScaleHighPreset.runWhen { controller.yButton }
+        goToFrontScalePreset.runWhen { controller.getStickButton(GenericHID.Hand.kLeft) }
         goToIntakePreset.runWhen { controller.bButton }
         incrementScaleStackHeight.runWhen { controller.pov == 0 }
         decrementScaleStackHeight.runWhen { controller.pov == 180 }
+
         tuneArmPID.runWhen { SmartDashboard.getBoolean("Tune Arm PID", false) }
+        commandReset.runWhen { controller.startButton }
+
     }
 }
+
+val commandReset = Command("Command Reset", Drivetrain, Carriage, Wings) {}
+
+

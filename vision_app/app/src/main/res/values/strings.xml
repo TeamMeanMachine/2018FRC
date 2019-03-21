@@ -1,9 +1,0 @@
-<resources>
-    <string name="app_name">PowerupVision</string>
-
-    <string-array name="visionModes">
-        <item>Unfiltered</item>
-        <item>Thresholded</item>
-        <item>Thresholded (Processed)</item>
-    </string-array>
-</resources>

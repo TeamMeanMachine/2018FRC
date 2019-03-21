@@ -1,47 +1,91 @@
 package org.team2471.frc.powerup
 
-import edu.wpi.first.wpilibj.DriverStation
+import com.ctre.phoenix.motorcontrol.NeutralMode
 import edu.wpi.first.wpilibj.IterativeRobot
 import edu.wpi.first.wpilibj.livewindow.LiveWindow
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.experimental.runBlocking
+import org.team2471.frc.lib.control.experimental.CommandSystem
 import org.team2471.frc.lib.control.experimental.EventMapper
-import org.team2471.frc.powerup.subsystems.Carriage
-import org.team2471.frc.powerup.subsystems.Drivetrain
+import org.team2471.frc.lib.util.measureTimeFPGA
+import org.team2471.frc.powerup.carriage.Carriage
+import org.team2471.frc.powerup.carriage.Pose
+import org.team2471.frc.powerup.drivetrain.Drivetrain
 
-const val IS_COMP_BOT = false
+const val IS_COMP_BOT = true
 
 class Robot : IterativeRobot() {
     private var hasRunAuto = false
 
     override fun robotInit() {
-        LiveWindow.disableAllTelemetry()
+        //CameraStream.isEnabled = true
+        Game.updateGameData()
+
+        println("${if (IS_COMP_BOT) "Competition" else "Practice"} mode")
 
         Drivetrain
         Carriage
         Driver
         AutoChooser
 
-        println("${if (IS_COMP_BOT) "Competition" else "Practice"} mode")
+        LEDController.state = IdleState
+        val gameAlliance = Game.alliance
+        LEDController.alliance = gameAlliance
+
+        SmartDashboard.putNumber("Test Throttle", 1.0)
+        SmartDashboard.putBoolean("Callibrate Gyro", false)
+        LiveWindow.disableAllTelemetry()
+    }
+
+    override fun robotPeriodic() {
+        val eventMapperTime = measureTimeFPGA {
+            EventMapper.tick()
+        }
+
+        SmartDashboard.putNumber("Event Mapper Time", eventMapperTime)
+        Telemetry.tick()
+        SmartDashboard.putNumber("Match Time", (Game.matchTime - 3.0).coerceAtLeast(-1.0))
     }
 
     override fun autonomousInit() {
+        CameraStream.isEnabled = false
+        Drivetrain.isBraking = true
+        hasRunAuto = true
         Game.updateGameData()
         LEDController.alliance = Game.alliance
-        hasRunAuto = true
-        LEDController.state = TheatreState
-        Carriage.Lifter.zero()
+        Drivetrain.zeroGyro()
         AutoChooser.auto.launch()
     }
 
     override fun teleopInit() {
+        CameraStream.isEnabled = true
+        Drivetrain.isBraking = true
         if (!hasRunAuto) runBlocking {
-            Carriage.animateToPose(Carriage.Pose.INTAKE)
+            Carriage.animateToPose(Pose.INTAKE)
         }
         LEDController.state = FireState
+        Drivetrain.zeroEncoders()
+        CommandSystem.initDefaultCommands()
     }
 
-    override fun robotPeriodic() {
-        EventMapper.tick()
-        // println(Carriage.Arm.cubeSensor.voltage)
+    override fun disabledInit() {
+        CameraStream.isEnabled = true
+        LEDController.state = IdleState
+    }
+
+    override fun disabledPeriodic() {
+        if (SmartDashboard.getBoolean("Callibrate Gyro", false)) {
+            Drivetrain.calibrateGyro()
+            SmartDashboard.putBoolean("Callibrate Gyro", false)
+        }
+
+        // start coasting once motion stops
+        if (Drivetrain.isBraking && Drivetrain.leftVelocity == 0.0 && Drivetrain.rightVelocity == 0.0) {
+            Drivetrain.isBraking = false
+        }
+    }
+
+    override fun testInit() {
+        preMatchTest.launch()
     }
 }

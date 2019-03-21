@@ -2,20 +2,24 @@ package org.team2471.frc.powerup
 
 import edu.wpi.first.wpilibj.DriverStation
 import org.team2471.frc.lib.util.Alliance
+import org.team2471.frc.lib.util.measureTimeFPGA
 
 enum class Side {
     LEFT,
-    RIGHT;
+    RIGHT,
+    CENTER;
 
     operator fun not(): Side = when (this) {
         LEFT -> RIGHT
         RIGHT -> LEFT
+        CENTER -> CENTER
     }
 
     companion object {
         fun fromChar(char: Char): Side? = when (char) {
             'L' -> LEFT
             'R' -> RIGHT
+            'C' -> CENTER
             else -> null
         }
     }
@@ -28,7 +32,7 @@ object Game {
         get() = ds.matchTime
 
     val isEndGame: Boolean
-        get() = matchTime <= 28
+        get() = matchTime <= 29
 
     var switchSide: Side? = null
         private set
@@ -37,8 +41,19 @@ object Game {
         private set
 
     var alliance: Alliance? = null
+        private set
+
+    var isFMSAttached: Boolean = false
+        private set
 
     fun updateGameData() {
+        val findDsTime = measureTimeFPGA {
+            while (!ds.isDSAttached) {
+                Thread.sleep(100)
+            }
+        }
+        println("Found driverstation in $findDsTime seconds")
+
         val gameData = ds.gameSpecificMessage
 
         if (gameData.length < 2) {
@@ -51,10 +66,15 @@ object Game {
         switchSide = Side.fromChar(gameData[0])
         scaleSide = Side.fromChar(gameData[1])
 
-        alliance = when (ds.alliance) {
+        val dsAlliance = ds.alliance
+        println("Game data alliance: $dsAlliance")
+        alliance = when (dsAlliance) {
             DriverStation.Alliance.Red -> Alliance.RED
             DriverStation.Alliance.Blue -> Alliance.BLUE
             else -> null
         }
+        println("Set alliance: $alliance")
+
+        isFMSAttached = ds.isFMSAttached
     }
 }

@@ -5,23 +5,42 @@ import edu.wpi.first.wpilibj.SerialPort
 import org.team2471.frc.lib.util.Alliance
 
 object LEDController {
-    private val port = SerialPort(9600, SerialPort.Port.kUSB2)
+    private val port: SerialPort? = try {
+        SerialPort(9600, SerialPort.Port.kUSB1).also {
+            println("LEDController found")
+        }
+    } catch (e: Exception) {
+        DriverStation.reportError("Failed to connect to LEDController\n${e.message}", false)
+        null
+    }
 
     var alliance: Alliance? = null
         @Synchronized set(value) {
-            if (value == DriverStation.Alliance.Red) {
-                port.writeString("red")
-            } else if (value == DriverStation.Alliance.Blue) {
-                port.writeString("blue")
+            println("Alliance $value received. Previous $alliance")
+            if (value != field) {
+                if (value == Alliance.RED) {
+                    write("red")
+                } else if (value == Alliance.BLUE) {
+                    write("blue")
+                }
             }
             field = value
         }
 
     var state: LEDState? = IdleState
         @Synchronized set(value) {
-            if (value != null) port.writeString("${value.representation}\n")
+            if (value != field && value != null) {
+                write(value.representation)
+            }
             field = value
         }
+
+    private fun write(data: String) = try {
+        println("sending $data to LedController")
+        port?.writeString("$data\n")
+    } catch (e: Exception) {
+        DriverStation.reportError("Error writing string to LEDController: ${e.message}", false)
+    }
 }
 
 
@@ -64,4 +83,9 @@ object TheatreState : LEDState() {
 object BounceState : LEDState() {
     override val representation: String
         get() = "bounce"
+}
+
+object CallibrateGyroState : LEDState() {
+    override val representation: String
+        get() = "white"
 }
